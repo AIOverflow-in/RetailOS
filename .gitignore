@@ -1,0 +1,19 @@
+# Env files — never commit
+backend/.env
+frontend/.env.local
+frontend/.env
+
+# Go
+backend/tmp/
+
+# Node
+frontend/node_modules/
+frontend/.next/
+
+# Go build output
+backend/server
+backend/retailos
+
+# OS
+.DS_Store
+*.pdf

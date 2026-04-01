@@ -1,0 +1,206 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/retail-os/backend/internal/generated"
+	"github.com/retail-os/backend/internal/middleware"
+)
+
+type InventoryHandler struct{ pool *pgxpool.Pool }
+
+func NewInventoryHandler(pool *pgxpool.Pool) *InventoryHandler {
+	return &InventoryHandler{pool: pool}
+}
+
+func (h *InventoryHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query().Get("q")
+	conn := middleware.ConnFromCtx(r.Context())
+	queries := generated.New(conn)
+
+	products, err := queries.SearchProducts(r.Context(), q)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not fetch products")
+		return
+	}
+	writeJSON(w, http.StatusOK, products)
+}
+
+func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Name        string  `json:"name"`
+		CompanyName string  `json:"company_name"`
+		SKU         *string `json:"sku"`
+		HSNCode     *string `json:"hsn_code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.Name == "" || body.CompanyName == "" {
+		writeError(w, http.StatusBadRequest, "name and company_name are required")
+		return
+	}
+
+	conn := middleware.ConnFromCtx(r.Context())
+	queries := generated.New(conn)
+
+	product, err := queries.CreateProduct(r.Context(), generated.CreateProductParams{
+		Name:        body.Name,
+		CompanyName: body.CompanyName,
+		Sku:         body.SKU,
+		HsnCode:     body.HSNCode,
+	})
+	if err != nil {
+		writeError(w, http.StatusConflict, "product creation failed: "+err.Error())
+		return
+	}
+	writeJSON(w, http.StatusCreated, product)
+}
+
+func (h *InventoryHandler) ListBatches(w http.ResponseWriter, r *http.Request) {
+	productID := r.URL.Query().Get("product_id")
+	if productID == "" {
+		writeError(w, http.StatusBadRequest, "product_id is required")
+		return
+	}
+
+	var pid pgtype.UUID
+	if err := pid.Scan(productID); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid product_id")
+		return
+	}
+
+	conn := middleware.ConnFromCtx(r.Context())
+	queries := generated.New(conn)
+
+	batches, err := queries.ListBatchesForProduct(r.Context(), pid)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not fetch batches")
+		return
+	}
+	writeJSON(w, http.StatusOK, batches)
+}
+
+func (h *InventoryHandler) ListActiveBatches(w http.ResponseWriter, r *http.Request) {
+	productID := r.URL.Query().Get("product_id")
+	if productID == "" {
+		writeError(w, http.StatusBadRequest, "product_id is required")
+		return
+	}
+
+	var pid pgtype.UUID
+	if err := pid.Scan(productID); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid product_id")
+		return
+	}
+
+	conn := middleware.ConnFromCtx(r.Context())
+	queries := generated.New(conn)
+
+	batches, err := queries.ListActiveBatchesForProduct(r.Context(), pid)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not fetch active batches")
+		return
+	}
+	writeJSON(w, http.StatusOK, batches)
+}
+
+func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ProductID    string   `json:"product_id"`
+		BatchNo      string   `json:"batch_no"`
+		ExpiryDate   string   `json:"expiry_date"` // YYYY-MM-DD
+		MRP          float64  `json:"mrp"`
+		BuyingPrice  float64  `json:"buying_price"`
+		SellingPrice float64  `json:"selling_price"`
+		PurchaseQty  int32    `json:"purchase_qty"`
+		BoxNo        *string  `json:"box_no"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	// Mandatory field validation
+	if body.ProductID == "" || body.BatchNo == "" || body.ExpiryDate == "" {
+		writeError(w, http.StatusBadRequest, "product_id, batch_no, and expiry_date are required")
+		return
+	}
+	if body.PurchaseQty <= 0 {
+		writeError(w, http.StatusBadRequest, "purchase_qty must be greater than 0")
+		return
+	}
+
+	// Price validation: buying < selling < mrp
+	if body.BuyingPrice >= body.SellingPrice {
+		writeError(w, http.StatusBadRequest, "selling_price must be greater than buying_price")
+		return
+	}
+	if body.SellingPrice >= body.MRP {
+		writeError(w, http.StatusBadRequest, "mrp must be greater than selling_price")
+		return
+	}
+
+	// Expiry must be in the future
+	expiry, err := time.Parse("2006-01-02", body.ExpiryDate)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "expiry_date must be in YYYY-MM-DD format")
+		return
+	}
+	if !expiry.After(time.Now()) {
+		writeError(w, http.StatusBadRequest, "expiry_date must be a future date")
+		return
+	}
+
+	var pid pgtype.UUID
+	if err := pid.Scan(body.ProductID); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid product_id")
+		return
+	}
+
+	var expiryDate pgtype.Date
+	expiryDate.Time = expiry
+	expiryDate.Valid = true
+
+	mrp := numericFromFloat(body.MRP)
+	buyingPrice := numericFromFloat(body.BuyingPrice)
+	sellingPrice := numericFromFloat(body.SellingPrice)
+
+	conn := middleware.ConnFromCtx(r.Context())
+	queries := generated.New(conn)
+
+	batch, err := queries.CreateBatch(r.Context(), generated.CreateBatchParams{
+		ProductID:    pid,
+		BatchNo:      body.BatchNo,
+		ExpiryDate:   expiryDate,
+		Mrp:          mrp,
+		BuyingPrice:  buyingPrice,
+		SellingPrice: sellingPrice,
+		PurchaseQty:  body.PurchaseQty,
+		BoxNo:        body.BoxNo,
+	})
+	if err != nil {
+		writeError(w, http.StatusConflict, "batch creation failed: "+err.Error())
+		return
+	}
+	writeJSON(w, http.StatusCreated, batch)
+}
+
+func (h *InventoryHandler) ListInventory(w http.ResponseWriter, r *http.Request) {
+	conn := middleware.ConnFromCtx(r.Context())
+	queries := generated.New(conn)
+
+	rows, err := queries.ListInventory(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not fetch inventory")
+		return
+	}
+	writeJSON(w, http.StatusOK, rows)
+}
+
