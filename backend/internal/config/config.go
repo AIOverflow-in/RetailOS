@@ -8,10 +8,14 @@ import (
 )
 
 type Config struct {
-	DatabaseURL    string
-	JWTSecret      string
-	AdminSecretKey string
-	Port           string
+	DatabaseURL  string
+	JWTSecret    string
+	Port         string
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUsername string
+	SMTPPassword string
+	SMTPFrom     string
 }
 
 func Load() *Config {
@@ -21,10 +25,14 @@ func Load() *Config {
 	}
 
 	cfg := &Config{
-		DatabaseURL:    mustGet("DATABASE_URL"),
-		JWTSecret:      mustGet("JWT_SECRET"),
-		AdminSecretKey: mustGet("ADMIN_SECRET_KEY"),
-		Port:           getOrDefault("PORT", "8080"),
+		DatabaseURL:  mustGet("DATABASE_URL"),
+		JWTSecret:    mustGet("JWT_SECRET"),
+		Port:         getOrDefault("PORT", "8080"),
+		SMTPHost:     getOrDefault("SMTP_HOST", ""),
+		SMTPPort:     getOrDefault("SMTP_PORT", "587"),
+		SMTPUsername: getOrDefault("SMTP_USERNAME", ""),
+		SMTPPassword: getOrDefault("SMTP_PASSWORD", ""),
+		SMTPFrom:     getOrDefault("SMTP_FROM", ""),
 	}
 
 	return cfg
