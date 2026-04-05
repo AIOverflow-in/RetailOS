@@ -1,1 +1,5 @@
-export { default } from './(landing)/LandingPage'
+import { redirect } from 'next/navigation'
+
+export default function RootPage() {
+  redirect('/billing')
+}
