@@ -64,12 +64,15 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
+	// Rate limiter for login endpoints: 5 attempts per 10 seconds, burst of 5
+	loginLimiter := middleware.NewRateLimiter(0.5, 5)
+
 	// Auth
-	r.Post("/auth/login", authHandler.Login)
+	r.With(loginLimiter.Limit).Post("/auth/login", authHandler.Login)
 
 	// Super admin auth (public — login + OTP verification)
-	r.Post("/super-admin/auth/login", superAdminHandler.Login)
-	r.Post("/super-admin/auth/verify-otp", superAdminHandler.VerifyOTP)
+	r.With(loginLimiter.Limit).Post("/super-admin/auth/login", superAdminHandler.Login)
+	r.With(loginLimiter.Limit).Post("/super-admin/auth/verify-otp", superAdminHandler.VerifyOTP)
 
 	// Super admin protected routes (JWT with role=super_admin)
 	r.Group(func(r chi.Router) {
