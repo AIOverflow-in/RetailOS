@@ -67,6 +67,24 @@ type Product struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type SuperAdmin struct {
+	ID             pgtype.UUID        `json:"id"`
+	Username       string             `json:"username"`
+	Email          string             `json:"email"`
+	HashedPassword string             `json:"hashed_password"`
+	IsActive       bool               `json:"is_active"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
+type SuperAdminOtp struct {
+	ID        pgtype.UUID        `json:"id"`
+	AdminID   pgtype.UUID        `json:"admin_id"`
+	OtpCode   string             `json:"otp_code"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	Used      bool               `json:"used"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Tenant struct {
 	TenantID       pgtype.UUID        `json:"tenant_id"`
 	ShopName       string             `json:"shop_name"`

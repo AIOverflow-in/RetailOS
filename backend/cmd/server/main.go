@@ -12,6 +12,7 @@ import (
 
 	"github.com/retail-os/backend/internal/config"
 	"github.com/retail-os/backend/internal/db"
+	"github.com/retail-os/backend/internal/email"
 	"github.com/retail-os/backend/internal/handlers"
 	"github.com/retail-os/backend/internal/middleware"
 )
@@ -35,7 +36,14 @@ func main() {
 	// Handlers
 	authHandler := handlers.NewAuthHandler(pool, cfg.JWTSecret)
 	adminHandler := handlers.NewAdminHandler(pool, cfg.DatabaseURL)
-	superAdminHandler := handlers.NewSuperAdminHandler(pool, cfg.JWTSecret, cfg.AdminSecretKey)
+	smtpCfg := email.SMTPConfig{
+		Host:     cfg.SMTPHost,
+		Port:     cfg.SMTPPort,
+		Username: cfg.SMTPUsername,
+		Password: cfg.SMTPPassword,
+		From:     cfg.SMTPFrom,
+	}
+	superAdminHandler := handlers.NewSuperAdminHandler(pool, cfg.JWTSecret, smtpCfg)
 	inventoryHandler := handlers.NewInventoryHandler(pool)
 	customerHandler := handlers.NewCustomerHandler(pool)
 	orderHandler := handlers.NewOrderHandler(pool)
@@ -48,7 +56,7 @@ func main() {
 	r.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:3001", "https://*.vercel.app"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Admin-Key"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}).Handler)
 
@@ -56,19 +64,22 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
+	// Rate limiter for login endpoints: 5 attempts per 10 seconds, burst of 5
+	loginLimiter := middleware.NewRateLimiter(0.5, 5)
+
 	// Auth
-	r.Post("/auth/login", authHandler.Login)
+	r.With(loginLimiter.Limit).Post("/auth/login", authHandler.Login)
 
-	// Super admin auth (public — email+password login & seed)
-	r.Post("/superadmin/login", superAdminHandler.Login)
-	r.With(middleware.AdminAuth(cfg.AdminSecretKey)).Post("/superadmin/seed", superAdminHandler.Seed)
+	// Super admin auth (public — login + OTP verification)
+	r.With(loginLimiter.Limit).Post("/super-admin/auth/login", superAdminHandler.Login)
+	r.With(loginLimiter.Limit).Post("/super-admin/auth/verify-otp", superAdminHandler.VerifyOTP)
 
-	// Super admin tenant management (protected by X-Admin-Key header)
+	// Super admin protected routes (JWT with role=super_admin)
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.AdminAuth(cfg.AdminSecretKey))
-		r.Post("/admin/tenants", adminHandler.CreateTenant)
-		r.Get("/admin/tenants", adminHandler.ListTenants)
-		r.Patch("/admin/tenants/{id}", adminHandler.SetTenantActive)
+		r.Use(middleware.SuperAdminAuth(cfg.JWTSecret))
+		r.Post("/super-admin/tenants", adminHandler.CreateTenant)
+		r.Get("/super-admin/tenants", adminHandler.ListTenants)
+		r.Patch("/super-admin/tenants/{id}", adminHandler.SetTenantActive)
 	})
 
 	// Tenant-scoped routes (JWT + search_path middleware)

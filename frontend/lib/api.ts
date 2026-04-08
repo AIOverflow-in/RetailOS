@@ -44,31 +44,6 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ username, password }) }
     ),
 
-  // Admin
-  createTenant: (data: {
-    shop_name: string
-    username: string
-    password: string
-    order_prefix: string
-  }) =>
-    request('/admin/tenants', {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_KEY || '' },
-    }),
-
-  listTenants: () =>
-    request('/admin/tenants', {
-      headers: { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_KEY || '' },
-    }),
-
-  setTenantActive: (id: string, is_active: boolean) =>
-    request(`/admin/tenants/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ is_active }),
-      headers: { 'X-Admin-Key': process.env.NEXT_PUBLIC_ADMIN_KEY || '' },
-    }),
-
   // Products
   searchProducts: (q: string) => request<any[]>(`/products?q=${encodeURIComponent(q)}`),
   createProduct: (data: { name: string; company_name: string; sku?: string; hsn_code?: string }) =>

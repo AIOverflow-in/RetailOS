@@ -1,91 +1,154 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"encoding/json"
+	"fmt"
+	"math/big"
 	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/retail-os/backend/internal/email"
+	"github.com/retail-os/backend/internal/generated"
+	"github.com/retail-os/backend/internal/middleware"
 )
 
 type SuperAdminHandler struct {
-	pool       *pgxpool.Pool
-	jwtSecret  string
-	adminKey   string
+	pool      *pgxpool.Pool
+	jwtSecret string
+	smtp      email.SMTPConfig
 }
 
-func NewSuperAdminHandler(pool *pgxpool.Pool, jwtSecret, adminKey string) *SuperAdminHandler {
-	return &SuperAdminHandler{pool: pool, jwtSecret: jwtSecret, adminKey: adminKey}
+func NewSuperAdminHandler(pool *pgxpool.Pool, jwtSecret string, smtp email.SMTPConfig) *SuperAdminHandler {
+	return &SuperAdminHandler{pool: pool, jwtSecret: jwtSecret, smtp: smtp}
 }
 
-// POST /superadmin/seed — creates the first super admin (protected by X-Admin-Key)
-func (h *SuperAdminHandler) Seed(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Email == "" || req.Password == "" {
-		writeError(w, http.StatusBadRequest, "email and password are required")
-		return
-	}
-
-	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "could not hash password")
-		return
-	}
-
-	_, err = h.pool.Exec(r.Context(),
-		`INSERT INTO super_admins (email, hashed_password) VALUES ($1, $2)`,
-		req.Email, string(hashed),
-	)
-	if err != nil {
-		writeError(w, http.StatusConflict, "super admin already exists or db error: "+err.Error())
-		return
-	}
-
-	writeJSON(w, http.StatusCreated, map[string]string{"message": "super admin created"})
+type saLoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
-// POST /superadmin/login — email + password → JWT with role=superadmin
+type saLoginResponse struct {
+	Message   string `json:"message"`
+	SessionID string `json:"session_id"`
+}
+
 func (h *SuperAdminHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+	if !h.smtp.IsConfigured() {
+		writeError(w, http.StatusServiceUnavailable, "SMTP is not configured")
+		return
 	}
+
+	var req saLoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	var id, hashedPw string
-	err := h.pool.QueryRow(r.Context(),
-		`SELECT id, hashed_password FROM super_admins WHERE email = $1`,
-		req.Email,
-	).Scan(&id, &hashedPw)
+	if req.Username == "" || req.Password == "" {
+		writeError(w, http.StatusBadRequest, "username and password are required")
+		return
+	}
+
+	q := generated.New(h.pool)
+	admin, err := q.GetSuperAdminByUsername(r.Context(), req.Username)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(hashedPw), []byte(req.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(admin.HashedPassword), []byte(req.Password)); err != nil {
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":  id,
-		"role": "superadmin",
-		"exp":  time.Now().Add(24 * time.Hour).Unix(),
-		"iat":  time.Now().Unix(),
+	otp := generateOTP()
+
+	otpRecord, err := q.CreateSuperAdminOTP(r.Context(), generated.CreateSuperAdminOTPParams{
+		AdminID: admin.ID,
+		OtpCode: otp,
 	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not create OTP")
+		return
+	}
+
+	if err := email.SendOTP(h.smtp, admin.Email, otp); err != nil {
+		writeError(w, http.StatusInternalServerError, "could not send OTP email")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, saLoginResponse{
+		Message:   "OTP sent to registered email",
+		SessionID: otpRecord.ID.String(),
+	})
+}
+
+type verifyOTPRequest struct {
+	SessionID string `json:"session_id"`
+	OTP       string `json:"otp"`
+}
+
+type verifyOTPResponse struct {
+	Token string `json:"token"`
+}
+
+func (h *SuperAdminHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
+	var req verifyOTPRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.SessionID == "" || req.OTP == "" {
+		writeError(w, http.StatusBadRequest, "session_id and otp are required")
+		return
+	}
+
+	var sessionID pgtype.UUID
+	if err := sessionID.Scan(req.SessionID); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid session_id")
+		return
+	}
+
+	q := generated.New(h.pool)
+	otpRow, err := q.GetOTPByID(r.Context(), sessionID, req.OTP)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid or expired OTP")
+		return
+	}
+
+	if err := q.MarkOTPUsed(r.Context(), otpRow.ID); err != nil {
+		writeError(w, http.StatusInternalServerError, "could not verify OTP")
+		return
+	}
+
+	claims := &middleware.SuperAdminClaims{
+		AdminID:  otpRow.AdminID.String(),
+		Username: otpRow.Username,
+		Role:     "super_admin",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(4 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString([]byte(h.jwtSecret))
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "could not sign token")
+		writeError(w, http.StatusInternalServerError, "could not generate token")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"token": signed})
+	writeJSON(w, http.StatusOK, verifyOTPResponse{Token: signed})
+}
+
+func generateOTP() string {
+	n, _ := rand.Int(rand.Reader, big.NewInt(1000000))
+	return fmt.Sprintf("%06d", n.Int64())
 }

@@ -23,7 +23,7 @@ export default function InventoryPage() {
 
   useEffect(() => { setPage(1) }, [q])
 
-  const filtered = rows.filter(r =>
+  const filtered = rows?.filter(r =>
     q === '' ||
     r.name.toLowerCase().includes(q.toLowerCase()) ||
     r.company_name.toLowerCase().includes(q.toLowerCase()) ||

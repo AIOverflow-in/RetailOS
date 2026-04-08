@@ -32,7 +32,7 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="flex h-screen shrink-0">
+    <div className="flex h-screen shrink-0 print:hidden">
 
       {/* ── Icon rail ─────────────────────────── */}
       <aside className="flex flex-col w-[52px] shrink-0 bg-[#F0F0F0] items-center pt-3 pb-4 gap-1">
