@@ -30,6 +30,11 @@ UPDATE batches
 SET sold_qty = sold_qty + $2
 WHERE batch_id = $1;
 
+-- name: RestoreBatchStock :exec
+UPDATE batches
+SET sold_qty = sold_qty - $2
+WHERE batch_id = $1;
+
 -- name: GetBatch :one
 SELECT * FROM batches WHERE batch_id = $1;
 

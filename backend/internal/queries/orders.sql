@@ -14,7 +14,7 @@ SELECT o.order_id, o.order_number, o.total_amount, o.status, o.payment_mode, o.c
        c.phone AS customer_phone
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.status != 'deleted'
+WHERE o.status = 'active'
   AND (
       $1::text = ''
       OR o.order_number ILIKE '%' || $1 || '%'
@@ -31,7 +31,7 @@ SELECT COUNT(*) FROM orders WHERE status != 'deleted';
 SELECT COUNT(*)
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.status != 'deleted'
+WHERE o.status = 'active'
   AND (
       $1::text = ''
       OR o.order_number ILIKE '%' || $1 || '%'
@@ -52,6 +52,9 @@ SELECT * FROM order_items WHERE order_id = $1;
 
 -- name: SoftDeleteOrder :exec
 UPDATE orders SET status = 'deleted' WHERE order_id = $1;
+
+-- name: MarkOrderReturned :exec
+UPDATE orders SET status = 'returned' WHERE order_id = $1;
 
 -- name: CountOrdersInFY :one
 SELECT COUNT(*) FROM orders

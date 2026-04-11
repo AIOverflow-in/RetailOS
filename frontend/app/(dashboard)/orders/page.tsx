@@ -109,7 +109,10 @@ export default function OrdersPage() {
                       <span className="text-[12px] text-[#888] capitalize">{o.payment_mode ?? 'cash'}</span>
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`text-[12px] font-medium ${o.status === 'active' ? 'text-emerald-600' : 'text-[#CCCCCC]'}`}>
+                      <span className={`text-[12px] font-medium ${
+                        o.status === 'active' ? 'text-emerald-600' :
+                        o.status === 'returned' ? 'text-amber-500' : 'text-[#CCCCCC]'
+                      }`}>
                         {'\u25CF'} {o.status}
                       </span>
                     </td>
@@ -133,7 +136,7 @@ export default function OrdersPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete {o.order_number}?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will soft-delete the order. Stock will not be restored.
+                                This will delete the order and restore stock to the respective batches.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

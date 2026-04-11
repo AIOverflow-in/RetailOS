@@ -100,6 +100,8 @@ export const api = {
   getOrder: (id: string) => request<any>(`/orders/${id}`),
   deleteOrder: (id: string) =>
     request(`/orders/${id}`, { method: 'DELETE' }),
+  returnOrder: (id: string) =>
+    request(`/orders/${id}/return`, { method: 'POST' }),
 
   // Reports
   gstReport: (from: string, to: string) =>

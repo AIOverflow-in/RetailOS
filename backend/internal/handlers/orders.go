@@ -311,14 +311,135 @@ func (h *OrderHandler) SoftDeleteOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	conn := middleware.ConnFromCtx(r.Context())
-	queries := generated.New(conn)
 
-	if err := queries.SoftDeleteOrder(r.Context(), id); err != nil {
+	// Verify order is active
+	q := generated.New(conn)
+	order, err := q.GetOrderByID(r.Context(), id)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "order not found")
+		return
+	}
+	if order.Status != "active" {
+		writeError(w, http.StatusBadRequest, "only active orders can be deleted")
+		return
+	}
+
+	// Restore stock in a transaction
+	if err := restoreOrderStock(r.Context(), conn, q, id); err != nil {
+		log.Printf("SoftDeleteOrder restore stock error: %v", err)
 		writeError(w, http.StatusInternalServerError, "could not delete order")
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *OrderHandler) ReturnOrder(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	var id pgtype.UUID
+	if err := id.Scan(idStr); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid order id")
+		return
+	}
+
+	conn := middleware.ConnFromCtx(r.Context())
+
+	// Verify order is active
+	q := generated.New(conn)
+	order, err := q.GetOrderByID(r.Context(), id)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "order not found")
+		return
+	}
+	if order.Status != "active" {
+		writeError(w, http.StatusBadRequest, "only active orders can be returned")
+		return
+	}
+
+	// Restore stock and mark as returned
+	tx, err := conn.Begin(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not start transaction")
+		return
+	}
+	defer tx.Rollback(r.Context())
+
+	txq := generated.New(tx)
+
+	items, err := txq.GetOrderItems(r.Context(), id)
+	if err != nil {
+		log.Printf("ReturnOrder get items error: %v", err)
+		writeError(w, http.StatusInternalServerError, "could not fetch order items")
+		return
+	}
+
+	for _, item := range items {
+		if _, err := txq.LockBatchForUpdate(r.Context(), item.BatchID); err != nil {
+			log.Printf("ReturnOrder lock batch error: %v", err)
+			writeError(w, http.StatusInternalServerError, "could not lock batch")
+			return
+		}
+		if err := txq.RestoreBatchStock(r.Context(), generated.RestoreBatchStockParams{
+			BatchID: item.BatchID,
+			SoldQty: item.Qty,
+		}); err != nil {
+			log.Printf("ReturnOrder restore stock error: %v", err)
+			writeError(w, http.StatusInternalServerError, "could not restore stock")
+			return
+		}
+	}
+
+	if err := txq.MarkOrderReturned(r.Context(), id); err != nil {
+		log.Printf("ReturnOrder mark returned error: %v", err)
+		writeError(w, http.StatusInternalServerError, "could not mark order as returned")
+		return
+	}
+
+	if err := tx.Commit(r.Context()); err != nil {
+		writeError(w, http.StatusInternalServerError, "could not commit return")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "returned"})
+}
+
+// restoreOrderStock restores sold_qty for all items in an order, then soft-deletes it.
+func restoreOrderStock(ctx interface {
+	Deadline() (deadline time.Time, ok bool)
+	Done() <-chan struct{}
+	Err() error
+	Value(key any) any
+}, conn *pgxpool.Conn, _ *generated.Queries, orderID pgtype.UUID) error {
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	q := generated.New(tx)
+
+	items, err := q.GetOrderItems(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("get items: %w", err)
+	}
+
+	for _, item := range items {
+		if _, err := q.LockBatchForUpdate(ctx, item.BatchID); err != nil {
+			return fmt.Errorf("lock batch %v: %w", item.BatchID, err)
+		}
+		if err := q.RestoreBatchStock(ctx, generated.RestoreBatchStockParams{
+			BatchID: item.BatchID,
+			SoldQty: item.Qty,
+		}); err != nil {
+			return fmt.Errorf("restore batch %v: %w", item.BatchID, err)
+		}
+	}
+
+	if err := q.SoftDeleteOrder(ctx, orderID); err != nil {
+		return fmt.Errorf("soft delete: %w", err)
+	}
+
+	return tx.Commit(ctx)
 }
 
 // generateOrderNumber produces a sequential order number: PREFIX/NNNN/YY-YY

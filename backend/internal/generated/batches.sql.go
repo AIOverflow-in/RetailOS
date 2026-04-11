@@ -293,6 +293,22 @@ func (q *Queries) LockBatchForUpdate(ctx context.Context, batchID pgtype.UUID) (
 	return i, err
 }
 
+const restoreBatchStock = `-- name: RestoreBatchStock :exec
+UPDATE batches
+SET sold_qty = sold_qty - $2
+WHERE batch_id = $1
+`
+
+type RestoreBatchStockParams struct {
+	BatchID pgtype.UUID `json:"batch_id"`
+	SoldQty int32       `json:"sold_qty"`
+}
+
+func (q *Queries) RestoreBatchStock(ctx context.Context, arg RestoreBatchStockParams) error {
+	_, err := q.db.Exec(ctx, restoreBatchStock, arg.BatchID, arg.SoldQty)
+	return err
+}
+
 const updateBatch = `-- name: UpdateBatch :one
 UPDATE batches
 SET buying_price = $2, selling_price = $3, mrp = $4,
