@@ -77,12 +77,20 @@ export default function InventoryPage() {
             {loading ? 'Loading\u2026' : `${filtered.length} batches`}
           </p>
         </div>
-        <Link
-          href="/inventory/add"
-          className="mt-2 flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors shrink-0"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add Stock
-        </Link>
+        <div className="mt-2 flex items-center gap-2">
+          <Link
+            href="/inventory/adjustments"
+            className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium border border-[#E5E5E5] text-[#888] rounded-lg hover:border-[#CCC] hover:text-[#111] transition-colors shrink-0"
+          >
+            Adjustment History
+          </Link>
+          <Link
+            href="/inventory/add"
+            className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Stock
+          </Link>
+        </div>
       </div>
 
       {/* Search */}
