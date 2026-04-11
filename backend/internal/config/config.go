@@ -16,6 +16,7 @@ type Config struct {
 	SMTPUsername string
 	SMTPPassword string
 	SMTPFrom     string
+	ResendAPIKey string
 }
 
 func Load() *Config {
@@ -33,6 +34,7 @@ func Load() *Config {
 		SMTPUsername: getOrDefault("SMTP_USERNAME", ""),
 		SMTPPassword: getOrDefault("SMTP_PASSWORD", ""),
 		SMTPFrom:     getOrDefault("SMTP_FROM", ""),
+		ResendAPIKey: getOrDefault("RESEND_API_KEY", ""),
 	}
 
 	return cfg

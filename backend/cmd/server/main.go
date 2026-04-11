@@ -37,11 +37,12 @@ func main() {
 	authHandler := handlers.NewAuthHandler(pool, cfg.JWTSecret)
 	adminHandler := handlers.NewAdminHandler(pool, cfg.DatabaseURL)
 	smtpCfg := email.SMTPConfig{
-		Host:     cfg.SMTPHost,
-		Port:     cfg.SMTPPort,
-		Username: cfg.SMTPUsername,
-		Password: cfg.SMTPPassword,
-		From:     cfg.SMTPFrom,
+		Host:         cfg.SMTPHost,
+		Port:         cfg.SMTPPort,
+		Username:     cfg.SMTPUsername,
+		Password:     cfg.SMTPPassword,
+		From:         cfg.SMTPFrom,
+		ResendAPIKey: cfg.ResendAPIKey,
 	}
 	superAdminHandler := handlers.NewSuperAdminHandler(pool, cfg.JWTSecret, smtpCfg)
 	inventoryHandler := handlers.NewInventoryHandler(pool)
