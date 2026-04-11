@@ -2,28 +2,32 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Pencil } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { InventoryRow } from '@/types'
 import { fmtCurrency, fmtDate } from '@/lib/gst'
 import TableSkeleton from '@/components/shared/TableSkeleton'
 import Pagination from '@/components/shared/Pagination'
+import EditProductModal from '@/components/inventory/EditProductModal'
 
 const PAGE_SIZE = 20
 
 export default function InventoryPage() {
   const [rows, setRows] = useState<InventoryRow[]>([])
-  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
 
+  // Edit product modal state
+  const [editProduct, setEditProduct] = useState<{
+    product_id: string; name: string; company_name: string; sku: string | null; hsn_code: string | null
+  } | null>(null)
+  const [editProductOpen, setEditProductOpen] = useState(false)
+
   const fetchInventory = useCallback(() => {
     setLoading(true)
     api.listInventory().then(d => {
-      const all = d ?? []
-      setRows(all)
-      setTotal(all.length)
+      setRows(d ?? [])
     }).finally(() => setLoading(false))
   }, [])
 
@@ -54,7 +58,7 @@ export default function InventoryPage() {
         <div>
           <h1 className="text-[30px] font-bold tracking-tight text-[#111]">Inventory</h1>
           <p className="text-[13px] text-[#999] mt-0.5">
-            {loading ? 'Loading…' : `${filtered.length} batches`}
+            {loading ? 'Loading\u2026' : `${filtered.length} batches`}
           </p>
         </div>
         <Link
@@ -70,14 +74,14 @@ export default function InventoryPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCCCCC]" />
         <input
           className="w-full h-9 pl-9 pr-4 text-[13px] bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
-          placeholder="Search product, company, batch…"
+          placeholder="Search product, company, batch\u2026"
           value={q}
           onChange={e => setQ(e.target.value)}
         />
       </div>
 
       {loading ? (
-        <TableSkeleton cols={8} />
+        <TableSkeleton cols={9} />
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#EBEBEB] py-20 text-center">
           <p className="text-[13px] text-[#AAAAAA]">
@@ -90,8 +94,8 @@ export default function InventoryPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
-                  {['Product', 'Company', 'Batch', 'Expiry', 'MRP', 'Selling', 'Stock', 'HSN'].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB] whitespace-nowrap">
+                  {['Product', 'Company', 'Batch', 'Expiry', 'MRP', 'Selling', 'Stock', 'HSN', ''].map(h => (
+                    <th key={h || 'actions'} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB] whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -111,7 +115,7 @@ export default function InventoryPage() {
                       <td className="py-3 px-4 text-[12px] text-[#999] font-mono">{r.batch_no}</td>
                       <td className="py-3 px-4 whitespace-nowrap">
                         <span className={`text-[12px] ${expired ? 'text-red-500' : expiring ? 'text-amber-500' : 'text-[#999]'}`}>
-                          {(expired || expiring) && <span className="mr-1">●</span>}
+                          {(expired || expiring) && <span className="mr-1">{'\u25CF'}</span>}
                           {fmtDate(r.expiry_date)}
                         </span>
                       </td>
@@ -125,7 +129,25 @@ export default function InventoryPage() {
                           {r.available_stock}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-[12px] text-[#CCCCCC] font-mono">{r.hsn_code ?? '—'}</td>
+                      <td className="py-3 px-4 text-[12px] text-[#CCCCCC] font-mono">{r.hsn_code ?? '\u2014'}</td>
+                      <td className="py-3 px-2">
+                        <button
+                          onClick={() => {
+                            setEditProduct({
+                              product_id: r.product_id,
+                              name: r.name,
+                              company_name: r.company_name,
+                              sku: r.sku,
+                              hsn_code: r.hsn_code,
+                            })
+                            setEditProductOpen(true)
+                          }}
+                          className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
+                          title="Edit product"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -141,6 +163,13 @@ export default function InventoryPage() {
           />
         </>
       )}
+
+      <EditProductModal
+        product={editProduct}
+        open={editProductOpen}
+        onOpenChange={setEditProductOpen}
+        onSaved={fetchInventory}
+      />
     </div>
   )
 }

@@ -116,3 +116,38 @@ func (q *Queries) SearchProducts(ctx context.Context, arg SearchProductsParams) 
 	}
 	return items, nil
 }
+
+const updateProduct = `-- name: UpdateProduct :one
+UPDATE products
+SET name = $2, company_name = $3, sku = $4, hsn_code = $5
+WHERE product_id = $1
+RETURNING product_id, name, company_name, sku, hsn_code, created_at
+`
+
+type UpdateProductParams struct {
+	ProductID   pgtype.UUID `json:"product_id"`
+	Name        string      `json:"name"`
+	CompanyName string      `json:"company_name"`
+	Sku         *string     `json:"sku"`
+	HsnCode     *string     `json:"hsn_code"`
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, updateProduct,
+		arg.ProductID,
+		arg.Name,
+		arg.CompanyName,
+		arg.Sku,
+		arg.HsnCode,
+	)
+	var i Product
+	err := row.Scan(
+		&i.ProductID,
+		&i.Name,
+		&i.CompanyName,
+		&i.Sku,
+		&i.HsnCode,
+		&i.CreatedAt,
+	)
+	return i, err
+}

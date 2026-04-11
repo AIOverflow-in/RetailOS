@@ -90,6 +90,7 @@ func main() {
 		// Inventory
 		r.Get("/products", inventoryHandler.ListProducts)
 		r.Post("/products", inventoryHandler.CreateProduct)
+		r.Put("/products/{id}", inventoryHandler.UpdateProduct)
 		r.Get("/batches/active", inventoryHandler.ListActiveBatches)
 		r.Get("/batches", inventoryHandler.ListBatches)
 		r.Post("/batches", inventoryHandler.CreateBatch)
