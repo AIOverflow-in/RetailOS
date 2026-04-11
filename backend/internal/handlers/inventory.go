@@ -271,3 +271,77 @@ func (h *InventoryHandler) UpdateProduct(w http.ResponseWriter, r *http.Request)
 	}
 	writeJSON(w, http.StatusOK, product)
 }
+
+func (h *InventoryHandler) UpdateBatch(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	var bid pgtype.UUID
+	if err := bid.Scan(idStr); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid batch id")
+		return
+	}
+
+	var body struct {
+		BuyingPrice  float64 `json:"buying_price"`
+		SellingPrice float64 `json:"selling_price"`
+		MRP          float64 `json:"mrp"`
+		ExpiryDate   string  `json:"expiry_date"`
+		PurchaseQty  int32   `json:"purchase_qty"`
+		BoxNo        *string `json:"box_no"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	// Price validation
+	if body.BuyingPrice >= body.SellingPrice {
+		writeError(w, http.StatusBadRequest, "selling_price must be greater than buying_price")
+		return
+	}
+	if body.SellingPrice >= body.MRP {
+		writeError(w, http.StatusBadRequest, "mrp must be greater than selling_price")
+		return
+	}
+
+	// Expiry date
+	expiry, err := time.Parse("2006-01-02", body.ExpiryDate)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "expiry_date must be in YYYY-MM-DD format")
+		return
+	}
+
+	// Fetch current batch to check sold_qty
+	conn := middleware.ConnFromCtx(r.Context())
+	queries := generated.New(conn)
+
+	current, err := queries.GetBatch(r.Context(), bid)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "batch not found")
+		return
+	}
+
+	// Cannot reduce purchase_qty below what's already been sold
+	if body.PurchaseQty < current.SoldQty {
+		writeError(w, http.StatusBadRequest, "purchase_qty cannot be less than sold_qty ("+strconv.Itoa(int(current.SoldQty))+")")
+		return
+	}
+
+	var expiryDate pgtype.Date
+	expiryDate.Time = expiry
+	expiryDate.Valid = true
+
+	batch, err := queries.UpdateBatch(r.Context(), generated.UpdateBatchParams{
+		BatchID:      bid,
+		BuyingPrice:  numericFromFloat(body.BuyingPrice),
+		SellingPrice: numericFromFloat(body.SellingPrice),
+		Mrp:          numericFromFloat(body.MRP),
+		ExpiryDate:   expiryDate,
+		PurchaseQty:  body.PurchaseQty,
+		BoxNo:        body.BoxNo,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not update batch: "+err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, batch)
+}

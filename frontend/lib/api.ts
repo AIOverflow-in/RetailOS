@@ -64,6 +64,11 @@ export const api = {
     request<any[]>(`/batches/active?product_id=${product_id}`),
   createBatch: (data: object) =>
     request('/batches', { method: 'POST', body: JSON.stringify(data) }),
+  updateBatch: (id: string, data: {
+    buying_price: number; selling_price: number; mrp: number;
+    expiry_date: string; purchase_qty: number; box_no?: string | null
+  }) =>
+    request(`/batches/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   // Inventory
   listInventory: () => request<any[]>('/inventory'),

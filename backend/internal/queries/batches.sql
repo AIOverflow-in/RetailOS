@@ -30,10 +30,20 @@ UPDATE batches
 SET sold_qty = sold_qty + $2
 WHERE batch_id = $1;
 
+-- name: GetBatch :one
+SELECT * FROM batches WHERE batch_id = $1;
+
+-- name: UpdateBatch :one
+UPDATE batches
+SET buying_price = $2, selling_price = $3, mrp = $4,
+    expiry_date = $5, purchase_qty = $6, box_no = $7
+WHERE batch_id = $1
+RETURNING *;
+
 -- name: ListInventory :many
 SELECT p.product_id, p.name, p.company_name, p.sku, p.hsn_code,
-       b.batch_id, b.batch_no, b.expiry_date, b.mrp, b.selling_price,
-       b.purchase_qty, b.sold_qty,
+       b.batch_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price,
+       b.purchase_qty, b.sold_qty, b.box_no,
        (b.purchase_qty - b.sold_qty) AS available_stock
 FROM products p
 JOIN batches b ON b.product_id = p.product_id

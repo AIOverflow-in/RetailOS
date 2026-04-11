@@ -42,9 +42,11 @@ export interface InventoryRow {
   batch_no: string
   expiry_date: string
   mrp: number
+  buying_price: number
   selling_price: number
   purchase_qty: number
   sold_qty: number
+  box_no: string | null
   available_stock: number
 }
 
