@@ -43,6 +43,8 @@ func main() {
 		Password:     cfg.SMTPPassword,
 		From:         cfg.SMTPFrom,
 		ResendAPIKey: cfg.ResendAPIKey,
+		ResendFrom:   cfg.ResendFromAddr,
+		Environment:  cfg.Environment,
 	}
 	superAdminHandler := handlers.NewSuperAdminHandler(pool, cfg.JWTSecret, smtpCfg)
 	inventoryHandler := handlers.NewInventoryHandler(pool)
@@ -68,17 +70,22 @@ func main() {
 	// Auth
 	r.Post("/auth/login", authHandler.Login)
 
-	// Super admin auth (public — login + OTP verification)
-	r.Post("/super-admin/auth/login", superAdminHandler.Login)
-	r.Post("/super-admin/auth/verify-otp", superAdminHandler.VerifyOTP)
+	// Super admin routes — only available in dev/development environment
+	if cfg.Environment == "dev" || cfg.Environment == "development" {
+		log.Println("Super admin routes enabled (ENVIRONMENT=" + cfg.Environment + ")")
 
-	// Super admin protected routes (JWT with role=super_admin)
-	r.Group(func(r chi.Router) {
-		r.Use(middleware.SuperAdminAuth(cfg.JWTSecret))
-		r.Post("/super-admin/tenants", adminHandler.CreateTenant)
-		r.Get("/super-admin/tenants", adminHandler.ListTenants)
-		r.Patch("/super-admin/tenants/{id}", adminHandler.SetTenantActive)
-	})
+		r.Post("/super-admin/auth/login", superAdminHandler.Login)
+		r.Post("/super-admin/auth/verify-otp", superAdminHandler.VerifyOTP)
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.SuperAdminAuth(cfg.JWTSecret))
+			r.Post("/super-admin/tenants", adminHandler.CreateTenant)
+			r.Get("/super-admin/tenants", adminHandler.ListTenants)
+			r.Patch("/super-admin/tenants/{id}", adminHandler.SetTenantActive)
+		})
+	} else {
+		log.Println("Super admin routes disabled (ENVIRONMENT=" + cfg.Environment + ")")
+	}
 
 	// Tenant-scoped routes (JWT + search_path middleware)
 	r.Group(func(r chi.Router) {

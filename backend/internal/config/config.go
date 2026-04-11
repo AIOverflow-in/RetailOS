@@ -11,12 +11,14 @@ type Config struct {
 	DatabaseURL  string
 	JWTSecret    string
 	Port         string
+	Environment  string
 	SMTPHost     string
 	SMTPPort     string
 	SMTPUsername string
 	SMTPPassword string
-	SMTPFrom     string
-	ResendAPIKey string
+	SMTPFrom       string
+	ResendAPIKey   string
+	ResendFromAddr string
 }
 
 func Load() *Config {
@@ -29,12 +31,14 @@ func Load() *Config {
 		DatabaseURL:  mustGet("DATABASE_URL"),
 		JWTSecret:    mustGet("JWT_SECRET"),
 		Port:         getOrDefault("PORT", "8080"),
+		Environment:  getOrDefault("ENVIRONMENT", "production"),
 		SMTPHost:     getOrDefault("SMTP_HOST", ""),
 		SMTPPort:     getOrDefault("SMTP_PORT", "587"),
 		SMTPUsername: getOrDefault("SMTP_USERNAME", ""),
 		SMTPPassword: getOrDefault("SMTP_PASSWORD", ""),
-		SMTPFrom:     getOrDefault("SMTP_FROM", ""),
-		ResendAPIKey: getOrDefault("RESEND_API_KEY", ""),
+		SMTPFrom:       getOrDefault("SMTP_FROM", ""),
+		ResendAPIKey:   getOrDefault("RESEND_API_KEY", ""),
+		ResendFromAddr: getOrDefault("RESEND_FROM", ""),
 	}
 
 	return cfg

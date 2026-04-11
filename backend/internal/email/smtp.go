@@ -19,16 +19,22 @@ type SMTPConfig struct {
 	Password string
 	From     string
 
-	// Resend HTTP API — set this instead of Host/Port/Username/Password
-	// to send via Resend's API (works on platforms that block SMTP).
 	ResendAPIKey string
+	ResendFrom   string // From address for Resend (production)
+
+	// Environment controls transport: "dev"/"development" = SMTP, anything else = Resend
+	Environment string
 }
 
 func (c *SMTPConfig) IsConfigured() bool {
-	if c.ResendAPIKey != "" && c.From != "" {
-		return true
+	if c.isDev() {
+		return c.Host != "" && c.Username != "" && c.Password != "" && c.From != ""
 	}
-	return c.Host != "" && c.Username != "" && c.Password != "" && c.From != ""
+	return c.ResendAPIKey != "" && c.ResendFrom != ""
+}
+
+func (c *SMTPConfig) isDev() bool {
+	return c.Environment == "dev" || c.Environment == "development"
 }
 
 func SendOTP(cfg SMTPConfig, to string, otp string) error {
@@ -38,10 +44,14 @@ func SendOTP(cfg SMTPConfig, to string, otp string) error {
 		otp,
 	)
 
-	if cfg.ResendAPIKey != "" {
-		return sendWithResend(cfg, to, subject, body)
+	// dev/development → SMTP, production (or unset) → Resend
+	if cfg.isDev() {
+		return sendSMTP(cfg, to, subject, body)
 	}
+	return sendWithResend(cfg, to, subject, body)
+}
 
+func sendSMTP(cfg SMTPConfig, to string, subject string, body string) error {
 	msg := fmt.Sprintf(
 		"From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=\"utf-8\"\r\n\r\n%s",
 		cfg.From, to, subject, body,
@@ -60,7 +70,7 @@ func SendOTP(cfg SMTPConfig, to string, otp string) error {
 // Free tier: 3,000 emails/month.
 func sendWithResend(cfg SMTPConfig, to string, subject string, body string) error {
 	payload := map[string]interface{}{
-		"from":    cfg.From,
+		"from":    cfg.ResendFrom,
 		"to":      []string{to},
 		"subject": subject,
 		"text":    body,
