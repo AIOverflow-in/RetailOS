@@ -3,20 +3,42 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Printer } from 'lucide-react'
+import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import type { OrderDetail } from '@/types'
 import { fmtCurrency, fmtDate } from '@/lib/gst'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [data, setData] = useState<OrderDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [returning, setReturning] = useState(false)
 
-  useEffect(() => {
+  function load() {
     api.getOrder(id).then(setData).finally(() => setLoading(false))
-  }, [id])
+  }
+
+  useEffect(() => { load() }, [id])
+
+  async function handleReturn() {
+    setReturning(true)
+    try {
+      await api.returnOrder(id)
+      toast.success('Order returned — stock restored')
+      load()
+    } catch (err: any) {
+      toast.error(err.message || 'Return failed')
+    } finally {
+      setReturning(false)
+    }
+  }
 
   if (loading) return (
     <div className="max-w-2xl space-y-4">
@@ -30,6 +52,10 @@ export default function OrderDetailPage() {
 
   const { order, items } = data
 
+  const statusColor = order.status === 'active' ? 'text-emerald-600'
+    : order.status === 'returned' ? 'text-amber-500'
+    : 'text-[#CCCCCC]'
+
   return (
     <div className="max-w-2xl space-y-5">
 
@@ -41,12 +67,42 @@ export default function OrderDetailPage() {
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </button>
-        <button
-          onClick={() => window.print()}
-          className="flex items-center gap-1.5 text-[12px] text-[#AAAAAA] hover:text-[#111] transition-colors"
-        >
-          <Printer className="w-3.5 h-3.5" /> Print
-        </button>
+        <div className="flex items-center gap-2">
+          {order.status === 'active' && (
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <button className="h-8 px-3 text-[12px] font-medium border border-amber-300 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors">
+                    Return Order
+                  </button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Return {order.order_number}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will mark the order as returned and restore all stock to the respective batches.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-amber-500 text-white hover:bg-amber-600"
+                    onClick={handleReturn}
+                  >
+                    {returning ? 'Returning\u2026' : 'Confirm Return'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 text-[12px] text-[#AAAAAA] hover:text-[#111] transition-colors"
+          >
+            <Printer className="w-3.5 h-3.5" /> Print
+          </button>
+        </div>
       </div>
 
       {/* Title */}
@@ -54,9 +110,10 @@ export default function OrderDetailPage() {
         <h1 className="text-[28px] font-bold tracking-tight text-[#111] font-mono">{order.order_number}</h1>
         <p className="text-[13px] text-[#999] mt-0.5 flex items-center gap-3">
           <span>{fmtDate(order.created_at)}</span>
-          <span className={`text-[12px] font-medium ${order.status === 'active' ? 'text-emerald-600' : 'text-[#CCCCCC]'}`}>
-            ● {order.status}
+          <span className={`text-[12px] font-medium ${statusColor}`}>
+            {'\u25CF'} {order.status}
           </span>
+          <span className="text-[12px] text-[#888] capitalize">{order.payment_mode ?? 'cash'}</span>
         </p>
       </div>
 

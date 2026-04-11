@@ -8,13 +8,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/rs/cors"
-
 	"github.com/retail-os/backend/internal/config"
 	"github.com/retail-os/backend/internal/db"
 	"github.com/retail-os/backend/internal/email"
 	"github.com/retail-os/backend/internal/handlers"
 	"github.com/retail-os/backend/internal/middleware"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -33,6 +32,11 @@ func main() {
 	}
 	defer pool.Close()
 
+	// Run tenant migrations on all existing tenants
+	if err := db.MigrateAllTenants(ctx, pool); err != nil {
+		log.Printf("WARNING: tenant migrations had errors: %v", err)
+	}
+
 	// Handlers
 	authHandler := handlers.NewAuthHandler(pool, cfg.JWTSecret)
 	adminHandler := handlers.NewAdminHandler(pool, cfg.DatabaseURL)
@@ -50,6 +54,8 @@ func main() {
 	inventoryHandler := handlers.NewInventoryHandler(pool)
 	customerHandler := handlers.NewCustomerHandler(pool)
 	orderHandler := handlers.NewOrderHandler(pool)
+	stockAdjHandler := handlers.NewStockAdjustmentHandler(pool)
+	dashboardHandler := handlers.NewDashboardHandler(pool)
 	reportHandler := handlers.NewReportHandler(pool)
 
 	// Router
@@ -95,6 +101,9 @@ func main() {
 		r.Use(middleware.JWTAuth(cfg.JWTSecret))
 		r.Use(middleware.TenantContext(pool))
 
+		// Dashboard
+		r.Get("/dashboard", dashboardHandler.GetDashboard)
+
 		// Inventory
 		r.Get("/products", inventoryHandler.ListProducts)
 		r.Post("/products", inventoryHandler.CreateProduct)
@@ -105,14 +114,20 @@ func main() {
 		r.Put("/batches/{id}", inventoryHandler.UpdateBatch)
 		r.Get("/inventory", inventoryHandler.ListInventory)
 
+		// Stock Adjustments
+		r.Post("/stock-adjustments", stockAdjHandler.CreateAdjustment)
+		r.Get("/stock-adjustments", stockAdjHandler.ListAdjustments)
+
 		// Customers
 		r.Get("/customers", customerHandler.LookupCustomer)
+		r.Put("/customers/{id}", customerHandler.UpdateCustomer)
 
 		// Orders
 		r.Post("/orders", orderHandler.CreateOrder)
 		r.Get("/orders", orderHandler.ListOrders)
 		r.Get("/orders/{id}", orderHandler.GetOrder)
 		r.Delete("/orders/{id}", orderHandler.SoftDeleteOrder)
+		r.Post("/orders/{id}/return", orderHandler.ReturnOrder)
 
 		// Reports
 		r.Get("/reports/gst", reportHandler.GSTReport)

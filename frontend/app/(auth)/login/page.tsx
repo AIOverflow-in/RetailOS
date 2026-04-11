@@ -20,7 +20,7 @@ export default function LoginPage() {
     try {
       const res = await api.login(username, password)
       dispatch(setAuth(res))
-      router.replace('/billing')
+      router.replace('/dashboard')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Login failed')
     } finally {

@@ -41,6 +41,7 @@ type Order struct {
 	TotalAmount pgtype.Numeric     `json:"total_amount"`
 	Status      string             `json:"status"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	PaymentMode string             `json:"payment_mode"`
 }
 
 type OrderItem struct {
@@ -65,6 +66,15 @@ type Product struct {
 	Sku         *string            `json:"sku"`
 	HsnCode     *string            `json:"hsn_code"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type StockAdjustment struct {
+	AdjustmentID pgtype.UUID        `json:"adjustment_id"`
+	BatchID      pgtype.UUID        `json:"batch_id"`
+	QtyChange    int32              `json:"qty_change"`
+	Reason       string             `json:"reason"`
+	Notes        *string            `json:"notes"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
 type SuperAdmin struct {

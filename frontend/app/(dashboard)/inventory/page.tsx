@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Pencil, SlidersHorizontal } from 'lucide-react'
+import { Plus, Search, Pencil, SlidersHorizontal, PackageMinus } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { InventoryRow } from '@/types'
 import { fmtCurrency, fmtDate } from '@/lib/gst'
@@ -10,6 +10,7 @@ import TableSkeleton from '@/components/shared/TableSkeleton'
 import Pagination from '@/components/shared/Pagination'
 import EditProductModal from '@/components/inventory/EditProductModal'
 import EditBatchModal from '@/components/inventory/EditBatchModal'
+import StockAdjustmentModal from '@/components/inventory/StockAdjustmentModal'
 
 const PAGE_SIZE = 20
 
@@ -31,6 +32,13 @@ export default function InventoryPage() {
     mrp: number; expiry_date: string; purchase_qty: number; sold_qty: number; box_no: string | null
   } | null>(null)
   const [editBatchOpen, setEditBatchOpen] = useState(false)
+
+  // Stock adjustment modal state
+  const [adjustBatch, setAdjustBatch] = useState<{
+    batch_id: string; batch_no: string; name: string;
+    purchase_qty: number; sold_qty: number; available_stock: number
+  } | null>(null)
+  const [adjustOpen, setAdjustOpen] = useState(false)
 
   const fetchInventory = useCallback(() => {
     setLoading(true)
@@ -69,12 +77,20 @@ export default function InventoryPage() {
             {loading ? 'Loading\u2026' : `${filtered.length} batches`}
           </p>
         </div>
-        <Link
-          href="/inventory/add"
-          className="mt-2 flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors shrink-0"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add Stock
-        </Link>
+        <div className="mt-2 flex items-center gap-2">
+          <Link
+            href="/inventory/adjustments"
+            className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium border border-[#E5E5E5] text-[#888] rounded-lg hover:border-[#CCC] hover:text-[#111] transition-colors shrink-0"
+          >
+            Adjustment History
+          </Link>
+          <Link
+            href="/inventory/add"
+            className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Stock
+          </Link>
+        </div>
       </div>
 
       {/* Search */}
@@ -176,6 +192,23 @@ export default function InventoryPage() {
                           >
                             <SlidersHorizontal className="w-3.5 h-3.5" />
                           </button>
+                          <button
+                            onClick={() => {
+                              setAdjustBatch({
+                                batch_id: r.batch_id,
+                                batch_no: r.batch_no,
+                                name: r.name,
+                                purchase_qty: r.purchase_qty,
+                                sold_qty: r.sold_qty,
+                                available_stock: r.available_stock,
+                              })
+                              setAdjustOpen(true)
+                            }}
+                            className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
+                            title="Adjust stock"
+                          >
+                            <PackageMinus className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -205,6 +238,13 @@ export default function InventoryPage() {
         batch={editBatch}
         open={editBatchOpen}
         onOpenChange={setEditBatchOpen}
+        onSaved={fetchInventory}
+      />
+
+      <StockAdjustmentModal
+        batch={adjustBatch}
+        open={adjustOpen}
+        onOpenChange={setAdjustOpen}
         onSaved={fetchInventory}
       />
     </div>

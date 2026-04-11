@@ -80,6 +80,8 @@ export interface OrderItem {
   line_total: number
 }
 
+export type PaymentMode = 'cash' | 'upi' | 'card' | 'mixed'
+
 export interface Order {
   order_id: string
   order_number: string
@@ -90,6 +92,7 @@ export interface Order {
   sgst_total: number
   igst_total: number
   total_amount: number
+  payment_mode: PaymentMode
   status: string
   created_at: string
 }
@@ -117,11 +120,35 @@ export interface CartItem {
 export interface CartState {
   items: CartItem[]
   isInState: boolean
+  paymentMode: PaymentMode
   customer: {
     phone: string
     name: string
     age: string
   }
+}
+
+// ─── Dashboard ──────────────────────────────────────────────────────────
+
+export interface DashboardData {
+  total_sales: number
+  order_count: number
+  low_stock: number
+  expiring_soon: number
+  payment_split: { payment_mode: string; total: number }[]
+}
+
+// ─── Stock Adjustments ──────────────────────────────────────────────────
+
+export interface StockAdjustment {
+  adjustment_id: string
+  batch_id: string
+  batch_no: string
+  product_name: string
+  qty_change: number
+  reason: string
+  notes: string | null
+  created_at: string
 }
 
 // ─── Reports ─────────────────────────────────────────────────────────────────

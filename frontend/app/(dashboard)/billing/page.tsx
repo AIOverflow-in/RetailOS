@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
-import { clearCart, setIsInState, selectCartTotals } from '@/store/cartSlice'
+import { clearCart, setIsInState, setPaymentMode, selectCartTotals } from '@/store/cartSlice'
 import type { RootState } from '@/store'
 import CustomerLookup from '@/components/billing/CustomerLookup'
 import LineItem from '@/components/billing/LineItem'
@@ -15,7 +15,8 @@ export default function BillingPage() {
   const dispatch = useDispatch()
   const items    = useSelector((s: RootState) => s.cart.items)
   const isInState = useSelector((s: RootState) => s.cart.isInState)
-  const customer  = useSelector((s: RootState) => s.cart.customer)
+  const customer    = useSelector((s: RootState) => s.cart.customer)
+  const paymentMode = useSelector((s: RootState) => s.cart.paymentMode)
   const totals    = useSelector(selectCartTotals)
   const [addKey, setAddKey] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -26,6 +27,7 @@ export default function BillingPage() {
     try {
       const order = await api.createOrder({
         is_in_state: isInState,
+        payment_mode: paymentMode,
         phone: customer.phone || null,
         name:  customer.name  || null,
         age:   customer.age ? parseInt(customer.age) : null,
@@ -60,17 +62,31 @@ export default function BillingPage() {
           <h1 className="text-[30px] font-bold tracking-tight text-[#111]">New Bill</h1>
           <p className="text-[13px] text-[#999] mt-0.5">Create a new billing entry</p>
         </div>
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-[11px] text-[#BBBBBB]">GST</span>
-          <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-[12px] bg-white">
-            <button
-              className={`px-3 py-1.5 font-medium transition-colors ${isInState ? 'bg-[#111] text-white' : 'text-[#888] hover:bg-[#F5F5F5]'}`}
-              onClick={() => dispatch(setIsInState(true))}
-            >In-state</button>
-            <button
-              className={`px-3 py-1.5 font-medium transition-colors ${!isInState ? 'bg-[#111] text-white' : 'text-[#888] hover:bg-[#F5F5F5]'}`}
-              onClick={() => dispatch(setIsInState(false))}
-            >Out-of-state</button>
+        <div className="mt-2 flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-[#BBBBBB]">GST</span>
+            <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-[12px] bg-white">
+              <button
+                className={`px-3 py-1.5 font-medium transition-colors ${isInState ? 'bg-[#111] text-white' : 'text-[#888] hover:bg-[#F5F5F5]'}`}
+                onClick={() => dispatch(setIsInState(true))}
+              >In-state</button>
+              <button
+                className={`px-3 py-1.5 font-medium transition-colors ${!isInState ? 'bg-[#111] text-white' : 'text-[#888] hover:bg-[#F5F5F5]'}`}
+                onClick={() => dispatch(setIsInState(false))}
+              >Out-of-state</button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-[#BBBBBB]">Payment</span>
+            <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-[12px] bg-white">
+              {(['cash', 'upi', 'card', 'mixed'] as const).map(mode => (
+                <button
+                  key={mode}
+                  className={`px-3 py-1.5 font-medium transition-colors capitalize ${paymentMode === mode ? 'bg-[#111] text-white' : 'text-[#888] hover:bg-[#F5F5F5]'}`}
+                  onClick={() => dispatch(setPaymentMode(mode))}
+                >{mode}</button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

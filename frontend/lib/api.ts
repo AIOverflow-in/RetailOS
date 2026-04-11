@@ -73,8 +73,25 @@ export const api = {
   // Inventory
   listInventory: () => request<any[]>('/inventory'),
 
+  // Stock Adjustments
+  createStockAdjustment: (data: { batch_id: string; qty_change: number; reason: string; notes?: string | null }) =>
+    request('/stock-adjustments', { method: 'POST', body: JSON.stringify(data) }),
+  listStockAdjustments: (page = 1, limit = 20) =>
+    request<{ adjustments: any[]; total: number; page: number; limit: number }>(
+      `/stock-adjustments?page=${page}&limit=${limit}`
+    ),
+
   // Customers
   lookupCustomer: (phone: string) => request<any>(`/customers?phone=${phone}`),
+  listCustomers: (q = '', page = 1, limit = 20) =>
+    request<{ customers: any[]; total: number; page: number; limit: number }>(
+      `/customers?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`
+    ),
+  updateCustomer: (id: string, data: { name: string; phone: string; age?: number | null }) =>
+    request(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  // Dashboard
+  getDashboard: () => request<any>('/dashboard'),
 
   // Orders
   createOrder: (data: object) =>
@@ -86,6 +103,8 @@ export const api = {
   getOrder: (id: string) => request<any>(`/orders/${id}`),
   deleteOrder: (id: string) =>
     request(`/orders/${id}`, { method: 'DELETE' }),
+  returnOrder: (id: string) =>
+    request(`/orders/${id}/return`, { method: 'POST' }),
 
   // Reports
   gstReport: (from: string, to: string) =>

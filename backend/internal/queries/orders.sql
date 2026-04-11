@@ -1,6 +1,6 @@
 -- name: CreateOrder :one
-INSERT INTO orders (order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO orders (order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, payment_mode)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: CreateOrderItem :one
@@ -9,12 +9,12 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING *;
 
 -- name: ListOrders :many
-SELECT o.order_id, o.order_number, o.total_amount, o.status, o.created_at,
+SELECT o.order_id, o.order_number, o.total_amount, o.status, o.payment_mode, o.created_at,
        c.name  AS customer_name,
        c.phone AS customer_phone
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.status != 'deleted'
+WHERE o.status = 'active'
   AND (
       $1::text = ''
       OR o.order_number ILIKE '%' || $1 || '%'
@@ -31,7 +31,7 @@ SELECT COUNT(*) FROM orders WHERE status != 'deleted';
 SELECT COUNT(*)
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.status != 'deleted'
+WHERE o.status = 'active'
   AND (
       $1::text = ''
       OR o.order_number ILIKE '%' || $1 || '%'
@@ -52,6 +52,9 @@ SELECT * FROM order_items WHERE order_id = $1;
 
 -- name: SoftDeleteOrder :exec
 UPDATE orders SET status = 'deleted' WHERE order_id = $1;
+
+-- name: MarkOrderReturned :exec
+UPDATE orders SET status = 'returned' WHERE order_id = $1;
 
 -- name: CountOrdersInFY :one
 SELECT COUNT(*) FROM orders

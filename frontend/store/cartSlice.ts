@@ -1,11 +1,12 @@
 import { createSlice, createSelector, type PayloadAction } from '@reduxjs/toolkit'
-import type { CartItem, CartState, GSTRate } from '@/types'
+import type { CartItem, CartState, GSTRate, PaymentMode } from '@/types'
 import { calcCartTotals } from '@/lib/gst'
 import type { RootState } from './index'
 
 const initialState: CartState = {
   items: [],
   isInState: true,
+  paymentMode: 'cash',
   customer: { phone: '', name: '', age: '' },
 }
 
@@ -39,11 +40,15 @@ const cartSlice = createSlice({
     setIsInState(state, action: PayloadAction<boolean>) {
       state.isInState = action.payload
     },
+    setPaymentMode(state, action: PayloadAction<PaymentMode>) {
+      state.paymentMode = action.payload
+    },
     setCustomer(state, action: PayloadAction<{ phone: string; name: string; age: string }>) {
       state.customer = action.payload
     },
     clearCart(state) {
       state.items = []
+      state.paymentMode = 'cash'
       state.customer = { phone: '', name: '', age: '' }
     },
   },
@@ -51,7 +56,7 @@ const cartSlice = createSlice({
 
 export const {
   addItem, updateQty, updateSalePrice, updateGstRate,
-  removeItem, setIsInState, setCustomer, clearCart,
+  removeItem, setIsInState, setPaymentMode, setCustomer, clearCart,
 } = cartSlice.actions
 
 export const selectCartTotals = createSelector(

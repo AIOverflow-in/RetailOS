@@ -21,7 +21,7 @@ SELECT
     COALESCE(SUM(oi.line_total), 0)::numeric(14,2)             AS total_sales
 FROM orders o
 JOIN order_items oi ON o.order_id = oi.order_id
-WHERE o.status != 'deleted'
+WHERE o.status = 'active'
   AND o.created_at >= $1
   AND o.created_at <= $2
 `
@@ -64,7 +64,7 @@ SELECT
     COALESCE(SUM(oi.line_total), 0)::numeric(14,2)           AS total
 FROM orders o
 JOIN order_items oi ON o.order_id = oi.order_id
-WHERE o.status != 'deleted'
+WHERE o.status = 'active'
   AND o.created_at >= $1
   AND o.created_at <= $2
 GROUP BY oi.gst_rate

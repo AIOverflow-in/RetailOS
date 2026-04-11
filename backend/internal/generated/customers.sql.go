@@ -11,6 +11,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countCustomers = `-- name: CountCustomers :one
+SELECT COUNT(*) FROM customers
+WHERE $1::text = ''
+   OR name ILIKE '%' || $1 || '%'
+   OR phone ILIKE '%' || $1 || '%'
+`
+
+func (q *Queries) CountCustomers(ctx context.Context, dollar_1 string) (int64, error) {
+	row := q.db.QueryRow(ctx, countCustomers, dollar_1)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createCustomer = `-- name: CreateCustomer :one
 INSERT INTO customers (phone, name, age)
 VALUES ($1, $2, $3)
@@ -62,4 +76,79 @@ UPDATE customers SET visit_count = visit_count + 1 WHERE customer_id = $1
 func (q *Queries) IncrementVisitCount(ctx context.Context, customerID pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, incrementVisitCount, customerID)
 	return err
+}
+
+const listCustomers = `-- name: ListCustomers :many
+SELECT customer_id, phone, name, age, visit_count, created_at FROM customers
+WHERE $1::text = ''
+   OR name ILIKE '%' || $1 || '%'
+   OR phone ILIKE '%' || $1 || '%'
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type ListCustomersParams struct {
+	Column1 string `json:"column_1"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+func (q *Queries) ListCustomers(ctx context.Context, arg ListCustomersParams) ([]Customer, error) {
+	rows, err := q.db.Query(ctx, listCustomers, arg.Column1, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Customer
+	for rows.Next() {
+		var i Customer
+		if err := rows.Scan(
+			&i.CustomerID,
+			&i.Phone,
+			&i.Name,
+			&i.Age,
+			&i.VisitCount,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateCustomer = `-- name: UpdateCustomer :one
+UPDATE customers
+SET name = $2, phone = $3, age = $4
+WHERE customer_id = $1
+RETURNING customer_id, phone, name, age, visit_count, created_at
+`
+
+type UpdateCustomerParams struct {
+	CustomerID pgtype.UUID `json:"customer_id"`
+	Name       string      `json:"name"`
+	Phone      string      `json:"phone"`
+	Age        *int32      `json:"age"`
+}
+
+func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) (Customer, error) {
+	row := q.db.QueryRow(ctx, updateCustomer,
+		arg.CustomerID,
+		arg.Name,
+		arg.Phone,
+		arg.Age,
+	)
+	var i Customer
+	err := row.Scan(
+		&i.CustomerID,
+		&i.Phone,
+		&i.Name,
+		&i.Age,
+		&i.VisitCount,
+		&i.CreatedAt,
+	)
+	return i, err
 }

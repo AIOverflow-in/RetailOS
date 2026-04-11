@@ -88,7 +88,7 @@ export default function OrdersPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
-                  {['Bill No', 'Customer', 'Phone', 'Date', 'Total', 'Status', ''].map(h => (
+                  {['Bill No', 'Customer', 'Phone', 'Date', 'Total', 'Payment', 'Status', ''].map(h => (
                     <th key={h} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB] whitespace-nowrap">
                       {h}
                     </th>
@@ -106,8 +106,14 @@ export default function OrdersPage() {
                     <td className="py-3 px-4 text-[13px] text-[#888] whitespace-nowrap">{fmtDate(o.created_at)}</td>
                     <td className="py-3 px-4 text-[13px] font-medium text-[#111]">{fmtCurrency(o.total_amount)}</td>
                     <td className="py-3 px-4">
-                      <span className={`text-[12px] font-medium ${o.status === 'active' ? 'text-emerald-600' : 'text-[#CCCCCC]'}`}>
-                        ● {o.status}
+                      <span className="text-[12px] text-[#888] capitalize">{o.payment_mode ?? 'cash'}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`text-[12px] font-medium ${
+                        o.status === 'active' ? 'text-emerald-600' :
+                        o.status === 'returned' ? 'text-amber-500' : 'text-[#CCCCCC]'
+                      }`}>
+                        {'\u25CF'} {o.status}
                       </span>
                     </td>
                     <td className="py-3 px-4">
@@ -130,7 +136,7 @@ export default function OrdersPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete {o.order_number}?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will soft-delete the order. Stock will not be restored.
+                                This will delete the order and restore stock to the respective batches.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
