@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Pencil } from 'lucide-react'
+import { Plus, Search, Pencil, SlidersHorizontal } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { InventoryRow } from '@/types'
 import { fmtCurrency, fmtDate } from '@/lib/gst'
 import TableSkeleton from '@/components/shared/TableSkeleton'
 import Pagination from '@/components/shared/Pagination'
 import EditProductModal from '@/components/inventory/EditProductModal'
+import EditBatchModal from '@/components/inventory/EditBatchModal'
 
 const PAGE_SIZE = 20
 
@@ -23,6 +24,13 @@ export default function InventoryPage() {
     product_id: string; name: string; company_name: string; sku: string | null; hsn_code: string | null
   } | null>(null)
   const [editProductOpen, setEditProductOpen] = useState(false)
+
+  // Edit batch modal state
+  const [editBatch, setEditBatch] = useState<{
+    batch_id: string; batch_no: string; buying_price: number; selling_price: number;
+    mrp: number; expiry_date: string; purchase_qty: number; sold_qty: number; box_no: string | null
+  } | null>(null)
+  const [editBatchOpen, setEditBatchOpen] = useState(false)
 
   const fetchInventory = useCallback(() => {
     setLoading(true)
@@ -131,22 +139,44 @@ export default function InventoryPage() {
                       </td>
                       <td className="py-3 px-4 text-[12px] text-[#CCCCCC] font-mono">{r.hsn_code ?? '\u2014'}</td>
                       <td className="py-3 px-2">
-                        <button
-                          onClick={() => {
-                            setEditProduct({
-                              product_id: r.product_id,
-                              name: r.name,
-                              company_name: r.company_name,
-                              sku: r.sku,
-                              hsn_code: r.hsn_code,
-                            })
-                            setEditProductOpen(true)
-                          }}
-                          className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
-                          title="Edit product"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            onClick={() => {
+                              setEditProduct({
+                                product_id: r.product_id,
+                                name: r.name,
+                                company_name: r.company_name,
+                                sku: r.sku,
+                                hsn_code: r.hsn_code,
+                              })
+                              setEditProductOpen(true)
+                            }}
+                            className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
+                            title="Edit product"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditBatch({
+                                batch_id: r.batch_id,
+                                batch_no: r.batch_no,
+                                buying_price: r.buying_price,
+                                selling_price: r.selling_price,
+                                mrp: r.mrp,
+                                expiry_date: r.expiry_date,
+                                purchase_qty: r.purchase_qty,
+                                sold_qty: r.sold_qty,
+                                box_no: r.box_no,
+                              })
+                              setEditBatchOpen(true)
+                            }}
+                            className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
+                            title="Edit batch"
+                          >
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -168,6 +198,13 @@ export default function InventoryPage() {
         product={editProduct}
         open={editProductOpen}
         onOpenChange={setEditProductOpen}
+        onSaved={fetchInventory}
+      />
+
+      <EditBatchModal
+        batch={editBatch}
+        open={editBatchOpen}
+        onOpenChange={setEditBatchOpen}
         onSaved={fetchInventory}
       />
     </div>
