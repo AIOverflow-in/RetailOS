@@ -73,6 +73,10 @@ export const api = {
   // Inventory
   listInventory: () => request<any[]>('/inventory'),
 
+  // Stock Adjustments
+  createStockAdjustment: (data: { batch_id: string; qty_change: number; reason: string; notes?: string | null }) =>
+    request('/stock-adjustments', { method: 'POST', body: JSON.stringify(data) }),
+
   // Customers
   lookupCustomer: (phone: string) => request<any>(`/customers?phone=${phone}`),
   listCustomers: (q = '', page = 1, limit = 20) =>

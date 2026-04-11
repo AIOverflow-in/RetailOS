@@ -54,6 +54,7 @@ func main() {
 	inventoryHandler := handlers.NewInventoryHandler(pool)
 	customerHandler := handlers.NewCustomerHandler(pool)
 	orderHandler := handlers.NewOrderHandler(pool)
+	stockAdjHandler := handlers.NewStockAdjustmentHandler(pool)
 	reportHandler := handlers.NewReportHandler(pool)
 
 	// Router
@@ -108,6 +109,10 @@ func main() {
 		r.Post("/batches", inventoryHandler.CreateBatch)
 		r.Put("/batches/{id}", inventoryHandler.UpdateBatch)
 		r.Get("/inventory", inventoryHandler.ListInventory)
+
+		// Stock Adjustments
+		r.Post("/stock-adjustments", stockAdjHandler.CreateAdjustment)
+		r.Get("/stock-adjustments", stockAdjHandler.ListAdjustments)
 
 		// Customers
 		r.Get("/customers", customerHandler.LookupCustomer)

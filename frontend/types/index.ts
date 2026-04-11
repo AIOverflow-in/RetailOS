@@ -128,6 +128,19 @@ export interface CartState {
   }
 }
 
+// ─── Stock Adjustments ──────────────────────────────────────────────────
+
+export interface StockAdjustment {
+  adjustment_id: string
+  batch_id: string
+  batch_no: string
+  product_name: string
+  qty_change: number
+  reason: string
+  notes: string | null
+  created_at: string
+}
+
 // ─── Reports ─────────────────────────────────────────────────────────────────
 
 export interface GSTSummary {
