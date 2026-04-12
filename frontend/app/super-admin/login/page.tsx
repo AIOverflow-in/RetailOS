@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { superAdminApi } from '@/lib/super-admin-api'
+import PasswordInput from '@/components/shared/PasswordInput'
 
 export default function SuperAdminLoginPage() {
   const router = useRouter()
@@ -70,12 +71,10 @@ export default function SuperAdminLoginPage() {
               </div>
               <div className="space-y-1.5">
                 <p className="text-caption font-medium text-[#AAAAAA]">Password</p>
-                <input
+                <PasswordInput
                   className={inputClass}
-                  type="password"
-                  autoComplete="current-password"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={setPassword}
                   required
                 />
               </div>

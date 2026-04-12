@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { setAuth } from '@/store/authSlice'
+import PasswordInput from '@/components/shared/PasswordInput'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -55,12 +56,10 @@ export default function LoginPage() {
             </div>
             <div className="space-y-1.5">
               <p className="text-caption font-medium text-[#AAAAAA]">Password</p>
-              <input
+              <PasswordInput
                 className={inputClass}
-                type="password"
-                autoComplete="current-password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={setPassword}
                 required
               />
             </div>
