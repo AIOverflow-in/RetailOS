@@ -57,8 +57,8 @@ export default function OrdersPage() {
 
       {/* Page title */}
       <div>
-        <h1 className="text-[30px] font-bold tracking-tight text-[#111]">Orders</h1>
-        <p className="text-[13px] text-[#999] mt-0.5">
+        <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">Orders</h1>
+        <p className="text-body text-[#999] mt-0.5">
           {loading ? 'Loading…' : `${total.toLocaleString()} total orders`}
         </p>
       </div>
@@ -67,7 +67,7 @@ export default function OrdersPage() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCCCCC]" />
         <input
-          className="w-full h-9 pl-9 pr-4 text-[13px] bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+          className="w-full h-9 pl-9 pr-4 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
           placeholder="Search bill no, name, phone…"
           value={q}
           onChange={e => setQ(e.target.value)}
@@ -78,7 +78,7 @@ export default function OrdersPage() {
         <TableSkeleton cols={6} />
       ) : orders.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#EBEBEB] py-20 text-center">
-          <p className="text-[13px] text-[#AAAAAA]">
+          <p className="text-body text-[#AAAAAA]">
             {q ? 'No results found.' : 'No orders yet.'}
           </p>
         </div>
@@ -89,7 +89,7 @@ export default function OrdersPage() {
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Bill No', 'Customer', 'Phone', 'Date', 'Total', 'Payment', 'Status', ''].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB] whitespace-nowrap">
+                    <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -98,18 +98,18 @@ export default function OrdersPage() {
               <tbody>
                 {orders.map(o => (
                   <tr key={o.order_id} className="border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA] transition-colors">
-                    <td className="py-3 px-4 font-mono text-[12px] font-medium text-[#111]">{o.order_number}</td>
-                    <td className="py-3 px-4 text-[13px] font-medium text-[#111]">
+                    <td className="py-3 px-4 font-mono text-body-sm font-medium text-[#111]">{o.order_number}</td>
+                    <td className="py-3 px-4 text-body font-medium text-[#111]">
                       {o.customer_name ?? <span className="text-[#CCCCCC]">—</span>}
                     </td>
-                    <td className="py-3 px-4 text-[13px] text-[#888]">{o.customer_phone ?? '—'}</td>
-                    <td className="py-3 px-4 text-[13px] text-[#888] whitespace-nowrap">{fmtDate(o.created_at)}</td>
-                    <td className="py-3 px-4 text-[13px] font-medium text-[#111]">{fmtCurrency(o.total_amount)}</td>
+                    <td className="py-3 px-4 text-body text-[#888]">{o.customer_phone ?? '—'}</td>
+                    <td className="py-3 px-4 text-body text-[#888] whitespace-nowrap">{fmtDate(o.created_at)}</td>
+                    <td className="py-3 px-4 text-body font-medium text-[#111]">{fmtCurrency(o.total_amount)}</td>
                     <td className="py-3 px-4">
-                      <span className="text-[12px] text-[#888] capitalize">{o.payment_mode ?? 'cash'}</span>
+                      <span className="text-body-sm text-[#888] capitalize">{o.payment_mode ?? 'cash'}</span>
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`text-[12px] font-medium ${
+                      <span className={`text-body-sm font-medium ${
                         o.status === 'active' ? 'text-emerald-600' :
                         o.status === 'returned' ? 'text-amber-500' : 'text-[#CCCCCC]'
                       }`}>
@@ -120,14 +120,14 @@ export default function OrdersPage() {
                       <div className="flex items-center gap-4">
                         <Link
                           href={`/orders/${o.order_id}`}
-                          className="text-[12px] text-[#AAAAAA] hover:text-[#111] transition-colors"
+                          className="text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors"
                         >
                           View
                         </Link>
                         <AlertDialog>
                           <AlertDialogTrigger
                             render={
-                              <button className="text-[12px] text-[#DDDDDD] hover:text-red-500 transition-colors">
+                              <button className="text-body-sm text-[#DDDDDD] hover:text-red-500 transition-colors">
                                 Delete
                               </button>
                             }

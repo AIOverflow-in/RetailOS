@@ -41,8 +41,8 @@ export default function CustomersPage() {
 
       {/* Page title */}
       <div>
-        <h1 className="text-[30px] font-bold tracking-tight text-[#111]">Customers</h1>
-        <p className="text-[13px] text-[#999] mt-0.5">
+        <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">Customers</h1>
+        <p className="text-body text-[#999] mt-0.5">
           {loading ? 'Loading\u2026' : `${total} customers`}
         </p>
       </div>
@@ -51,7 +51,7 @@ export default function CustomersPage() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCCCCC]" />
         <input
-          className="w-full h-9 pl-9 pr-4 text-[13px] bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+          className="w-full h-9 pl-9 pr-4 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
           placeholder="Search by name or phone\u2026"
           value={q}
           onChange={e => setQ(e.target.value)}
@@ -62,7 +62,7 @@ export default function CustomersPage() {
         <TableSkeleton cols={6} />
       ) : customers.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#EBEBEB] py-20 text-center">
-          <p className="text-[13px] text-[#AAAAAA]">
+          <p className="text-body text-[#AAAAAA]">
             {q ? 'No customers found.' : 'No customers yet.'}
           </p>
         </div>
@@ -73,7 +73,7 @@ export default function CustomersPage() {
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Name', 'Phone', 'Age', 'Visits', 'Joined', ''].map(h => (
-                    <th key={h || 'actions'} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB] whitespace-nowrap">
+                    <th key={h || 'actions'} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -85,11 +85,11 @@ export default function CustomersPage() {
                     key={c.customer_id}
                     className="border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA] transition-colors"
                   >
-                    <td className="py-3 px-4 text-[13px] font-medium text-[#111]">{c.name}</td>
-                    <td className="py-3 px-4 text-[13px] text-[#888] font-mono">{c.phone}</td>
-                    <td className="py-3 px-4 text-[13px] text-[#999]">{c.age ?? '\u2014'}</td>
-                    <td className="py-3 px-4 text-[13px] text-[#999]">{c.visit_count}</td>
-                    <td className="py-3 px-4 text-[12px] text-[#999]">{fmtDate(c.created_at)}</td>
+                    <td className="py-3 px-4 text-body font-medium text-[#111]">{c.name}</td>
+                    <td className="py-3 px-4 text-body text-[#888] font-mono">{c.phone}</td>
+                    <td className="py-3 px-4 text-body text-[#999]">{c.age ?? '\u2014'}</td>
+                    <td className="py-3 px-4 text-body text-[#999]">{c.visit_count}</td>
+                    <td className="py-3 px-4 text-body-sm text-[#999]">{fmtDate(c.created_at)}</td>
                     <td className="py-3 px-2">
                       <button
                         onClick={() => { setEditCustomer(c); setEditOpen(true) }}

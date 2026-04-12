@@ -72,21 +72,21 @@ export default function InventoryPage() {
       {/* Page title */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-[30px] font-bold tracking-tight text-[#111]">Inventory</h1>
-          <p className="text-[13px] text-[#999] mt-0.5">
+          <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">Inventory</h1>
+          <p className="text-body text-[#999] mt-0.5">
             {loading ? 'Loading\u2026' : `${filtered.length} batches`}
           </p>
         </div>
         <div className="mt-2 flex items-center gap-2">
           <Link
             href="/inventory/adjustments"
-            className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium border border-[#E5E5E5] text-[#888] rounded-lg hover:border-[#CCC] hover:text-[#111] transition-colors shrink-0"
+            className="flex items-center gap-1.5 h-8 px-3 text-body-sm font-medium border border-[#E5E5E5] text-[#888] rounded-lg hover:border-[#CCC] hover:text-[#111] transition-colors shrink-0"
           >
             Adjustment History
           </Link>
           <Link
             href="/inventory/add"
-            className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors shrink-0"
+            className="flex items-center gap-1.5 h-8 px-3 text-body-sm font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors shrink-0"
           >
             <Plus className="w-3.5 h-3.5" /> Add Stock
           </Link>
@@ -97,7 +97,7 @@ export default function InventoryPage() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCCCCC]" />
         <input
-          className="w-full h-9 pl-9 pr-4 text-[13px] bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+          className="w-full h-9 pl-9 pr-4 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
           placeholder="Search product, company, batch\u2026"
           value={q}
           onChange={e => setQ(e.target.value)}
@@ -108,7 +108,7 @@ export default function InventoryPage() {
         <TableSkeleton cols={9} />
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#EBEBEB] py-20 text-center">
-          <p className="text-[13px] text-[#AAAAAA]">
+          <p className="text-body text-[#AAAAAA]">
             {q ? 'No results found.' : 'No stock yet. Add your first batch.'}
           </p>
         </div>
@@ -119,7 +119,7 @@ export default function InventoryPage() {
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Product', 'Company', 'Batch', 'Expiry', 'MRP', 'Selling', 'Stock', 'HSN', ''].map(h => (
-                    <th key={h || 'actions'} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB] whitespace-nowrap">
+                    <th key={h || 'actions'} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -134,26 +134,26 @@ export default function InventoryPage() {
                       key={r.batch_id}
                       className={`border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA] transition-colors ${expired ? 'opacity-40' : ''}`}
                     >
-                      <td className="py-3 px-4 text-[13px] font-medium text-[#111]">{r.name}</td>
-                      <td className="py-3 px-4 text-[13px] text-[#888]">{r.company_name}</td>
-                      <td className="py-3 px-4 text-[12px] text-[#999] font-mono">{r.batch_no}</td>
+                      <td className="py-3 px-4 text-body font-medium text-[#111]">{r.name}</td>
+                      <td className="py-3 px-4 text-body text-[#888]">{r.company_name}</td>
+                      <td className="py-3 px-4 text-body-sm text-[#999] font-mono">{r.batch_no}</td>
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span className={`text-[12px] ${expired ? 'text-red-500' : expiring ? 'text-amber-500' : 'text-[#999]'}`}>
+                        <span className={`text-body-sm ${expired ? 'text-red-500' : expiring ? 'text-amber-500' : 'text-[#999]'}`}>
                           {(expired || expiring) && <span className="mr-1">{'\u25CF'}</span>}
                           {fmtDate(r.expiry_date)}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-[13px] text-[#888]">{fmtCurrency(r.mrp)}</td>
-                      <td className="py-3 px-4 text-[13px] font-medium text-[#111]">{fmtCurrency(r.selling_price)}</td>
+                      <td className="py-3 px-4 text-body text-[#888]">{fmtCurrency(r.mrp)}</td>
+                      <td className="py-3 px-4 text-body font-medium text-[#111]">{fmtCurrency(r.selling_price)}</td>
                       <td className="py-3 px-4">
-                        <span className={`text-[12px] font-medium ${
+                        <span className={`text-body-sm font-medium ${
                           r.available_stock === 0 ? 'text-red-500' :
                           r.available_stock < 10 ? 'text-amber-500' : 'text-[#555]'
                         }`}>
                           {r.available_stock}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-[12px] text-[#CCCCCC] font-mono">{r.hsn_code ?? '\u2014'}</td>
+                      <td className="py-3 px-4 text-body-sm text-[#CCCCCC] font-mono">{r.hsn_code ?? '\u2014'}</td>
                       <td className="py-3 px-2">
                         <div className="flex items-center gap-0.5">
                           <button

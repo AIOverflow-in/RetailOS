@@ -175,3 +175,13 @@ export interface GSTReport {
   summary: GSTSummary
   slabs: GSTSlab[]
 }
+
+// ─── Shop Settings ───────────────────────────────────────────────────────────
+
+export interface ShopSettings {
+  store_address?: string
+  gstin?: string
+  drug_license?: string
+  food_license?: string
+  other_licenses?: string
+}

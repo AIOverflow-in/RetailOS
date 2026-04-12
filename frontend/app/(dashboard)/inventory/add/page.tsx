@@ -96,25 +96,25 @@ export default function AddStockPage() {
   }
 
   const productReady = selectedProduct || (isNewProduct && newProductName && newCompanyName)
-  const inp = "w-full h-8 px-3 text-[13px] border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+  const inp = "w-full h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
   const errInp = `${inp} !border-red-300 focus:!border-red-400`
 
   return (
     <div className="max-w-lg space-y-6">
 
       <div>
-        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[12px] text-[#AAAAAA] hover:text-[#111] transition-colors mb-3">
+        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors mb-3">
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </button>
-        <h1 className="text-[28px] font-bold tracking-tight text-[#111]">Add Stock</h1>
-        <p className="text-[13px] text-[#999] mt-0.5">Add a new batch to inventory</p>
+        <h1 className="text-heading-lg font-bold tracking-tight text-[#111]">Add Stock</h1>
+        <p className="text-body text-[#999] mt-0.5">Add a new batch to inventory</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
 
         {/* Product */}
         <div className="bg-white rounded-lg border border-[#EBEBEB] p-4 space-y-3">
-          <p className="text-[11px] font-medium text-[#BBBBBB]">Product</p>
+          <p className="text-caption font-medium text-[#BBBBBB]">Product</p>
           <div className="relative">
             <input
               className={inp}
@@ -132,12 +132,12 @@ export default function AddStockPage() {
                     className="w-full text-left px-3 py-2.5 hover:bg-[#F5F5F5] transition-colors"
                     onMouseDown={e => { e.preventDefault(); selectProduct(p) }}
                   >
-                    <p className="text-[13px] font-medium text-[#111]">{p.name}</p>
-                    <p className="text-[11px] text-[#999]">{p.company_name}</p>
+                    <p className="text-body font-medium text-[#111]">{p.name}</p>
+                    <p className="text-caption text-[#999]">{p.company_name}</p>
                   </button>
                 ))}
                 <button type="button"
-                  className="w-full text-left px-3 py-2.5 text-[13px] text-[#111] hover:bg-[#F5F5F5] border-t border-[#F0F0F0] transition-colors"
+                  className="w-full text-left px-3 py-2.5 text-body text-[#111] hover:bg-[#F5F5F5] border-t border-[#F0F0F0] transition-colors"
                   onMouseDown={e => { e.preventDefault(); startNewProduct() }}
                 >
                   + Add &ldquo;{query}&rdquo; as new product
@@ -148,8 +148,8 @@ export default function AddStockPage() {
 
           {selectedProduct && (
             <div className="bg-[#F7F7F7] rounded-lg px-3 py-2">
-              <p className="text-[13px] font-medium text-[#111]">{selectedProduct.name}</p>
-              <p className="text-[11px] text-[#999] mt-0.5">{selectedProduct.company_name}</p>
+              <p className="text-body font-medium text-[#111]">{selectedProduct.name}</p>
+              <p className="text-caption text-[#999] mt-0.5">{selectedProduct.company_name}</p>
             </div>
           )}
 
@@ -162,7 +162,7 @@ export default function AddStockPage() {
                 { label: 'HSN Code', val: newHsn, set: setNewHsn },
               ].map(({ label, val, set }) => (
                 <div key={label} className="space-y-1">
-                  <p className="text-[11px] text-[#BBBBBB]">{label}</p>
+                  <p className="text-caption text-[#BBBBBB]">{label}</p>
                   <input className={inp} value={val} onChange={e => set(e.target.value)} required={label.includes('*')} />
                 </div>
               ))}
@@ -172,48 +172,48 @@ export default function AddStockPage() {
 
         {/* Batch */}
         <div className="bg-white rounded-lg border border-[#EBEBEB] p-4 space-y-3">
-          <p className="text-[11px] font-medium text-[#BBBBBB]">Batch Details</p>
+          <p className="text-caption font-medium text-[#BBBBBB]">Batch Details</p>
           <div className="grid grid-cols-2 gap-2.5">
             <div className="space-y-1">
-              <p className="text-[11px] text-[#BBBBBB]">Batch no. *</p>
+              <p className="text-caption text-[#BBBBBB]">Batch no. *</p>
               <input className={inp} value={batchNo} onChange={e => setBatchNo(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-[11px] text-[#BBBBBB]">Expiry date *</p>
+              <p className="text-caption text-[#BBBBBB]">Expiry date *</p>
               <input type="date" className={inp} value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-[11px] text-[#BBBBBB]">Buying price (₹) *</p>
+              <p className="text-caption text-[#BBBBBB]">Buying price (₹) *</p>
               <input type="number" min={0} step={0.01} className={inp} value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-[11px] text-[#BBBBBB]">Selling price (₹) *</p>
+              <p className="text-caption text-[#BBBBBB]">Selling price (₹) *</p>
               <input type="number" min={0} step={0.01}
                 className={priceError?.includes('Selling') ? errInp : inp}
                 value={sellingPrice} onChange={e => setSellingPrice(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-[11px] text-[#BBBBBB]">MRP (₹) *</p>
+              <p className="text-caption text-[#BBBBBB]">MRP (₹) *</p>
               <input type="number" min={0} step={0.01}
                 className={priceError?.includes('MRP') ? errInp : inp}
                 value={mrp} onChange={e => setMrp(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-[11px] text-[#BBBBBB]">Purchase qty *</p>
+              <p className="text-caption text-[#BBBBBB]">Purchase qty *</p>
               <input type="number" min={1} className={inp} value={purchaseQty} onChange={e => setPurchaseQty(e.target.value)} required />
             </div>
             <div className="space-y-1 col-span-2">
-              <p className="text-[11px] text-[#BBBBBB]">Box no.</p>
+              <p className="text-caption text-[#BBBBBB]">Box no.</p>
               <input className={inp} value={boxNo} onChange={e => setBoxNo(e.target.value)} />
             </div>
           </div>
-          {priceError && <p className="text-[12px] text-red-500">{priceError}</p>}
+          {priceError && <p className="text-body-sm text-red-500">{priceError}</p>}
         </div>
 
         <button
           type="submit"
           disabled={loading || !productReady}
-          className="w-full h-9 text-[13px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
+          className="w-full h-9 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
         >
           {loading ? 'Adding…' : 'Add Stock'}
         </button>

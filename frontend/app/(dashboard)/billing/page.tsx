@@ -59,13 +59,13 @@ export default function BillingPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-[30px] font-bold tracking-tight text-[#111]">New Bill</h1>
-          <p className="text-[13px] text-[#999] mt-0.5">Create a new billing entry</p>
+          <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">New Bill</h1>
+          <p className="text-body text-[#999] mt-0.5">Create a new billing entry</p>
         </div>
         <div className="mt-2 flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-[#BBBBBB]">GST</span>
-            <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-[12px] bg-white">
+            <span className="text-caption text-[#BBBBBB]">GST</span>
+            <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-body-sm bg-white">
               <button
                 className={`px-3 py-1.5 font-medium transition-colors ${isInState ? 'bg-[#111] text-white' : 'text-[#888] hover:bg-[#F5F5F5]'}`}
                 onClick={() => dispatch(setIsInState(true))}
@@ -77,8 +77,8 @@ export default function BillingPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-[#BBBBBB]">Payment</span>
-            <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-[12px] bg-white">
+            <span className="text-caption text-[#BBBBBB]">Payment</span>
+            <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-body-sm bg-white">
               {(['cash', 'upi', 'card', 'mixed'] as const).map(mode => (
                 <button
                   key={mode}
@@ -93,7 +93,7 @@ export default function BillingPage() {
 
       {/* Customer */}
       <div className="bg-white rounded-lg border border-[#EBEBEB] p-4">
-        <p className="text-[11px] font-medium text-[#BBBBBB] mb-3">Customer</p>
+        <p className="text-caption font-medium text-[#BBBBBB] mb-3">Customer</p>
         <CustomerLookup />
       </div>
 
@@ -107,7 +107,7 @@ export default function BillingPage() {
             <thead>
               <tr className="border-b border-[#F2F2F2]">
                 {HEADERS.map(h => (
-                  <th key={h} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB] whitespace-nowrap">
+                  <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
                     {h}
                   </th>
                 ))}
@@ -141,7 +141,7 @@ export default function BillingPage() {
           {items.length > 0 && (
             <button
               onClick={() => { dispatch(clearCart()); setAddKey(k => k + 1) }}
-              className="h-9 px-4 text-[13px] border border-[#E5E5E5] rounded-lg text-[#888] hover:border-[#CCCCCC] hover:text-[#111] transition-colors"
+              className="h-9 px-4 text-body border border-[#E5E5E5] rounded-lg text-[#888] hover:border-[#CCCCCC] hover:text-[#111] transition-colors"
             >
               Clear
             </button>
@@ -149,7 +149,7 @@ export default function BillingPage() {
           <button
             onClick={completeOrder}
             disabled={loading || items.length === 0}
-            className="h-9 px-5 text-[13px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors min-w-[160px]"
+            className="h-9 px-5 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors min-w-[160px]"
           >
             {loading ? 'Processing…' : `Complete — ₹${totals.total.toFixed(2)}`}
           </button>

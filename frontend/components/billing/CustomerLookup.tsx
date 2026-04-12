@@ -7,7 +7,7 @@ import { api } from '@/lib/api'
 import { setCustomer } from '@/store/cartSlice'
 import type { RootState } from '@/store'
 
-const inputClass = "h-8 px-3 text-[13px] border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+const inputClass = "h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
 
 export default function CustomerLookup() {
   const dispatch = useDispatch()
@@ -41,7 +41,7 @@ export default function CustomerLookup() {
   return (
     <div className="flex gap-3 flex-wrap items-end">
       <div className="space-y-1.5">
-        <p className="text-[11px] text-[#BBBBBB] font-medium">Phone</p>
+        <p className="text-caption text-[#BBBBBB] font-medium">Phone</p>
         <div className="relative">
           <input
             className={`${inputClass} w-36`}
@@ -51,12 +51,12 @@ export default function CustomerLookup() {
             onChange={e => handlePhone(e.target.value.replace(/\D/g, ''))}
           />
           {loading && (
-            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[#BBBBBB]">…</span>
+            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-caption text-[#BBBBBB]">…</span>
           )}
         </div>
       </div>
       <div className="space-y-1.5">
-        <p className="text-[11px] text-[#BBBBBB] font-medium">Name</p>
+        <p className="text-caption text-[#BBBBBB] font-medium">Name</p>
         <input
           className={`${inputClass} w-48`}
           placeholder="Patient name"
@@ -65,7 +65,7 @@ export default function CustomerLookup() {
         />
       </div>
       <div className="space-y-1.5">
-        <p className="text-[11px] text-[#BBBBBB] font-medium">Age</p>
+        <p className="text-caption text-[#BBBBBB] font-medium">Age</p>
         <input
           className={`${inputClass} w-16`}
           placeholder="—"

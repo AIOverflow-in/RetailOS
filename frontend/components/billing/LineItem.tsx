@@ -35,8 +35,8 @@ interface LineItemProps {
   isInState: boolean
 }
 
-const cellInput = "h-7 px-2 text-[12px] border border-[#E8E8E8] rounded-md bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors w-full"
-const cellSelect = "h-7 px-2 text-[12px] border border-[#E8E8E8] rounded-md bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors w-full cursor-pointer"
+const cellInput = "h-7 px-2 text-body-sm border border-[#E8E8E8] rounded-md bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors w-full"
+const cellSelect = "h-7 px-2 text-body-sm border border-[#E8E8E8] rounded-md bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors w-full cursor-pointer"
 
 export function NewLineItem({ onAdd, isInState }: { onAdd: () => void; isInState: boolean }) {
   const dispatch = useDispatch()
@@ -117,7 +117,7 @@ export function NewLineItem({ onAdd, isInState }: { onAdd: () => void; isInState
           {/* Product search */}
           <div className="relative flex-shrink-0">
             <input
-              className="h-8 px-3 text-[13px] border border-[#E0E0E0] rounded-lg bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors w-52 placeholder:text-[#CCCCCC]"
+              className="h-8 px-3 text-body border border-[#E0E0E0] rounded-lg bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors w-52 placeholder:text-[#CCCCCC]"
               placeholder="Search product…"
               value={query}
               onChange={e => handleQueryChange(e.target.value)}
@@ -128,7 +128,7 @@ export function NewLineItem({ onAdd, isInState }: { onAdd: () => void; isInState
             {dropdownOpen && (
               <div className="absolute z-30 top-full left-0 mt-1 w-64 bg-white border border-[#EBEBEB] rounded-lg shadow-lg overflow-hidden">
                 {searching && products.length === 0 && (
-                  <div className="px-3 py-2.5 text-[12px] text-[#BBBBBB]">Searching…</div>
+                  <div className="px-3 py-2.5 text-body-sm text-[#BBBBBB]">Searching…</div>
                 )}
                 {products.map(p => (
                   <button
@@ -137,8 +137,8 @@ export function NewLineItem({ onAdd, isInState }: { onAdd: () => void; isInState
                     className="w-full text-left px-3 py-2 hover:bg-[#F5F5F5] transition-colors border-b border-[#F5F5F5] last:border-0"
                     onMouseDown={e => { e.preventDefault(); selectProduct(p) }}
                   >
-                    <p className="text-[13px] font-medium text-[#111]">{p.name}</p>
-                    <p className="text-[11px] text-[#999]">{p.company_name}</p>
+                    <p className="text-body font-medium text-[#111]">{p.name}</p>
+                    <p className="text-caption text-[#999]">{p.company_name}</p>
                   </button>
                 ))}
               </div>
@@ -148,7 +148,7 @@ export function NewLineItem({ onAdd, isInState }: { onAdd: () => void; isInState
           {/* Batch — appears after product selected */}
           {batches.length > 0 && (
             <select
-              className="h-8 px-2 text-[12px] border border-[#E0E0E0] rounded-lg bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors w-44 flex-shrink-0"
+              className="h-8 px-2 text-body-sm border border-[#E0E0E0] rounded-lg bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors w-44 flex-shrink-0"
               value={selectedBatch?.batch_id ?? ''}
               onChange={e => {
                 const b = batches.find(b => b.batch_id === e.target.value)
@@ -167,15 +167,15 @@ export function NewLineItem({ onAdd, isInState }: { onAdd: () => void; isInState
           {/* Fields — appear after batch selected */}
           {selectedBatch && (
             <>
-              <span className="text-[12px] text-[#AAAAAA] flex-shrink-0">
+              <span className="text-body-sm text-[#AAAAAA] flex-shrink-0">
                 MRP {fmtCurrency(selectedBatch.mrp)}
               </span>
 
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <span className="text-[11px] text-[#BBBBBB]">₹</span>
+                <span className="text-caption text-[#BBBBBB]">₹</span>
                 <input
                   type="number" min={0} step={0.01}
-                  className="h-8 w-20 px-2 text-[13px] text-right border border-[#E0E0E0] rounded-lg bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors"
+                  className="h-8 w-20 px-2 text-body text-right border border-[#E0E0E0] rounded-lg bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors"
                   value={salePrice || ''}
                   placeholder="price"
                   onChange={e => setSalePrice(parseFloat(e.target.value) || 0)}
@@ -183,10 +183,10 @@ export function NewLineItem({ onAdd, isInState }: { onAdd: () => void; isInState
               </div>
 
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <span className="text-[11px] text-[#BBBBBB]">Qty</span>
+                <span className="text-caption text-[#BBBBBB]">Qty</span>
                 <input
                   type="number" min={1} max={selectedBatch.available_stock}
-                  className="h-8 w-14 px-2 text-[13px] text-right border border-[#E0E0E0] rounded-lg bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors"
+                  className="h-8 w-14 px-2 text-body text-right border border-[#E0E0E0] rounded-lg bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors"
                   value={qty}
                   onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
                   onKeyDown={e => { if (e.key === 'Enter') addToCart() }}
@@ -194,7 +194,7 @@ export function NewLineItem({ onAdd, isInState }: { onAdd: () => void; isInState
               </div>
 
               <select
-                className="h-8 px-2 text-[12px] border border-[#E0E0E0] rounded-lg bg-white focus:outline-none w-16 flex-shrink-0"
+                className="h-8 px-2 text-body-sm border border-[#E0E0E0] rounded-lg bg-white focus:outline-none w-16 flex-shrink-0"
                 value={String(gstRate)}
                 onChange={e => setGstRate(parseInt(e.target.value) as GSTRate)}
               >
@@ -203,11 +203,11 @@ export function NewLineItem({ onAdd, isInState }: { onAdd: () => void; isInState
                 ))}
               </select>
 
-              <span className="text-[11px] text-[#AAAAAA] flex-shrink-0">
+              <span className="text-caption text-[#AAAAAA] flex-shrink-0">
                 stock: {selectedBatch.available_stock}
               </span>
 
-              <span className="text-[13px] font-semibold text-[#111] flex-shrink-0 ml-1">
+              <span className="text-body font-semibold text-[#111] flex-shrink-0 ml-1">
                 {fmtCurrency(lineTotal)}
               </span>
             </>
@@ -218,7 +218,7 @@ export function NewLineItem({ onAdd, isInState }: { onAdd: () => void; isInState
             <button
               disabled={!selectedBatch}
               onClick={addToCart}
-              className="h-8 px-4 text-[12px] font-medium bg-[#111] text-white rounded-lg disabled:bg-[#E5E5E5] disabled:text-[#BBBBBB] hover:bg-[#333] transition-colors"
+              className="h-8 px-4 text-body-sm font-medium bg-[#111] text-white rounded-lg disabled:bg-[#E5E5E5] disabled:text-[#BBBBBB] hover:bg-[#333] transition-colors"
             >
               + Add
             </button>
@@ -242,12 +242,12 @@ export default function LineItem({
   return (
     <tr className="border-b border-[#F7F7F7] group hover:bg-[#FAFAFA] transition-colors">
       <td className="py-2.5 px-3">
-        <p className="text-[13px] font-medium text-[#111] truncate">{productName}</p>
-        <p className="text-[11px] text-[#AAAAAA]">{batchNo}</p>
+        <p className="text-body font-medium text-[#111] truncate">{productName}</p>
+        <p className="text-caption text-[#AAAAAA]">{batchNo}</p>
       </td>
-      <td className="py-2.5 px-3 text-[12px] text-[#888] truncate">{batchNo}</td>
-      <td className="py-2.5 px-3 text-[12px] text-[#888] whitespace-nowrap">{fmtDate(expiryDate)}</td>
-      <td className="py-2.5 px-3 text-[12px] text-[#888]">{fmtCurrency(mrp)}</td>
+      <td className="py-2.5 px-3 text-body-sm text-[#888] truncate">{batchNo}</td>
+      <td className="py-2.5 px-3 text-body-sm text-[#888] whitespace-nowrap">{fmtDate(expiryDate)}</td>
+      <td className="py-2.5 px-3 text-body-sm text-[#888]">{fmtCurrency(mrp)}</td>
       <td className="py-2.5 px-3">
         <input
           type="number" min={0} step={0.01}
@@ -275,11 +275,11 @@ export default function LineItem({
           ))}
         </select>
       </td>
-      <td className="py-2.5 px-3 text-[12px] text-[#555] text-center font-medium">{availableStock}</td>
-      <td className="py-2.5 px-3 text-right text-[13px] font-semibold text-[#111]">{fmtCurrency(lineTotal)}</td>
+      <td className="py-2.5 px-3 text-body-sm text-[#555] text-center font-medium">{availableStock}</td>
+      <td className="py-2.5 px-3 text-right text-body font-semibold text-[#111]">{fmtCurrency(lineTotal)}</td>
       <td className="py-2.5 px-3 text-center">
         <button
-          className="text-[13px] text-[#DDDDDD] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+          className="text-body text-[#DDDDDD] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
           onClick={() => dispatch(removeItem(id))}
         >
           ✕

@@ -31,7 +31,7 @@ export default function CartSummary() {
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
-    <div className={`flex justify-between gap-8 ${bold ? 'font-semibold text-[14px] text-foreground' : 'text-[12px] text-[#888]'}`}>
+    <div className={`flex justify-between gap-8 ${bold ? 'font-semibold text-subtitle text-foreground' : 'text-body-sm text-[#888]'}`}>
       <span>{label}</span>
       <span>{value}</span>
     </div>

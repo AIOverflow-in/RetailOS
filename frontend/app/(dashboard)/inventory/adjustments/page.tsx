@@ -43,15 +43,15 @@ export default function AdjustmentsPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/inventory"
-          className="flex items-center gap-1.5 text-[12px] text-[#AAAAAA] hover:text-[#111] transition-colors"
+          className="flex items-center gap-1.5 text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Inventory
         </Link>
       </div>
 
       <div>
-        <h1 className="text-[30px] font-bold tracking-tight text-[#111]">Stock Adjustments</h1>
-        <p className="text-[13px] text-[#999] mt-0.5">
+        <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">Stock Adjustments</h1>
+        <p className="text-body text-[#999] mt-0.5">
           {loading ? 'Loading\u2026' : `${total} adjustments`}
         </p>
       </div>
@@ -60,7 +60,7 @@ export default function AdjustmentsPage() {
         <TableSkeleton cols={6} />
       ) : adjustments.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#EBEBEB] py-20 text-center">
-          <p className="text-[13px] text-[#AAAAAA]">No stock adjustments yet.</p>
+          <p className="text-body text-[#AAAAAA]">No stock adjustments yet.</p>
         </div>
       ) : (
         <>
@@ -69,7 +69,7 @@ export default function AdjustmentsPage() {
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Product', 'Batch', 'Change', 'Reason', 'Notes', 'Date'].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB] whitespace-nowrap">
+                    <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -78,16 +78,16 @@ export default function AdjustmentsPage() {
               <tbody>
                 {adjustments.map(a => (
                   <tr key={a.adjustment_id} className="border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA] transition-colors">
-                    <td className="py-3 px-4 text-[13px] font-medium text-[#111]">{a.product_name}</td>
-                    <td className="py-3 px-4 text-[12px] text-[#999] font-mono">{a.batch_no}</td>
+                    <td className="py-3 px-4 text-body font-medium text-[#111]">{a.product_name}</td>
+                    <td className="py-3 px-4 text-body-sm text-[#999] font-mono">{a.batch_no}</td>
                     <td className="py-3 px-4">
-                      <span className={`text-[13px] font-medium ${a.qty_change > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      <span className={`text-body font-medium ${a.qty_change > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                         {a.qty_change > 0 ? '+' : ''}{a.qty_change}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-[13px] text-[#888]">{reasonLabels[a.reason] ?? a.reason}</td>
-                    <td className="py-3 px-4 text-[12px] text-[#999] max-w-[200px] truncate">{a.notes ?? '\u2014'}</td>
-                    <td className="py-3 px-4 text-[12px] text-[#999] whitespace-nowrap">{fmtDate(a.created_at)}</td>
+                    <td className="py-3 px-4 text-body text-[#888]">{reasonLabels[a.reason] ?? a.reason}</td>
+                    <td className="py-3 px-4 text-body-sm text-[#999] max-w-[200px] truncate">{a.notes ?? '\u2014'}</td>
+                    <td className="py-3 px-4 text-body-sm text-[#999] whitespace-nowrap">{fmtDate(a.created_at)}</td>
                   </tr>
                 ))}
               </tbody>

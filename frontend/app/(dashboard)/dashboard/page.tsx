@@ -37,33 +37,33 @@ export default function DashboardPage() {
     <div className="space-y-6">
 
       <div>
-        <h1 className="text-[30px] font-bold tracking-tight text-[#111]">Dashboard</h1>
-        <p className="text-[13px] text-[#999] mt-0.5">Today's overview</p>
+        <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">Dashboard</h1>
+        <p className="text-body text-[#999] mt-0.5">Today's overview</p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
         <div className="bg-white rounded-lg border border-[#EBEBEB] p-5">
-          <p className="text-[11px] font-medium text-[#BBBBBB] uppercase tracking-wide">Today's Sales</p>
-          <p className="text-[24px] font-bold text-[#111] mt-2">{fmtCurrency(sales)}</p>
+          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">Today's Sales</p>
+          <p className="text-heading font-bold text-[#111] mt-2">{fmtCurrency(sales)}</p>
         </div>
 
         <div className="bg-white rounded-lg border border-[#EBEBEB] p-5">
-          <p className="text-[11px] font-medium text-[#BBBBBB] uppercase tracking-wide">Orders Today</p>
-          <p className="text-[24px] font-bold text-[#111] mt-2">{orders}</p>
+          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">Orders Today</p>
+          <p className="text-heading font-bold text-[#111] mt-2">{orders}</p>
         </div>
 
         <Link href="/inventory" className="bg-white rounded-lg border border-[#EBEBEB] p-5 hover:border-amber-300 transition-colors">
-          <p className="text-[11px] font-medium text-[#BBBBBB] uppercase tracking-wide">Low Stock</p>
-          <p className={`text-[24px] font-bold mt-2 ${lowStock > 0 ? 'text-amber-500' : 'text-[#111]'}`}>{lowStock}</p>
-          <p className="text-[11px] text-[#CCCCCC] mt-1">batches below 10 units</p>
+          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">Low Stock</p>
+          <p className={`text-heading font-bold mt-2 ${lowStock > 0 ? 'text-amber-500' : 'text-[#111]'}`}>{lowStock}</p>
+          <p className="text-caption text-[#CCCCCC] mt-1">batches below 10 units</p>
         </Link>
 
         <Link href="/inventory" className="bg-white rounded-lg border border-[#EBEBEB] p-5 hover:border-amber-300 transition-colors">
-          <p className="text-[11px] font-medium text-[#BBBBBB] uppercase tracking-wide">Expiring Soon</p>
-          <p className={`text-[24px] font-bold mt-2 ${expiring > 0 ? 'text-amber-500' : 'text-[#111]'}`}>{expiring}</p>
-          <p className="text-[11px] text-[#CCCCCC] mt-1">within 60 days</p>
+          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">Expiring Soon</p>
+          <p className={`text-heading font-bold mt-2 ${expiring > 0 ? 'text-amber-500' : 'text-[#111]'}`}>{expiring}</p>
+          <p className="text-caption text-[#CCCCCC] mt-1">within 60 days</p>
         </Link>
 
       </div>
@@ -71,12 +71,12 @@ export default function DashboardPage() {
       {/* Payment Mode Breakdown */}
       {paymentSplit.length > 0 && (
         <div className="bg-white rounded-lg border border-[#EBEBEB] p-5">
-          <p className="text-[11px] font-medium text-[#BBBBBB] uppercase tracking-wide mb-4">Payment Breakdown (Today)</p>
+          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide mb-4">Payment Breakdown (Today)</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {paymentSplit.map(p => (
               <div key={p.payment_mode} className="space-y-1">
-                <p className="text-[13px] font-medium text-[#111] capitalize">{p.payment_mode}</p>
-                <p className="text-[18px] font-bold text-[#111]">{fmtCurrency(Number(p.total))}</p>
+                <p className="text-body font-medium text-[#111] capitalize">{p.payment_mode}</p>
+                <p className="text-heading-xs font-bold text-[#111]">{fmtCurrency(Number(p.total))}</p>
               </div>
             ))}
           </div>

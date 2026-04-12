@@ -57,6 +57,7 @@ func main() {
 	stockAdjHandler := handlers.NewStockAdjustmentHandler(pool)
 	dashboardHandler := handlers.NewDashboardHandler(pool)
 	reportHandler := handlers.NewReportHandler(pool)
+	settingsHandler := handlers.NewSettingsHandler(pool)
 
 	// Router
 	r := chi.NewRouter()
@@ -132,6 +133,10 @@ func main() {
 		// Reports
 		r.Get("/reports/gst", reportHandler.GSTReport)
 		r.Get("/reports/gst/export", reportHandler.GSTReportCSV)
+
+		// Settings
+		r.Get("/settings", settingsHandler.GetSettings)
+		r.Put("/settings", settingsHandler.UpdateSettings)
 	})
 
 	addr := fmt.Sprintf(":%s", cfg.Port)

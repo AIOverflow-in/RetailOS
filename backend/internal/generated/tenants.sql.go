@@ -14,7 +14,7 @@ import (
 const createTenant = `-- name: CreateTenant :one
 INSERT INTO tenants (shop_name, schema_name, order_prefix, username, hashed_password)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING tenant_id, shop_name, schema_name, order_prefix, username, hashed_password, is_active, created_at
+RETURNING tenant_id, shop_name, schema_name, order_prefix, username, hashed_password, is_active, created_at, settings
 `
 
 type CreateTenantParams struct {
@@ -43,12 +43,13 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 		&i.HashedPassword,
 		&i.IsActive,
 		&i.CreatedAt,
+		&i.Settings,
 	)
 	return i, err
 }
 
 const getTenantByID = `-- name: GetTenantByID :one
-SELECT tenant_id, shop_name, schema_name, order_prefix, username, hashed_password, is_active, created_at FROM tenants WHERE tenant_id = $1 LIMIT 1
+SELECT tenant_id, shop_name, schema_name, order_prefix, username, hashed_password, is_active, created_at, settings FROM tenants WHERE tenant_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetTenantByID(ctx context.Context, tenantID pgtype.UUID) (Tenant, error) {
@@ -63,12 +64,13 @@ func (q *Queries) GetTenantByID(ctx context.Context, tenantID pgtype.UUID) (Tena
 		&i.HashedPassword,
 		&i.IsActive,
 		&i.CreatedAt,
+		&i.Settings,
 	)
 	return i, err
 }
 
 const getTenantByUsername = `-- name: GetTenantByUsername :one
-SELECT tenant_id, shop_name, schema_name, order_prefix, username, hashed_password, is_active, created_at FROM tenants WHERE username = $1 LIMIT 1
+SELECT tenant_id, shop_name, schema_name, order_prefix, username, hashed_password, is_active, created_at, settings FROM tenants WHERE username = $1 LIMIT 1
 `
 
 func (q *Queries) GetTenantByUsername(ctx context.Context, username string) (Tenant, error) {
@@ -83,8 +85,20 @@ func (q *Queries) GetTenantByUsername(ctx context.Context, username string) (Ten
 		&i.HashedPassword,
 		&i.IsActive,
 		&i.CreatedAt,
+		&i.Settings,
 	)
 	return i, err
+}
+
+const getTenantSettings = `-- name: GetTenantSettings :one
+SELECT settings FROM tenants WHERE tenant_id = $1
+`
+
+func (q *Queries) GetTenantSettings(ctx context.Context, tenantID pgtype.UUID) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getTenantSettings, tenantID)
+	var settings []byte
+	err := row.Scan(&settings)
+	return settings, err
 }
 
 const listTenants = `-- name: ListTenants :many
@@ -142,5 +156,19 @@ type SetTenantActiveParams struct {
 
 func (q *Queries) SetTenantActive(ctx context.Context, arg SetTenantActiveParams) error {
 	_, err := q.db.Exec(ctx, setTenantActive, arg.TenantID, arg.IsActive)
+	return err
+}
+
+const updateTenantSettings = `-- name: UpdateTenantSettings :exec
+UPDATE tenants SET settings = $2 WHERE tenant_id = $1
+`
+
+type UpdateTenantSettingsParams struct {
+	TenantID pgtype.UUID `json:"tenant_id"`
+	Settings []byte      `json:"settings"`
+}
+
+func (q *Queries) UpdateTenantSettings(ctx context.Context, arg UpdateTenantSettingsParams) error {
+	_, err := q.db.Exec(ctx, updateTenantSettings, arg.TenantID, arg.Settings)
 	return err
 }

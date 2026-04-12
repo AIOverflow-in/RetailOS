@@ -67,7 +67,7 @@ export default function SuperAdminDashboard() {
     router.replace('/super-admin/login')
   }
 
-  const fieldCls = "w-full h-8 px-3 text-[13px] border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors"
+  const fieldCls = "w-full h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors"
 
   return (
     <div className="max-w-4xl mx-auto p-8">
@@ -75,21 +75,21 @@ export default function SuperAdminDashboard() {
 
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-[30px] font-bold tracking-tight text-[#111]">Super Admin</h1>
-            <p className="text-[13px] text-[#999] mt-0.5">{tenants.length} shops</p>
+            <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">Super Admin</h1>
+            <p className="text-body text-[#999] mt-0.5">{tenants.length} shops</p>
           </div>
           <div className="flex items-center gap-2 mt-2">
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger
                 render={
-                  <Button size="sm" className="gap-1.5 h-8 text-[12px] bg-[#111] hover:bg-[#333]">
+                  <Button size="sm" className="gap-1.5 h-8 text-body-sm bg-[#111] hover:bg-[#333]">
                     <Plus className="w-3.5 h-3.5" /> Create Shop
                   </Button>
                 }
               />
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle className="text-[14px] font-semibold">Create new shop</DialogTitle>
+                  <DialogTitle className="text-subtitle font-semibold">Create new shop</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={createTenant} className="space-y-3 pt-1">
                   {[
@@ -99,14 +99,14 @@ export default function SuperAdminDashboard() {
                     { label: 'Order prefix (e.g. INV)', val: orderPrefix, set: (v: string) => setOrderPrefix(v.toUpperCase()), type: 'text' },
                   ].map(({ label, val, set, type }) => (
                     <div key={label} className="space-y-1">
-                      <p className="text-[11px] font-medium text-[#BBBBBB]">{label}</p>
+                      <p className="text-caption font-medium text-[#BBBBBB]">{label}</p>
                       <input type={type} className={fieldCls} value={val} onChange={e => set(e.target.value)} required />
                     </div>
                   ))}
                   <button
                     type="submit"
                     disabled={creating}
-                    className="w-full h-8 text-[13px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
+                    className="w-full h-8 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
                   >
                     {creating ? 'Creating...' : 'Create Shop'}
                   </button>
@@ -115,7 +115,7 @@ export default function SuperAdminDashboard() {
             </Dialog>
             <button
               onClick={logout}
-              className="h-8 px-3 flex items-center gap-1.5 text-[12px] text-[#999] hover:text-[#111] border border-[#E5E5E5] rounded-lg hover:border-[#CCC] transition-colors"
+              className="h-8 px-3 flex items-center gap-1.5 text-body-sm text-[#999] hover:text-[#111] border border-[#E5E5E5] rounded-lg hover:border-[#CCC] transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" /> Sign out
             </button>
@@ -126,7 +126,7 @@ export default function SuperAdminDashboard() {
           <TableSkeleton cols={5} />
         ) : tenants.length === 0 ? (
           <div className="bg-white rounded-lg border border-[#EBEBEB] py-20 text-center">
-            <p className="text-[13px] text-[#AAAAAA]">No shops yet.</p>
+            <p className="text-body text-[#AAAAAA]">No shops yet.</p>
           </div>
         ) : (
           <div className="bg-white rounded-lg border border-[#EBEBEB] overflow-x-auto">
@@ -134,24 +134,24 @@ export default function SuperAdminDashboard() {
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Shop', 'Username', 'Created', 'Status', ''].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB]">{h}</th>
+                    <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB]">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {tenants.map(t => (
                   <tr key={t.tenant_id} className="border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA] transition-colors">
-                    <td className="py-3 px-4 text-[13px] font-medium text-[#111]">{t.shop_name}</td>
-                    <td className="py-3 px-4 text-[13px] text-[#888]">{t.username}</td>
-                    <td className="py-3 px-4 text-[13px] text-[#888]">{fmtDate(t.created_at)}</td>
+                    <td className="py-3 px-4 text-body font-medium text-[#111]">{t.shop_name}</td>
+                    <td className="py-3 px-4 text-body text-[#888]">{t.username}</td>
+                    <td className="py-3 px-4 text-body text-[#888]">{fmtDate(t.created_at)}</td>
                     <td className="py-3 px-4">
-                      <span className={`text-[12px] font-medium ${t.is_active ? 'text-emerald-600' : 'text-[#CCCCCC]'}`}>
+                      <span className={`text-body-sm font-medium ${t.is_active ? 'text-emerald-600' : 'text-[#CCCCCC]'}`}>
                         {t.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="py-3 px-4">
                       <button
-                        className="text-[12px] text-[#CCCCCC] hover:text-[#111] transition-colors"
+                        className="text-body-sm text-[#CCCCCC] hover:text-[#111] transition-colors"
                         onClick={() => toggleActive(t.tenant_id, t.is_active)}
                       >
                         {t.is_active ? 'Deactivate' : 'Activate'}

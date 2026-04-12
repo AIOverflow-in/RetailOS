@@ -16,3 +16,9 @@ UPDATE tenants SET is_active = $2 WHERE tenant_id = $1;
 
 -- name: GetTenantByID :one
 SELECT * FROM tenants WHERE tenant_id = $1 LIMIT 1;
+
+-- name: GetTenantSettings :one
+SELECT settings FROM tenants WHERE tenant_id = $1;
+
+-- name: UpdateTenantSettings :exec
+UPDATE tenants SET settings = $2 WHERE tenant_id = $1;

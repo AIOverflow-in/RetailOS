@@ -48,7 +48,7 @@ export default function OrderDetailPage() {
     </div>
   )
 
-  if (!data) return <p className="text-[13px] text-[#AAAAAA]">Order not found.</p>
+  if (!data) return <p className="text-body text-[#AAAAAA]">Order not found.</p>
 
   const { order, items } = data
 
@@ -63,7 +63,7 @@ export default function OrderDetailPage() {
       <div className="flex items-center justify-between print:hidden">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-[12px] text-[#AAAAAA] hover:text-[#111] transition-colors"
+          className="flex items-center gap-1.5 text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </button>
@@ -72,7 +72,7 @@ export default function OrderDetailPage() {
             <AlertDialog>
               <AlertDialogTrigger
                 render={
-                  <button className="h-8 px-3 text-[12px] font-medium border border-amber-300 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors">
+                  <button className="h-8 px-3 text-body-sm font-medium border border-amber-300 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors">
                     Return Order
                   </button>
                 }
@@ -98,7 +98,7 @@ export default function OrderDetailPage() {
           )}
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 text-[12px] text-[#AAAAAA] hover:text-[#111] transition-colors"
+            className="flex items-center gap-1.5 text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors"
           >
             <Printer className="w-3.5 h-3.5" /> Print
           </button>
@@ -107,13 +107,13 @@ export default function OrderDetailPage() {
 
       {/* Title */}
       <div>
-        <h1 className="text-[28px] font-bold tracking-tight text-[#111] font-mono">{order.order_number}</h1>
-        <p className="text-[13px] text-[#999] mt-0.5 flex items-center gap-3">
+        <h1 className="text-heading-lg font-bold tracking-tight text-[#111] font-mono">{order.order_number}</h1>
+        <p className="text-body text-[#999] mt-0.5 flex items-center gap-3">
           <span>{fmtDate(order.created_at)}</span>
-          <span className={`text-[12px] font-medium ${statusColor}`}>
+          <span className={`text-body-sm font-medium ${statusColor}`}>
             {'\u25CF'} {order.status}
           </span>
-          <span className="text-[12px] text-[#888] capitalize">{order.payment_mode ?? 'cash'}</span>
+          <span className="text-body-sm text-[#888] capitalize">{order.payment_mode ?? 'cash'}</span>
         </p>
       </div>
 
@@ -121,13 +121,13 @@ export default function OrderDetailPage() {
       {order.customer_name && (
         <div className="bg-white rounded-lg border border-[#EBEBEB] px-5 py-4 grid grid-cols-2 gap-4">
           <div>
-            <p className="text-[11px] font-medium text-[#BBBBBB] mb-1">Customer</p>
-            <p className="text-[13px] font-medium text-[#111]">{order.customer_name}</p>
+            <p className="text-caption font-medium text-[#BBBBBB] mb-1">Customer</p>
+            <p className="text-body font-medium text-[#111]">{order.customer_name}</p>
           </div>
           {order.customer_phone && (
             <div>
-              <p className="text-[11px] font-medium text-[#BBBBBB] mb-1">Phone</p>
-              <p className="text-[13px] font-medium text-[#111]">{order.customer_phone}</p>
+              <p className="text-caption font-medium text-[#BBBBBB] mb-1">Phone</p>
+              <p className="text-body font-medium text-[#111]">{order.customer_phone}</p>
             </div>
           )}
         </div>
@@ -139,19 +139,19 @@ export default function OrderDetailPage() {
           <thead>
             <tr className="border-b border-[#F2F2F2]">
               {['Product', 'Batch', 'Qty', 'Sale Price', 'GST', 'Total'].map(h => (
-                <th key={h} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB]">{h}</th>
+                <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB]">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {items.map(item => (
               <tr key={item.item_id} className="border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA]">
-                <td className="py-3 px-4 text-[13px] font-medium text-[#111]">{item.product_name}</td>
-                <td className="py-3 px-4 text-[12px] text-[#999] font-mono">{item.batch_no}</td>
-                <td className="py-3 px-4 text-[13px] text-[#555]">{item.qty}</td>
-                <td className="py-3 px-4 text-[13px] text-[#555]">{fmtCurrency(item.sale_price)}</td>
-                <td className="py-3 px-4 text-[12px] text-[#999]">{item.gst_rate}%</td>
-                <td className="py-3 px-4 text-[13px] font-medium text-[#111]">{fmtCurrency(item.line_total)}</td>
+                <td className="py-3 px-4 text-body font-medium text-[#111]">{item.product_name}</td>
+                <td className="py-3 px-4 text-body-sm text-[#999] font-mono">{item.batch_no}</td>
+                <td className="py-3 px-4 text-body text-[#555]">{item.qty}</td>
+                <td className="py-3 px-4 text-body text-[#555]">{fmtCurrency(item.sale_price)}</td>
+                <td className="py-3 px-4 text-body-sm text-[#999]">{item.gst_rate}%</td>
+                <td className="py-3 px-4 text-body font-medium text-[#111]">{fmtCurrency(item.line_total)}</td>
               </tr>
             ))}
           </tbody>
@@ -162,20 +162,20 @@ export default function OrderDetailPage() {
       <div className="bg-white rounded-lg border border-[#EBEBEB] px-5 py-4 space-y-2">
         {order.cgst_total > 0 && (
           <>
-            <div className="flex justify-between text-[13px] text-[#888]">
+            <div className="flex justify-between text-body text-[#888]">
               <span>CGST</span><span>{fmtCurrency(order.cgst_total)}</span>
             </div>
-            <div className="flex justify-between text-[13px] text-[#888]">
+            <div className="flex justify-between text-body text-[#888]">
               <span>SGST</span><span>{fmtCurrency(order.sgst_total)}</span>
             </div>
           </>
         )}
         {order.igst_total > 0 && (
-          <div className="flex justify-between text-[13px] text-[#888]">
+          <div className="flex justify-between text-body text-[#888]">
             <span>IGST</span><span>{fmtCurrency(order.igst_total)}</span>
           </div>
         )}
-        <div className="flex justify-between text-[15px] font-bold text-[#111] pt-2 border-t border-[#F2F2F2]">
+        <div className="flex justify-between text-subtitle-lg font-bold text-[#111] pt-2 border-t border-[#F2F2F2]">
           <span>Total</span><span>{fmtCurrency(order.total_amount)}</span>
         </div>
       </div>

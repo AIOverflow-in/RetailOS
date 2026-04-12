@@ -24,7 +24,7 @@ interface Props {
 }
 
 const fieldCls =
-  'w-full h-8 px-3 text-[13px] bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors'
+  'w-full h-8 px-3 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors'
 
 const REASONS = [
   { value: 'damage', label: 'Damage' },
@@ -80,11 +80,11 @@ export default function StockAdjustmentModal({ batch, open, onOpenChange, onSave
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-[14px] font-semibold">Adjust Stock</DialogTitle>
+          <DialogTitle className="text-subtitle font-semibold">Adjust Stock</DialogTitle>
         </DialogHeader>
 
         {batch && (
-          <div className="bg-[#F7F7F7] rounded-lg px-3 py-2.5 text-[12px] space-y-1">
+          <div className="bg-[#F7F7F7] rounded-lg px-3 py-2.5 text-body-sm space-y-1">
             <p className="font-medium text-[#111]">{batch.name} &mdash; {batch.batch_no}</p>
             <p className="text-[#888]">
               Current stock: <span className="font-medium text-[#555]">{batch.available_stock}</span>
@@ -95,7 +95,7 @@ export default function StockAdjustmentModal({ batch, open, onOpenChange, onSave
 
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
           <div className="space-y-1">
-            <p className="text-[11px] font-medium text-[#BBBBBB]">Qty Change (+ to add, - to remove)</p>
+            <p className="text-caption font-medium text-[#BBBBBB]">Qty Change (+ to add, - to remove)</p>
             <input
               type="number"
               className={fieldCls}
@@ -106,7 +106,7 @@ export default function StockAdjustmentModal({ batch, open, onOpenChange, onSave
             />
           </div>
           <div className="space-y-1">
-            <p className="text-[11px] font-medium text-[#BBBBBB]">Reason</p>
+            <p className="text-caption font-medium text-[#BBBBBB]">Reason</p>
             <select
               className={fieldCls}
               value={reason}
@@ -118,7 +118,7 @@ export default function StockAdjustmentModal({ batch, open, onOpenChange, onSave
             </select>
           </div>
           <div className="space-y-1">
-            <p className="text-[11px] font-medium text-[#BBBBBB]">Notes (optional)</p>
+            <p className="text-caption font-medium text-[#BBBBBB]">Notes (optional)</p>
             <textarea
               className={fieldCls + ' h-16 py-2 resize-none'}
               value={notes}
@@ -129,7 +129,7 @@ export default function StockAdjustmentModal({ batch, open, onOpenChange, onSave
           <button
             type="submit"
             disabled={saving}
-            className="w-full h-8 text-[13px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
+            className="w-full h-8 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
           >
             {saving ? 'Adjusting...' : 'Apply Adjustment'}
           </button>

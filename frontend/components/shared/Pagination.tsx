@@ -31,7 +31,7 @@ export default function Pagination({ page, total, limit, onChange }: PaginationP
     <div className="flex items-center justify-between pt-1">
 
       {/* Count */}
-      <p className="text-[12px] text-[#AAAAAA]">
+      <p className="text-body-sm text-[#AAAAAA]">
         Showing <span className="text-[#555] font-medium">{from}–{to}</span> of{' '}
         <span className="text-[#555] font-medium">{total.toLocaleString()}</span>
       </p>
@@ -51,7 +51,7 @@ export default function Pagination({ page, total, limit, onChange }: PaginationP
         {/* Page numbers */}
         {pages.map((p, i) =>
           p === '…' ? (
-            <span key={`ellipsis-${i}`} className="w-7 h-7 flex items-center justify-center text-[12px] text-[#CCCCCC]">
+            <span key={`ellipsis-${i}`} className="w-7 h-7 flex items-center justify-center text-body-sm text-[#CCCCCC]">
               …
             </span>
           ) : (
@@ -59,7 +59,7 @@ export default function Pagination({ page, total, limit, onChange }: PaginationP
               key={p}
               onClick={() => onChange(p as number)}
               className={cn(
-                'w-7 h-7 flex items-center justify-center rounded-md text-[12px] font-medium transition-colors',
+                'w-7 h-7 flex items-center justify-center rounded-md text-body-sm font-medium transition-colors',
                 p === page
                   ? 'bg-[#111] text-white'
                   : 'text-[#666] hover:bg-[#F2F2F2] hover:text-[#111]'

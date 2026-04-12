@@ -8,7 +8,7 @@ import type { RootState } from '@/store'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Receipt, Package, ClipboardList, BarChart2,
-  Users, LogOut, Plus,
+  Users, LogOut, Plus, Settings,
 } from 'lucide-react'
 
 const NAV = [
@@ -18,6 +18,7 @@ const NAV = [
   { href: '/orders',    label: 'Orders',    Icon: ClipboardList },
   { href: '/customers', label: 'Customers', Icon: Users },
   { href: '/reports',   label: 'Reports',   Icon: BarChart2 },
+  { href: '/settings',  label: 'Settings',  Icon: Settings },
 ]
 
 export default function Sidebar() {
@@ -37,11 +38,11 @@ export default function Sidebar() {
     <div className="flex h-screen shrink-0 print:hidden">
 
       {/* ── Icon rail ─────────────────────────── */}
-      <aside className="flex flex-col w-[52px] shrink-0 bg-[#F0F0F0] items-center pt-3 pb-4 gap-1">
+      <aside className="flex flex-col w-[56px] shrink-0 bg-[#F0F0F0] items-center pt-3 pb-4 gap-1">
 
         {/* Logo */}
         <div className="w-8 h-8 rounded-xl bg-[#111] flex items-center justify-center mb-3 shrink-0">
-          <span className="text-white text-[11px] font-bold tracking-tight">R</span>
+          <span className="text-white text-caption font-bold tracking-tight">R</span>
         </div>
 
         {/* Nav icons */}
@@ -57,7 +58,7 @@ export default function Sidebar() {
                 active ? 'bg-[#111] text-white' : 'text-[#999] hover:bg-black/[0.06] hover:text-[#333]'
               )}
             >
-              <Icon strokeWidth={active ? 2 : 1.5} className="w-[16px] h-[16px]" />
+              <Icon strokeWidth={active ? 2 : 1.5} className="w-4 h-4" />
             </Link>
           )
         })}
@@ -69,35 +70,35 @@ export default function Sidebar() {
           onClick={logout}
           title="Sign out"
           suppressHydrationWarning
-          className="w-7 h-7 rounded-full bg-[#555] flex items-center justify-center text-white text-[10px] font-semibold hover:bg-[#111] transition-colors shrink-0"
+          className="w-7 h-7 rounded-full bg-[#555] flex items-center justify-center text-white text-caption-sm font-semibold hover:bg-[#111] transition-colors shrink-0"
         >
           {shopName?.[0]?.toUpperCase() ?? 'U'}
         </button>
       </aside>
 
       {/* ── Text panel ────────────────────────── */}
-      <aside className="flex flex-col w-[208px] shrink-0 bg-white border-r border-[#EBEBEB]">
+      <aside className="flex flex-col w-[224px] shrink-0 bg-white border-r border-[#EBEBEB]">
 
         {/* Header — shop name + active page tab */}
         <div className="px-4 pt-[14px] border-b border-[#EBEBEB]">
           <div className="flex items-center justify-between mb-[10px]">
-            <p suppressHydrationWarning className="text-[13px] font-semibold text-[#111] truncate leading-tight">
+            <p suppressHydrationWarning className="text-body font-semibold text-[#111] truncate leading-tight">
               {shopName ?? 'RetailOS'}
             </p>
             <LogOut
               strokeWidth={1.5}
               onClick={logout}
-              className="w-[13px] h-[13px] text-[#CCCCCC] shrink-0 cursor-pointer hover:text-[#333] transition-colors ml-2"
+              className="w-3 h-3 text-[#CCCCCC] shrink-0 cursor-pointer hover:text-[#333] transition-colors ml-2"
             />
           </div>
           {/* Active page tab — underline style like the reference */}
           <div className="flex gap-4">
             {activeNav && (
-              <span className="text-[12px] font-medium text-[#111] pb-[9px] border-b-[1.5px] border-[#111]">
+              <span className="text-body-sm font-medium text-[#111] pb-[9px] border-b-[1.5px] border-[#111]">
                 {activeNav.label}
               </span>
             )}
-            <span className="text-[12px] text-[#BBBBBB] pb-[9px]">RetailOS</span>
+            <span className="text-body-sm text-[#BBBBBB] pb-[9px]">RetailOS</span>
           </div>
         </div>
 
@@ -117,19 +118,19 @@ export default function Sidebar() {
                 <Icon
                   strokeWidth={active ? 2 : 1.5}
                   className={cn(
-                    'w-[14px] h-[14px] shrink-0 transition-colors',
+                    'w-3.5 h-3.5 shrink-0 transition-colors',
                     active ? 'text-[#111]' : 'text-[#AAAAAA] group-hover:text-[#333]'
                   )}
                 />
                 <span className={cn(
-                  'flex-1 text-[13px] transition-colors',
+                  'flex-1 text-body transition-colors',
                   active ? 'text-[#111] font-semibold' : 'text-[#666] group-hover:text-[#111]'
                 )}>
                   {label}
                 </span>
                 <Plus
                   strokeWidth={1.5}
-                  className="w-[13px] h-[13px] text-[#DDDDDD] group-hover:text-[#AAAAAA] transition-colors"
+                  className="w-3 h-3 text-[#DDDDDD] group-hover:text-[#AAAAAA] transition-colors"
                 />
               </Link>
             )
@@ -140,9 +141,9 @@ export default function Sidebar() {
         <div className="px-2 py-2.5 border-t border-[#F0F0F0]">
           <button
             onClick={logout}
-            className="w-full flex items-center gap-2 px-2 py-[6px] rounded-md text-[12px] text-[#AAAAAA] hover:bg-[#F7F7F7] hover:text-[#333] transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-[6px] rounded-md text-body-sm text-[#AAAAAA] hover:bg-[#F7F7F7] hover:text-[#333] transition-colors"
           >
-            <LogOut strokeWidth={1.5} className="w-[14px] h-[14px] shrink-0" />
+            <LogOut strokeWidth={1.5} className="w-3.5 h-3.5 shrink-0" />
             <span>Sign out</span>
           </button>
         </div>

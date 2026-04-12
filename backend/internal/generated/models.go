@@ -104,4 +104,5 @@ type Tenant struct {
 	HashedPassword string             `json:"hashed_password"`
 	IsActive       bool               `json:"is_active"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	Settings       []byte             `json:"settings"`
 }

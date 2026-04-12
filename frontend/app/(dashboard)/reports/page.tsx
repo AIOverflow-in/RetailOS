@@ -44,38 +44,38 @@ export default function ReportsPage() {
   }
 
   const s = report?.summary
-  const dateInput = "h-8 px-3 text-[13px] border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors"
+  const dateInput = "h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors"
 
   return (
     <div className="space-y-6">
 
       <div>
-        <h1 className="text-[30px] font-bold tracking-tight text-[#111]">GST Report</h1>
-        <p className="text-[13px] text-[#999] mt-0.5">Tax summary by date range</p>
+        <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">GST Report</h1>
+        <p className="text-body text-[#999] mt-0.5">Tax summary by date range</p>
       </div>
 
       {/* Date range controls */}
       <div className="bg-white rounded-lg border border-[#EBEBEB] p-5 flex flex-wrap items-end gap-4">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium text-[#BBBBBB]">From</p>
+          <p className="text-caption font-medium text-[#BBBBBB]">From</p>
           <input type="date" className={`${dateInput} w-40`} value={from} onChange={e => setFrom(e.target.value)} />
         </div>
         <div className="space-y-1.5">
-          <p className="text-[11px] font-medium text-[#BBBBBB]">To</p>
+          <p className="text-caption font-medium text-[#BBBBBB]">To</p>
           <input type="date" className={`${dateInput} w-40`} value={to} onChange={e => setTo(e.target.value)} />
         </div>
         <div className="flex gap-2">
           <button
             onClick={fetchReport}
             disabled={loading}
-            className="h-8 px-4 text-[12px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors"
+            className="h-8 px-4 text-body-sm font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors"
           >
             {loading ? 'Loading…' : 'Generate'}
           </button>
           {report && (
             <button
               onClick={downloadCSV}
-              className="h-8 px-3 text-[12px] border border-[#E5E5E5] rounded-lg text-[#888] hover:text-[#111] hover:border-[#CCCCCC] flex items-center gap-1.5 transition-colors"
+              className="h-8 px-3 text-body-sm border border-[#E5E5E5] rounded-lg text-[#888] hover:text-[#111] hover:border-[#CCCCCC] flex items-center gap-1.5 transition-colors"
             >
               <Download className="w-3.5 h-3.5" /> CSV
             </button>
@@ -104,25 +104,25 @@ export default function ReportsPage() {
           {report.slabs.length > 0 && (
             <div className="bg-white rounded-lg border border-[#EBEBEB] overflow-x-auto">
               <div className="px-5 py-3 border-b border-[#F2F2F2]">
-                <p className="text-[13px] font-semibold text-[#111]">Slab Breakdown</p>
+                <p className="text-body font-semibold text-[#111]">Slab Breakdown</p>
               </div>
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#F2F2F2]">
                     {['GST Rate', 'Taxable Value', 'CGST', 'SGST', 'IGST', 'Total'].map(h => (
-                      <th key={h} className="text-left py-2.5 px-4 text-[11px] font-medium text-[#BBBBBB]">{h}</th>
+                      <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB]">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {report.slabs.map(slab => (
                     <tr key={slab.gst_rate} className="border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA]">
-                      <td className="py-2.5 px-4 text-[13px] font-medium text-[#111]">{slab.gst_rate}%</td>
-                      <td className="py-2.5 px-4 text-[13px] text-[#555]">{fmtCurrency(slab.taxable_value)}</td>
-                      <td className="py-2.5 px-4 text-[13px] text-[#555]">{fmtCurrency(slab.cgst)}</td>
-                      <td className="py-2.5 px-4 text-[13px] text-[#555]">{fmtCurrency(slab.sgst)}</td>
-                      <td className="py-2.5 px-4 text-[13px] text-[#555]">{fmtCurrency(slab.igst)}</td>
-                      <td className="py-2.5 px-4 text-[13px] font-medium text-[#111]">{fmtCurrency(slab.total)}</td>
+                      <td className="py-2.5 px-4 text-body font-medium text-[#111]">{slab.gst_rate}%</td>
+                      <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.taxable_value)}</td>
+                      <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.cgst)}</td>
+                      <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.sgst)}</td>
+                      <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.igst)}</td>
+                      <td className="py-2.5 px-4 text-body font-medium text-[#111]">{fmtCurrency(slab.total)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -132,7 +132,7 @@ export default function ReportsPage() {
         </>
       ) : (
         <div className="bg-white rounded-lg border border-[#EBEBEB] py-20 text-center">
-          <p className="text-[13px] text-[#AAAAAA]">Select a date range and click Generate.</p>
+          <p className="text-body text-[#AAAAAA]">Select a date range and click Generate.</p>
         </div>
       )}
     </div>
@@ -142,8 +142,8 @@ export default function ReportsPage() {
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-white rounded-lg border border-[#EBEBEB] p-4">
-      <p className="text-[11px] font-medium text-[#BBBBBB] mb-2">{label}</p>
-      <p className="text-[22px] font-bold tracking-tight text-[#111]">{value}</p>
+      <p className="text-caption font-medium text-[#BBBBBB] mb-2">{label}</p>
+      <p className="text-heading-sm font-bold tracking-tight text-[#111]">{value}</p>
     </div>
   )
 }

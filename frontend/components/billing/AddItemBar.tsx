@@ -14,7 +14,7 @@ interface Batch {
   mrp: number; selling_price: number; available_stock: number
 }
 
-const inp = "h-9 px-3 text-[13px] border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999] transition-colors"
+const inp = "h-9 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999] transition-colors"
 
 export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; isInState: boolean }) {
   const dispatch = useDispatch()
@@ -92,13 +92,13 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
 
   return (
     <div className="bg-white rounded-lg border border-[#EBEBEB] p-4">
-      <p className="text-[11px] font-medium text-[#BBBBBB] mb-3">Add Item</p>
+      <p className="text-caption font-medium text-[#BBBBBB] mb-3">Add Item</p>
 
       <div className="flex flex-wrap items-end gap-3">
 
         {/* ── Product search ── */}
         <div className="flex flex-col gap-1">
-          <span className="text-[11px] text-[#BBBBBB]">Product</span>
+          <span className="text-caption text-[#BBBBBB]">Product</span>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCCCCC] pointer-events-none" />
             <input
@@ -115,7 +115,7 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
             {dropdownOpen && (
               <div className="absolute z-50 top-full left-0 mt-1 w-72 bg-white border border-[#EBEBEB] rounded-lg shadow-xl overflow-hidden">
                 {searching && products.length === 0 && (
-                  <p className="px-4 py-3 text-[12px] text-[#BBBBBB]">Searching…</p>
+                  <p className="px-4 py-3 text-body-sm text-[#BBBBBB]">Searching…</p>
                 )}
                 {products.map(p => (
                   <button
@@ -124,8 +124,8 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
                     className="w-full text-left px-4 py-2.5 hover:bg-[#F7F7F7] transition-colors border-b border-[#F5F5F5] last:border-0"
                     onMouseDown={e => { e.preventDefault(); selectProduct(p) }}
                   >
-                    <p className="text-[13px] font-medium text-[#111]">{p.name}</p>
-                    <p className="text-[11px] text-[#999]">{p.company_name}</p>
+                    <p className="text-body font-medium text-[#111]">{p.name}</p>
+                    <p className="text-caption text-[#999]">{p.company_name}</p>
                   </button>
                 ))}
               </div>
@@ -136,7 +136,7 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
         {/* ── Batch ── */}
         {batches.length > 0 && (
           <div className="flex flex-col gap-1">
-            <span className="text-[11px] text-[#BBBBBB]">Batch</span>
+            <span className="text-caption text-[#BBBBBB]">Batch</span>
             <select
               className={`${inp} w-48`}
               value={selectedBatch?.batch_id ?? ''}
@@ -159,7 +159,7 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
         {selectedBatch && (
           <>
             <div className="flex flex-col gap-1">
-              <span className="text-[11px] text-[#BBBBBB]">Sale Price (₹)</span>
+              <span className="text-caption text-[#BBBBBB]">Sale Price (₹)</span>
               <input
                 type="number" min={0} step={0.01}
                 className={`${inp} w-24 text-right`}
@@ -169,7 +169,7 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-[11px] text-[#BBBBBB]">Qty</span>
+              <span className="text-caption text-[#BBBBBB]">Qty</span>
               <input
                 type="number" min={1} max={selectedBatch.available_stock}
                 className={`${inp} w-16 text-right`}
@@ -180,7 +180,7 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-[11px] text-[#BBBBBB]">GST</span>
+              <span className="text-caption text-[#BBBBBB]">GST</span>
               <select
                 className={`${inp} w-20`}
                 value={String(gstRate)}
@@ -194,15 +194,15 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
 
             {/* Info pills */}
             <div className="flex flex-col gap-1">
-              <span className="text-[11px] text-[#BBBBBB]">MRP</span>
-              <div className="h-9 flex items-center px-3 bg-[#F7F7F7] rounded-lg text-[13px] text-[#888]">
+              <span className="text-caption text-[#BBBBBB]">MRP</span>
+              <div className="h-9 flex items-center px-3 bg-[#F7F7F7] rounded-lg text-body text-[#888]">
                 {fmtCurrency(selectedBatch.mrp)}
               </div>
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-[11px] text-[#BBBBBB]">Stock</span>
-              <div className={`h-9 flex items-center px-3 rounded-lg text-[13px] font-medium ${
+              <span className="text-caption text-[#BBBBBB]">Stock</span>
+              <div className={`h-9 flex items-center px-3 rounded-lg text-body font-medium ${
                 selectedBatch.available_stock < 10 ? 'bg-amber-50 text-amber-600' : 'bg-[#F7F7F7] text-[#555]'
               }`}>
                 {selectedBatch.available_stock}
@@ -210,8 +210,8 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-[11px] text-[#BBBBBB]">Total</span>
-              <div className="h-9 flex items-center px-3 bg-[#F7F7F7] rounded-lg text-[13px] font-semibold text-[#111]">
+              <span className="text-caption text-[#BBBBBB]">Total</span>
+              <div className="h-9 flex items-center px-3 bg-[#F7F7F7] rounded-lg text-body font-semibold text-[#111]">
                 {fmtCurrency(lineTotal)}
               </div>
             </div>
@@ -220,11 +220,11 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
 
         {/* ── Add button ── */}
         <div className="flex flex-col gap-1">
-          <span className="text-[11px] text-transparent select-none">·</span>
+          <span className="text-caption text-transparent select-none">·</span>
           <button
             disabled={!selectedBatch}
             onClick={addToCart}
-            className="h-9 px-5 text-[13px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:bg-[#E5E5E5] disabled:text-[#BBBBBB] transition-colors"
+            className="h-9 px-5 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:bg-[#E5E5E5] disabled:text-[#BBBBBB] transition-colors"
           >
             + Add
           </button>

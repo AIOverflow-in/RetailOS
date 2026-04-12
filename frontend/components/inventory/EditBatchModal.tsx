@@ -27,7 +27,7 @@ interface Props {
 }
 
 const fieldCls =
-  'w-full h-8 px-3 text-[13px] bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors'
+  'w-full h-8 px-3 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors'
 
 export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: Props) {
   const [buyingPrice, setBuyingPrice] = useState('')
@@ -95,49 +95,49 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-[14px] font-semibold">
+          <DialogTitle className="text-subtitle font-semibold">
             Edit Batch {batch?.batch_no}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
-              <p className="text-[11px] font-medium text-[#BBBBBB]">Buying Price</p>
+              <p className="text-caption font-medium text-[#BBBBBB]">Buying Price</p>
               <input type="number" step="0.01" min="0" className={fieldCls} value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-[11px] font-medium text-[#BBBBBB]">Selling Price</p>
+              <p className="text-caption font-medium text-[#BBBBBB]">Selling Price</p>
               <input type="number" step="0.01" min="0" className={fieldCls} value={sellingPrice} onChange={e => setSellingPrice(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-[11px] font-medium text-[#BBBBBB]">MRP</p>
+              <p className="text-caption font-medium text-[#BBBBBB]">MRP</p>
               <input type="number" step="0.01" min="0" className={fieldCls} value={mrp} onChange={e => setMrp(e.target.value)} required />
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-[11px] font-medium text-[#BBBBBB]">Expiry Date</p>
+            <p className="text-caption font-medium text-[#BBBBBB]">Expiry Date</p>
             <input type="date" className={fieldCls} value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <p className="text-[11px] font-medium text-[#BBBBBB]">Purchase Qty</p>
+              <p className="text-caption font-medium text-[#BBBBBB]">Purchase Qty</p>
               <input type="number" min="0" className={fieldCls} value={purchaseQty} onChange={e => setPurchaseQty(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-[11px] font-medium text-[#999]">
+              <p className="text-caption font-medium text-[#999]">
                 Sold Qty <span className="text-[#CCCCCC]">(read-only)</span>
               </p>
               <input className={fieldCls + ' bg-[#F7F7F7] text-[#999] cursor-not-allowed'} value={batch?.sold_qty ?? 0} disabled />
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-[11px] font-medium text-[#BBBBBB]">Box No (optional)</p>
+            <p className="text-caption font-medium text-[#BBBBBB]">Box No (optional)</p>
             <input className={fieldCls} value={boxNo} onChange={e => setBoxNo(e.target.value)} />
           </div>
           <button
             type="submit"
             disabled={saving}
-            className="w-full h-8 text-[13px] font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
+            className="w-full h-8 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
