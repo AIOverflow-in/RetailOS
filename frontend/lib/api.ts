@@ -1,3 +1,5 @@
+import type { ShopSettings } from '@/types'
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 function getToken(): string | null {
@@ -111,4 +113,9 @@ export const api = {
     request<any>(`/reports/gst?from=${from}&to=${to}`),
   gstReportExportURL: (from: string, to: string) =>
     `${BASE_URL}/reports/gst/export?from=${from}&to=${to}`,
+
+  // Settings
+  getSettings: () => request<ShopSettings>('/settings'),
+  updateSettings: (data: ShopSettings) =>
+    request<ShopSettings>('/settings', { method: 'PUT', body: JSON.stringify(data) }),
 }

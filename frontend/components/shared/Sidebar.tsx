@@ -8,7 +8,7 @@ import type { RootState } from '@/store'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Receipt, Package, ClipboardList, BarChart2,
-  Users, LogOut, Plus,
+  Users, LogOut, Plus, Settings,
 } from 'lucide-react'
 
 const NAV = [
@@ -18,6 +18,7 @@ const NAV = [
   { href: '/orders',    label: 'Orders',    Icon: ClipboardList },
   { href: '/customers', label: 'Customers', Icon: Users },
   { href: '/reports',   label: 'Reports',   Icon: BarChart2 },
+  { href: '/settings',  label: 'Settings',  Icon: Settings },
 ]
 
 export default function Sidebar() {
