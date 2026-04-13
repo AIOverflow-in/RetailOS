@@ -20,6 +20,7 @@ export default function SettingsPage() {
   const [drugLicense, setDrugLicense] = useState('')
   const [foodLicense, setFoodLicense] = useState('')
   const [otherLicenses, setOtherLicenses] = useState('')
+  const [storePolicies, setStorePolicies] = useState('')
 
   useEffect(() => {
     api.getSettings()
@@ -29,6 +30,7 @@ export default function SettingsPage() {
         setDrugLicense(s.drug_license ?? '')
         setFoodLicense(s.food_license ?? '')
         setOtherLicenses(s.other_licenses ?? '')
+        setStorePolicies(s.store_policies ?? '')
       })
       .catch(err => toast.error(err.message || 'Could not load settings'))
       .finally(() => setLoading(false))
@@ -43,6 +45,7 @@ export default function SettingsPage() {
       drug_license: drugLicense.trim(),
       food_license: foodLicense.trim(),
       other_licenses: otherLicenses.trim(),
+      store_policies: storePolicies.trim(),
     }
     try {
       await api.updateSettings(payload)
@@ -115,8 +118,7 @@ export default function SettingsPage() {
               className={fieldCls}
               value={foodLicense}
               onChange={e => setFoodLicense(e.target.value)}
-              placeholder="14-digit FSSAI number"
-              maxLength={14}
+              placeholder="FSSAI number"
             />
           </div>
 
@@ -130,6 +132,19 @@ export default function SettingsPage() {
               value={otherLicenses}
               onChange={e => setOtherLicenses(e.target.value)}
               placeholder="Any additional license or registration details"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">
+              Store Policies
+            </p>
+            <textarea
+              className={textareaCls}
+              rows={4}
+              value={storePolicies}
+              onChange={e => setStorePolicies(e.target.value)}
+              placeholder="Return, exchange or refund policies to show on bills"
             />
           </div>
 

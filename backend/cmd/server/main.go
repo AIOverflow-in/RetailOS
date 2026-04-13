@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/retail-os/backend/internal/config"
 	"github.com/retail-os/backend/internal/db"
 	"github.com/retail-os/backend/internal/email"
@@ -20,14 +21,24 @@ func main() {
 	cfg := config.Load()
 	ctx := context.Background()
 
-	// Run public migrations on startup (idempotent)
-	if err := db.RunPublicMigrations(cfg.DatabaseURL); err != nil {
+	// Run public migrations on startup (idempotent).
+	// Retry to ride out transient DNS failures / Neon cold-starts.
+	if err := db.Retry("public migrations", func() error {
+		return db.RunPublicMigrations(cfg.DatabaseURL)
+	}); err != nil {
 		log.Fatalf("public migrations failed: %v", err)
 	}
 
 	// Connect pool
-	pool, err := db.New(ctx, cfg.DatabaseURL)
-	if err != nil {
+	var pool *pgxpool.Pool
+	if err := db.Retry("db connection", func() error {
+		p, err := db.New(ctx, cfg.DatabaseURL)
+		if err != nil {
+			return err
+		}
+		pool = p
+		return nil
+	}); err != nil {
 		log.Fatalf("db connection failed: %v", err)
 	}
 	defer pool.Close()

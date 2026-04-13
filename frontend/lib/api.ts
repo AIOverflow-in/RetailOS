@@ -1,6 +1,13 @@
 import type { ShopSettings } from '@/types'
+import { toast } from 'sonner'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+
+const SERVICE_DOWN_MSG = 'Service temporarily unavailable. Please try again in 5 minutes.'
+
+function notifyServiceUnavailable() {
+  toast.error(SERVICE_DOWN_MSG, { id: 'service-unavailable', duration: 6000 })
+}
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
@@ -18,7 +25,13 @@ async function request<T>(
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+  let res: Response
+  try {
+    res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+  } catch {
+    notifyServiceUnavailable()
+    throw new Error(SERVICE_DOWN_MSG)
+  }
 
   if (res.status === 401 && path !== '/auth/login') {
     localStorage.removeItem('token')
@@ -26,6 +39,11 @@ async function request<T>(
     localStorage.removeItem('schema_name')
     window.location.href = '/login'
     throw new Error('Unauthorized')
+  }
+
+  if (res.status === 503 || res.status === 502 || res.status === 504) {
+    notifyServiceUnavailable()
+    throw new Error(SERVICE_DOWN_MSG)
   }
 
   const text = await res.text()
@@ -55,6 +73,10 @@ export const api = {
     request<{ products: any[]; total: number; page: number; limit: number }>(
       `/products?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`
     ),
+  searchAllProducts: () =>
+    request<{ products: any[]; total: number; page: number; limit: number }>(
+      '/products?q=&limit=200'
+    ).then(r => ({ products: r.products ?? [], total: r.total ?? 0 })),
   createProduct: (data: { name: string; company_name: string; sku?: string; hsn_code?: string }) =>
     request('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id: string, data: { name: string; company_name: string; sku?: string | null; hsn_code?: string | null }) =>

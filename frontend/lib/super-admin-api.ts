@@ -1,4 +1,12 @@
+import { toast } from 'sonner'
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+
+const SERVICE_DOWN_MSG = 'Service temporarily unavailable. Please try again in 5 minutes.'
+
+function notifyServiceUnavailable() {
+  toast.error(SERVICE_DOWN_MSG, { id: 'service-unavailable', duration: 6000 })
+}
 
 function getSAToken(): string | null {
   if (typeof window === 'undefined') return null
@@ -17,12 +25,23 @@ async function saRequest<T>(
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+  let res: Response
+  try {
+    res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+  } catch {
+    notifyServiceUnavailable()
+    throw new Error(SERVICE_DOWN_MSG)
+  }
 
   if ((res.status === 401 || res.status === 403) && !skipAuthRedirect) {
     localStorage.removeItem('sa_token')
     window.location.href = '/super-admin/login'
     throw new Error('Unauthorized')
+  }
+
+  if (res.status === 503 || res.status === 502 || res.status === 504) {
+    notifyServiceUnavailable()
+    throw new Error(SERVICE_DOWN_MSG)
   }
 
   const text = await res.text()

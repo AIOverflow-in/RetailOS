@@ -184,4 +184,5 @@ export interface ShopSettings {
   drug_license?: string
   food_license?: string
   other_licenses?: string
+  store_policies?: string
 }
