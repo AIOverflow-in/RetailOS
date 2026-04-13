@@ -1,24 +1,23 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import type { Product } from '@/types'
+import { useProductSearch } from '@/lib/useProductSearch'
 import { ArrowLeft } from 'lucide-react'
 
 export default function AddStockPage() {
   const router = useRouter()
 
-  const [query, setQuery] = useState('')
-  const [suggestions, setSuggestions] = useState<Product[]>([])
+  const { query, suggestions, handleQuery, triggerPreload, setQuery, setSuggestions } = useProductSearch()
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isNewProduct, setIsNewProduct] = useState(false)
   const [newProductName, setNewProductName] = useState('')
   const [newCompanyName, setNewCompanyName] = useState('')
   const [newSku, setNewSku] = useState('')
   const [newHsn, setNewHsn] = useState('')
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [focused, setFocused] = useState(false)
 
   const [batchNo, setBatchNo] = useState('')
@@ -29,21 +28,6 @@ export default function AddStockPage() {
   const [purchaseQty, setPurchaseQty] = useState('')
   const [boxNo, setBoxNo] = useState('')
   const [loading, setLoading] = useState(false)
-
-  function handleQuery(val: string) {
-    setQuery(val)
-    setSelectedProduct(null)
-    setIsNewProduct(false)
-    if (searchTimer.current) clearTimeout(searchTimer.current)
-    if (val.trim().length >= 1) {
-      searchTimer.current = setTimeout(async () => {
-        const res = await api.searchProducts(val)
-        setSuggestions(res ?? [])
-      }, 150)
-    } else {
-      setSuggestions([])
-    }
-  }
 
   function selectProduct(p: Product) {
     setSelectedProduct(p)
@@ -59,6 +43,12 @@ export default function AddStockPage() {
     setNewProductName(query)
     setSuggestions([])
     setFocused(false)
+  }
+
+  function handleInputChange(val: string) {
+    setSelectedProduct(null)
+    setIsNewProduct(false)
+    handleQuery(val)
   }
 
   const b = parseFloat(buyingPrice), s = parseFloat(sellingPrice), m = parseFloat(mrp)
@@ -120,12 +110,12 @@ export default function AddStockPage() {
               className={inp}
               placeholder="Search product name…"
               value={query}
-              onChange={e => handleQuery(e.target.value)}
-              onFocus={() => setFocused(true)}
+              onChange={e => handleInputChange(e.target.value)}
+              onFocus={() => { setFocused(true); triggerPreload() }}
               onBlur={() => setFocused(false)}
               autoFocus
             />
-            {focused && suggestions.length > 0 && (
+            {focused && (suggestions.length > 0 || query.trim().length > 0) && (
               <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-[#EBEBEB] rounded-lg shadow-md overflow-hidden">
                 {suggestions.map(p => (
                   <button key={p.product_id} type="button"
@@ -136,12 +126,21 @@ export default function AddStockPage() {
                     <p className="text-caption text-[#999]">{p.company_name}</p>
                   </button>
                 ))}
-                <button type="button"
-                  className="w-full text-left px-3 py-2.5 text-body text-[#111] hover:bg-[#F5F5F5] border-t border-[#F0F0F0] transition-colors"
-                  onMouseDown={e => { e.preventDefault(); startNewProduct() }}
-                >
-                  + Add &ldquo;{query}&rdquo; as new product
-                </button>
+                {query.trim().length > 0 && (
+                  <button type="button"
+                    className="w-full text-left px-3 py-2.5 text-body text-[#111] hover:bg-[#F5F5F5] transition-colors"
+                    style={suggestions.length > 0 ? { borderTopWidth: '1px', borderTopColor: '#F0F0F0' } : {}}
+                    onMouseDown={e => { e.preventDefault(); startNewProduct() }}
+                  >
+                    + Add &ldquo;{query}&rdquo; as new product
+                  </button>
+                )}
+              </div>
+            )}
+
+            {!selectedProduct && query && !isNewProduct && (
+              <div className="bg-[#FFF8E6] border border-[#FFE5B4] rounded-lg px-3 py-2">
+                <p className="text-caption text-[#999]">Click "+ Add as new product" to create <strong>{query}</strong></p>
               </div>
             )}
           </div>

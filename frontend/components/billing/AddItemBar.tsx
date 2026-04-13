@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { Search } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { GSTRate } from '@/types'
+import { useProductSearch } from '@/lib/useProductSearch'
 import { GST_RATES, calcLineTotal, fmtCurrency, fmtDate } from '@/lib/gst'
 import { addItem } from '@/store/cartSlice'
 
@@ -19,8 +20,7 @@ const inp = "h-9 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focu
 export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; isInState: boolean }) {
   const dispatch = useDispatch()
 
-  const [query, setQuery]               = useState('')
-  const [products, setProducts]         = useState<Product[]>([])
+  const { query, suggestions, loading, handleQuery, triggerPreload, setQuery, setSuggestions } = useProductSearch()
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [batches, setBatches]           = useState<Batch[]>([])
   const [selectedBatch, setSelectedBatch]     = useState<Batch | null>(null)
@@ -28,33 +28,18 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
   const [salePrice, setSalePrice]       = useState(0)
   const [gstRate, setGstRate]           = useState<GSTRate>(0)
   const [focused, setFocused]           = useState(false)
-  const [searching, setSearching]       = useState(false)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  function handleQuery(val: string) {
-    setQuery(val)
+  function handleInputChange(val: string) {
     setSelectedProduct(null)
     setSelectedBatch(null)
     setBatches([])
-    if (timer.current) clearTimeout(timer.current)
-    if (val.trim().length >= 1) {
-      setSearching(true)
-      timer.current = setTimeout(async () => {
-        try {
-          const res = await api.searchProducts(val)
-          setProducts(res ?? [])
-        } finally { setSearching(false) }
-      }, 150)
-    } else {
-      setProducts([])
-      setSearching(false)
-    }
+    handleQuery(val)
   }
 
   async function selectProduct(p: Product) {
     setSelectedProduct(p)
     setQuery(p.name)
-    setProducts([])
+    setSuggestions([])
     setFocused(false)
     const bs = await api.listActiveBatches(p.product_id)
     const list = bs ?? []
@@ -83,11 +68,11 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
     }))
     // reset
     setQuery(''); setSelectedProduct(null); setSelectedBatch(null)
-    setBatches([]); setQty(1); setSalePrice(0); setGstRate(0)
+    setSuggestions([]); setBatches([]); setQty(1); setSalePrice(0); setGstRate(0)
     onAdd()
   }
 
-  const dropdownOpen = focused && (products.length > 0 || searching)
+  const dropdownOpen = focused && (suggestions.length > 0 || loading)
   const lineTotal    = selectedBatch ? calcLineTotal(salePrice, qty, gstRate) : 0
 
   return (
@@ -105,8 +90,8 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
               className={`${inp} pl-9 w-56`}
               placeholder="Search product…"
               value={query}
-              onChange={e => handleQuery(e.target.value)}
-              onFocus={() => setFocused(true)}
+              onChange={e => handleInputChange(e.target.value)}
+              onFocus={() => { setFocused(true); triggerPreload() }}
               onBlur={() => setFocused(false)}
               onKeyDown={e => { if (e.key === 'Enter' && selectedBatch) addToCart() }}
               autoFocus
@@ -114,10 +99,10 @@ export default function AddItemBar({ onAdd, isInState }: { onAdd: () => void; is
             {/* Dropdown — fully outside any overflow container */}
             {dropdownOpen && (
               <div className="absolute z-50 top-full left-0 mt-1 w-72 bg-white border border-[#EBEBEB] rounded-lg shadow-xl overflow-hidden">
-                {searching && products.length === 0 && (
+                {loading && suggestions.length === 0 && (
                   <p className="px-4 py-3 text-body-sm text-[#BBBBBB]">Searching…</p>
                 )}
-                {products.map(p => (
+                {suggestions.map(p => (
                   <button
                     key={p.product_id}
                     type="button"

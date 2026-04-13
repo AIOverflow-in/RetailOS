@@ -73,6 +73,10 @@ export const api = {
     request<{ products: any[]; total: number; page: number; limit: number }>(
       `/products?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`
     ),
+  searchAllProducts: () =>
+    request<{ products: any[]; total: number; page: number; limit: number }>(
+      '/products?q=&limit=200'
+    ).then(r => ({ products: r.products ?? [], total: r.total ?? 0 })),
   createProduct: (data: { name: string; company_name: string; sku?: string; hsn_code?: string }) =>
     request('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id: string, data: { name: string; company_name: string; sku?: string | null; hsn_code?: string | null }) =>
