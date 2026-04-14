@@ -13,6 +13,7 @@ import (
 )
 
 // tenantMigrations is the single source of truth for tenant schema migrations.
+// IMPORTANT: New migration files must be added here to be applied to existing tenants.
 var tenantMigrations = []string{
 	"internal/migrations/tenant/000001_create_products.up.sql",
 	"internal/migrations/tenant/000002_create_batches.up.sql",
@@ -21,6 +22,7 @@ var tenantMigrations = []string{
 	"internal/migrations/tenant/000005_create_order_items.up.sql",
 	"internal/migrations/tenant/000006_add_payment_mode_to_orders.up.sql",
 	"internal/migrations/tenant/000007_create_stock_adjustments.up.sql",
+	"internal/migrations/tenant/000008_add_purchase_gst_to_batches.up.sql",
 }
 
 // RunPublicMigrations runs migrations in migrations/public/ against the public schema.
@@ -103,6 +105,7 @@ func MigrateAllTenants(ctx context.Context, pool *pgxpool.Pool) error {
 			return fmt.Errorf("set search_path for %s: %w", schema, err)
 		}
 
+		migrationErrors := 0
 		for _, f := range tenantMigrations {
 			sql, err := os.ReadFile(f)
 			if err != nil {
@@ -110,13 +113,20 @@ func MigrateAllTenants(ctx context.Context, pool *pgxpool.Pool) error {
 				return fmt.Errorf("read migration %s: %w", f, err)
 			}
 			if _, err := conn.Exec(ctx, string(sql)); err != nil {
-				log.Printf("Migration %s on %s: %v (may be already applied)", f, schema, err)
+				log.Printf("WARNING: Migration %s on %s FAILED: %v", f, schema, err)
+				migrationErrors++
+			} else {
+				log.Printf("Migration %s on %s: OK", f, schema)
 			}
 		}
 
 		conn.Exec(ctx, "SET search_path TO public")
 		conn.Release()
-		log.Printf("Tenant %s migrations applied", schema)
+		if migrationErrors > 0 {
+			log.Printf("Tenant %s migrations completed with %d error(s) — check warnings above", schema, migrationErrors)
+		} else {
+			log.Printf("Tenant %s migrations applied successfully", schema)
+		}
 	}
 
 	return nil

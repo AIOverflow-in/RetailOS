@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -141,14 +143,21 @@ func (h *InventoryHandler) ListActiveBatches(w http.ResponseWriter, r *http.Requ
 
 func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		ProductID    string  `json:"product_id"`
-		BatchNo      string  `json:"batch_no"`
-		ExpiryDate   string  `json:"expiry_date"` // YYYY-MM-DD
-		MRP          float64 `json:"mrp"`
-		BuyingPrice  float64 `json:"buying_price"`
-		SellingPrice float64 `json:"selling_price"`
-		PurchaseQty  int32   `json:"purchase_qty"`
-		BoxNo        *string `json:"box_no"`
+		ProductID       string   `json:"product_id"`
+		BatchNo         string   `json:"batch_no"`
+		ExpiryDate      string   `json:"expiry_date"` // YYYY-MM-DD
+		MRP             float64  `json:"mrp"`
+		BuyingPrice     float64  `json:"buying_price"`
+		SellingPrice    float64  `json:"selling_price"`
+		PurchaseQty     int32    `json:"purchase_qty"`
+		BoxNo           *string  `json:"box_no"`
+		PurchaseGSTRate *float64 `json:"purchase_gst_rate"`
+		DistributorDetails *struct {
+			Name      *string `json:"name"`
+			Location  *string `json:"location"`
+			Phone     *string `json:"phone"`
+			InvoiceNo *string `json:"invoice_no"`
+		} `json:"distributor_details"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -165,9 +174,20 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Price validation: buying < selling < mrp
-	if body.BuyingPrice >= body.SellingPrice {
-		writeError(w, http.StatusBadRequest, "selling_price must be greater than buying_price")
+	// Compute landing price if GST rate is provided
+	var landingPrice *float64
+	if body.PurchaseGSTRate != nil && *body.PurchaseGSTRate > 0 {
+		lp := body.BuyingPrice * (1 + *body.PurchaseGSTRate/100)
+		landingPrice = &lp
+	}
+
+	// Price validation: landing_price (or buying_price if no GST) < selling < mrp
+	costPrice := body.BuyingPrice
+	if landingPrice != nil {
+		costPrice = *landingPrice
+	}
+	if costPrice >= body.SellingPrice {
+		writeError(w, http.StatusBadRequest, "selling_price must be greater than landing_price" + map[bool]string{true: "", false: " (or buying_price)"}[landingPrice == nil])
 		return
 	}
 	if body.SellingPrice >= body.MRP {
@@ -200,18 +220,39 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 	buyingPrice := numericFromFloat(body.BuyingPrice)
 	sellingPrice := numericFromFloat(body.SellingPrice)
 
+	// Convert landing price and GST rate to pgtype.Numeric
+	var landingPriceNumeric pgtype.Numeric
+	if landingPrice != nil {
+		landingPriceNumeric = numericFromFloat(*landingPrice)
+	}
+
+	var purchaseGstRateNumeric pgtype.Numeric
+	if body.PurchaseGSTRate != nil {
+		purchaseGstRateNumeric = numericFromFloat(*body.PurchaseGSTRate)
+	}
+
+	var distributorDetailsStr *string
+	if body.DistributorDetails != nil {
+		b, _ := json.Marshal(body.DistributorDetails)
+		s := string(b)
+		distributorDetailsStr = &s
+	}
+
 	conn := middleware.ConnFromCtx(r.Context())
 	queries := generated.New(conn)
 
 	batch, err := queries.CreateBatch(r.Context(), generated.CreateBatchParams{
-		ProductID:    pid,
-		BatchNo:      body.BatchNo,
-		ExpiryDate:   expiryDate,
-		Mrp:          mrp,
-		BuyingPrice:  buyingPrice,
-		SellingPrice: sellingPrice,
-		PurchaseQty:  body.PurchaseQty,
-		BoxNo:        body.BoxNo,
+		ProductID:          pid,
+		BatchNo:            body.BatchNo,
+		ExpiryDate:         expiryDate,
+		Mrp:                mrp,
+		BuyingPrice:        buyingPrice,
+		SellingPrice:       sellingPrice,
+		PurchaseQty:        body.PurchaseQty,
+		BoxNo:              body.BoxNo,
+		PurchaseGstRate:    purchaseGstRateNumeric,
+		LandingPrice:       landingPriceNumeric,
+		DistributorDetails: distributorDetailsStr,
 	})
 	if err != nil {
 		writeError(w, http.StatusConflict, "batch creation failed: "+err.Error())
@@ -226,7 +267,10 @@ func (h *InventoryHandler) ListInventory(w http.ResponseWriter, r *http.Request)
 
 	rows, err := queries.ListInventory(r.Context())
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "could not fetch inventory")
+		// Log the actual error for debugging
+		errMsg := fmt.Sprintf("ListInventory error: %v", err)
+		log.Println(errMsg)
+		writeError(w, http.StatusInternalServerError, "could not fetch inventory: "+err.Error())
 		return
 	}
 	writeJSON(w, http.StatusOK, rows)
@@ -281,21 +325,43 @@ func (h *InventoryHandler) UpdateBatch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		BuyingPrice  float64 `json:"buying_price"`
-		SellingPrice float64 `json:"selling_price"`
-		MRP          float64 `json:"mrp"`
-		ExpiryDate   string  `json:"expiry_date"`
-		PurchaseQty  int32   `json:"purchase_qty"`
-		BoxNo        *string `json:"box_no"`
+		BuyingPrice     float64  `json:"buying_price"`
+		SellingPrice    float64  `json:"selling_price"`
+		MRP             float64  `json:"mrp"`
+		ExpiryDate      string   `json:"expiry_date"`
+		PurchaseQty     int32    `json:"purchase_qty"`
+		BoxNo           *string  `json:"box_no"`
+		PurchaseGSTRate *float64 `json:"purchase_gst_rate"`
+		DistributorDetails *struct {
+			Name      *string `json:"name"`
+			Location  *string `json:"location"`
+			Phone     *string `json:"phone"`
+			InvoiceNo *string `json:"invoice_no"`
+		} `json:"distributor_details"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	// Price validation
-	if body.BuyingPrice >= body.SellingPrice {
-		writeError(w, http.StatusBadRequest, "selling_price must be greater than buying_price")
+	// Compute landing price if GST rate is provided
+	var landingPrice *float64
+	if body.PurchaseGSTRate != nil && *body.PurchaseGSTRate > 0 {
+		lp := body.BuyingPrice * (1 + *body.PurchaseGSTRate/100)
+		landingPrice = &lp
+	}
+
+	// Price validation: landing_price (or buying_price if no GST) < selling < mrp
+	costPrice := body.BuyingPrice
+	if landingPrice != nil {
+		costPrice = *landingPrice
+	}
+	if costPrice >= body.SellingPrice {
+		msgSuffix := ""
+		if landingPrice == nil {
+			msgSuffix = " (or buying_price)"
+		}
+		writeError(w, http.StatusBadRequest, "selling_price must be greater than landing_price"+msgSuffix)
 		return
 	}
 	if body.SellingPrice >= body.MRP {
@@ -330,14 +396,35 @@ func (h *InventoryHandler) UpdateBatch(w http.ResponseWriter, r *http.Request) {
 	expiryDate.Time = expiry
 	expiryDate.Valid = true
 
+	// Convert landing price and GST rate to pgtype.Numeric
+	var landingPriceNumeric pgtype.Numeric
+	if landingPrice != nil {
+		landingPriceNumeric = numericFromFloat(*landingPrice)
+	}
+
+	var purchaseGstRateNumeric pgtype.Numeric
+	if body.PurchaseGSTRate != nil {
+		purchaseGstRateNumeric = numericFromFloat(*body.PurchaseGSTRate)
+	}
+
+	var distributorDetailsStr *string
+	if body.DistributorDetails != nil {
+		b, _ := json.Marshal(body.DistributorDetails)
+		s := string(b)
+		distributorDetailsStr = &s
+	}
+
 	batch, err := queries.UpdateBatch(r.Context(), generated.UpdateBatchParams{
-		BatchID:      bid,
-		BuyingPrice:  numericFromFloat(body.BuyingPrice),
-		SellingPrice: numericFromFloat(body.SellingPrice),
-		Mrp:          numericFromFloat(body.MRP),
-		ExpiryDate:   expiryDate,
-		PurchaseQty:  body.PurchaseQty,
-		BoxNo:        body.BoxNo,
+		BatchID:            bid,
+		BuyingPrice:        numericFromFloat(body.BuyingPrice),
+		SellingPrice:       numericFromFloat(body.SellingPrice),
+		Mrp:                numericFromFloat(body.MRP),
+		ExpiryDate:         expiryDate,
+		PurchaseQty:        body.PurchaseQty,
+		BoxNo:              body.BoxNo,
+		PurchaseGstRate:    purchaseGstRateNumeric,
+		LandingPrice:       landingPriceNumeric,
+		DistributorDetails: distributorDetailsStr,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "could not update batch: "+err.Error())

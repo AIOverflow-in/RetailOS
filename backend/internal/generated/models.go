@@ -5,21 +5,26 @@
 package generated
 
 import (
+	"encoding/json"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Batch struct {
-	BatchID      pgtype.UUID        `json:"batch_id"`
-	ProductID    pgtype.UUID        `json:"product_id"`
-	BatchNo      string             `json:"batch_no"`
-	ExpiryDate   pgtype.Date        `json:"expiry_date"`
-	Mrp          pgtype.Numeric     `json:"mrp"`
-	BuyingPrice  pgtype.Numeric     `json:"buying_price"`
-	SellingPrice pgtype.Numeric     `json:"selling_price"`
-	PurchaseQty  int32              `json:"purchase_qty"`
-	SoldQty      int32              `json:"sold_qty"`
-	BoxNo        *string            `json:"box_no"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	BatchID            pgtype.UUID        `json:"batch_id"`
+	ProductID          pgtype.UUID        `json:"product_id"`
+	BatchNo            string             `json:"batch_no"`
+	ExpiryDate         pgtype.Date        `json:"expiry_date"`
+	Mrp                pgtype.Numeric     `json:"mrp"`
+	BuyingPrice        pgtype.Numeric     `json:"buying_price"`
+	SellingPrice       pgtype.Numeric     `json:"selling_price"`
+	PurchaseQty        int32              `json:"purchase_qty"`
+	SoldQty            int32              `json:"sold_qty"`
+	BoxNo              *string            `json:"box_no"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	PurchaseGstRate    pgtype.Numeric     `json:"purchase_gst_rate"`
+	LandingPrice       pgtype.Numeric     `json:"landing_price"`
+	DistributorDetails json.RawMessage    `json:"distributor_details"`
 }
 
 type Customer struct {

@@ -29,7 +29,9 @@ export default function InventoryPage() {
   // Edit batch modal state
   const [editBatch, setEditBatch] = useState<{
     batch_id: string; batch_no: string; buying_price: number; selling_price: number;
-    mrp: number; expiry_date: string; purchase_qty: number; sold_qty: number; box_no: string | null
+    mrp: number; expiry_date: string; purchase_qty: number; sold_qty: number; box_no: string | null;
+    purchase_gst_rate: number | null; landing_price: number | null;
+    distributor_details: { name?: string; location?: string; phone?: string; invoice_no?: string } | null
   } | null>(null)
   const [editBatchOpen, setEditBatchOpen] = useState(false)
 
@@ -184,6 +186,9 @@ export default function InventoryPage() {
                                 purchase_qty: r.purchase_qty,
                                 sold_qty: r.sold_qty,
                                 box_no: r.box_no,
+                                purchase_gst_rate: r.purchase_gst_rate ?? null,
+                                landing_price: r.landing_price ?? null,
+                                distributor_details: r.distributor_details ?? null,
                               })
                               setEditBatchOpen(true)
                             }}

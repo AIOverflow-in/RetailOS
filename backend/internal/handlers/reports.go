@@ -47,9 +47,32 @@ func (h *ReportHandler) GSTReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get purchase GST data
+	purchaseSummary, err := queries.PurchaseGSTSummary(r.Context(), generated.PurchaseGSTSummaryParams{
+		CreatedAt:   from,
+		CreatedAt_2: to,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not generate purchase report")
+		return
+	}
+
+	purchaseSlabs, err := queries.PurchaseGSTSlabBreakdown(r.Context(), generated.PurchaseGSTSlabBreakdownParams{
+		CreatedAt:   from,
+		CreatedAt_2: to,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not generate purchase slab breakdown")
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"summary": summary,
 		"slabs":   slabs,
+		"purchase": map[string]any{
+			"summary": purchaseSummary,
+			"slabs":   purchaseSlabs,
+		},
 	})
 }
 
@@ -72,6 +95,24 @@ func (h *ReportHandler) GSTReportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	purchaseSummary, err := queries.PurchaseGSTSummary(r.Context(), generated.PurchaseGSTSummaryParams{
+		CreatedAt:   from,
+		CreatedAt_2: to,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not generate purchase report")
+		return
+	}
+
+	purchaseSlabs, err := queries.PurchaseGSTSlabBreakdown(r.Context(), generated.PurchaseGSTSlabBreakdownParams{
+		CreatedAt:   from,
+		CreatedAt_2: to,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not generate purchase slab breakdown")
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/csv")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(
 		`attachment; filename="gst_report_%s_%s.csv"`,
@@ -80,6 +121,9 @@ func (h *ReportHandler) GSTReportCSV(w http.ResponseWriter, r *http.Request) {
 	))
 
 	cw := csv.NewWriter(w)
+
+	// Output Tax (Sales)
+	cw.Write([]string{"OUTPUT TAX (SALES)"})
 	cw.Write([]string{"GST Rate", "Taxable Value", "CGST", "SGST", "IGST", "Total"})
 	for _, s := range slabs {
 		cw.Write([]string{
@@ -91,6 +135,37 @@ func (h *ReportHandler) GSTReportCSV(w http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf("%.2f", mustFloat(s.Total)),
 		})
 	}
+
+	// Blank separator
+	cw.Write([]string{})
+
+	// Input Tax (Purchases) summary
+	cw.Write([]string{"INPUT TAX (PURCHASES)"})
+	cw.Write([]string{"Total Batches", "Total Buying Value", "Total Input GST", "Total Landing Value"})
+	cw.Write([]string{
+		fmt.Sprintf("%d", purchaseSummary.TotalBatches),
+		fmt.Sprintf("%.2f", mustFloat(purchaseSummary.TotalBuyingValue)),
+		fmt.Sprintf("%.2f", mustFloat(purchaseSummary.TotalInputGst)),
+		fmt.Sprintf("%.2f", mustFloat(purchaseSummary.TotalLandingValue)),
+	})
+
+	// Blank separator
+	cw.Write([]string{})
+
+	// Purchase slab breakdown
+	if len(purchaseSlabs) > 0 {
+		cw.Write([]string{"INPUT TAX SLAB BREAKDOWN"})
+		cw.Write([]string{"GST Rate", "Buying Value", "Input GST", "Landing Value"})
+		for _, s := range purchaseSlabs {
+			cw.Write([]string{
+				fmt.Sprintf("%.0f%%", mustFloat(s.GstRate)),
+				fmt.Sprintf("%.2f", mustFloat(s.BuyingValue)),
+				fmt.Sprintf("%.2f", mustFloat(s.InputGst)),
+				fmt.Sprintf("%.2f", mustFloat(s.LandingValue)),
+			})
+		}
+	}
+
 	cw.Flush()
 }
 
