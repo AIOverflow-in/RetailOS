@@ -30,6 +30,14 @@ export interface Batch {
   available_stock: number
   box_no: string | null
   created_at: string
+  purchase_gst_rate: number | null
+  landing_price: number | null
+  distributor_details: {
+    name?: string
+    location?: string
+    phone?: string
+    invoice_no?: string
+  } | null
 }
 
 export interface InventoryRow {
@@ -48,6 +56,14 @@ export interface InventoryRow {
   sold_qty: number
   box_no: string | null
   available_stock: number
+  purchase_gst_rate: number | null
+  landing_price: number | null
+  distributor_details: {
+    name?: string
+    location?: string
+    phone?: string
+    invoice_no?: string
+  } | null
 }
 
 // ─── Customers ───────────────────────────────────────────────────────────────
@@ -171,9 +187,27 @@ export interface GSTSlab {
   total: number
 }
 
+export interface PurchaseGSTSummary {
+  total_batches: number
+  total_buying_value: number
+  total_input_gst: number
+  total_landing_value: number
+}
+
+export interface PurchaseGSTSlab {
+  gst_rate: number
+  buying_value: number
+  input_gst: number
+  landing_value: number
+}
+
 export interface GSTReport {
   summary: GSTSummary
   slabs: GSTSlab[]
+  purchase?: {
+    summary: PurchaseGSTSummary
+    slabs: PurchaseGSTSlab[]
+  }
 }
 
 // ─── Shop Settings ───────────────────────────────────────────────────────────

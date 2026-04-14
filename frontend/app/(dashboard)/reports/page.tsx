@@ -92,41 +92,85 @@ export default function ReportsPage() {
         </div>
       ) : report ? (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <StatCard label="Total Orders" value={String(s!.total_orders)} />
-            <StatCard label="Total Sales" value={fmtCurrency(s!.total_sales)} />
-            <StatCard label="Taxable Value" value={fmtCurrency(s!.taxable_value)} />
-            <StatCard label="CGST" value={fmtCurrency(s!.total_cgst)} />
-            <StatCard label="SGST" value={fmtCurrency(s!.total_sgst)} />
-            <StatCard label="IGST" value={fmtCurrency(s!.total_igst)} />
+          {/* Sales GST Section */}
+          <div className="space-y-4">
+            <h2 className="text-subtitle font-semibold text-[#111]">Output Tax (Sales)</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <StatCard label="Total Orders" value={String(s!.total_orders)} />
+              <StatCard label="Total Sales" value={fmtCurrency(s!.total_sales)} />
+              <StatCard label="Taxable Value" value={fmtCurrency(s!.taxable_value)} />
+              <StatCard label="CGST" value={fmtCurrency(s!.total_cgst)} />
+              <StatCard label="SGST" value={fmtCurrency(s!.total_sgst)} />
+              <StatCard label="IGST" value={fmtCurrency(s!.total_igst)} />
+            </div>
+
+            {report?.slabs?.length > 0 && (
+              <div className="bg-white rounded-lg border border-[#EBEBEB] overflow-x-auto">
+                <div className="px-5 py-3 border-b border-[#F2F2F2]">
+                  <p className="text-body font-semibold text-[#111]">Slab Breakdown</p>
+                </div>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#F2F2F2]">
+                      {['GST Rate', 'Taxable Value', 'CGST', 'SGST', 'IGST', 'Total'].map(h => (
+                        <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB]">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.slabs.map(slab => (
+                      <tr key={slab.gst_rate} className="border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA]">
+                        <td className="py-2.5 px-4 text-body font-medium text-[#111]">{slab.gst_rate}%</td>
+                        <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.taxable_value)}</td>
+                        <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.cgst)}</td>
+                        <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.sgst)}</td>
+                        <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.igst)}</td>
+                        <td className="py-2.5 px-4 text-body font-medium text-[#111]">{fmtCurrency(slab.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
-          {report.slabs.length > 0 && (
-            <div className="bg-white rounded-lg border border-[#EBEBEB] overflow-x-auto">
-              <div className="px-5 py-3 border-b border-[#F2F2F2]">
-                <p className="text-body font-semibold text-[#111]">Slab Breakdown</p>
+          {/* Purchase GST Section */}
+          {report?.purchase && (
+            <div className="space-y-4">
+              <h2 className="text-subtitle font-semibold text-[#111]">Input Tax (Purchases)</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <StatCard label="Total Batches" value={String(report.purchase.summary.total_batches)} />
+                <StatCard label="Buying Value" value={fmtCurrency(report.purchase.summary.total_buying_value)} />
+                <StatCard label="Input GST" value={fmtCurrency(report.purchase.summary.total_input_gst)} />
+                <StatCard label="Landing Value" value={fmtCurrency(report.purchase.summary.total_landing_value)} />
               </div>
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[#F2F2F2]">
-                    {['GST Rate', 'Taxable Value', 'CGST', 'SGST', 'IGST', 'Total'].map(h => (
-                      <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB]">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.slabs.map(slab => (
-                    <tr key={slab.gst_rate} className="border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA]">
-                      <td className="py-2.5 px-4 text-body font-medium text-[#111]">{slab.gst_rate}%</td>
-                      <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.taxable_value)}</td>
-                      <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.cgst)}</td>
-                      <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.sgst)}</td>
-                      <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.igst)}</td>
-                      <td className="py-2.5 px-4 text-body font-medium text-[#111]">{fmtCurrency(slab.total)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+              {report?.purchase?.slabs?.length > 0 && (
+                <div className="bg-white rounded-lg border border-[#EBEBEB] overflow-x-auto">
+                  <div className="px-5 py-3 border-b border-[#F2F2F2]">
+                    <p className="text-body font-semibold text-[#111]">Slab Breakdown</p>
+                  </div>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[#F2F2F2]">
+                        {['GST Rate', 'Buying Value', 'Input GST', 'Landing Value'].map(h => (
+                          <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB]">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {report.purchase.slabs.map(slab => (
+                        <tr key={slab.gst_rate} className="border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA]">
+                          <td className="py-2.5 px-4 text-body font-medium text-[#111]">{slab.gst_rate}%</td>
+                          <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.buying_value)}</td>
+                          <td className="py-2.5 px-4 text-body text-[#555]">{fmtCurrency(slab.input_gst)}</td>
+                          <td className="py-2.5 px-4 text-body font-medium text-[#111]">{fmtCurrency(slab.landing_value)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </>

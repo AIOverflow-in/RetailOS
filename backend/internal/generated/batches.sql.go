@@ -7,25 +7,29 @@ package generated
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createBatch = `-- name: CreateBatch :one
-INSERT INTO batches (product_id, batch_no, expiry_date, mrp, buying_price, selling_price, purchase_qty, box_no)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING batch_id, product_id, batch_no, expiry_date, mrp, buying_price, selling_price, purchase_qty, sold_qty, box_no, created_at
+INSERT INTO batches (product_id, batch_no, expiry_date, mrp, buying_price, selling_price, purchase_qty, box_no, purchase_gst_rate, landing_price, distributor_details)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
+RETURNING batch_id, product_id, batch_no, expiry_date, mrp, buying_price, selling_price, purchase_qty, sold_qty, box_no, created_at, purchase_gst_rate, landing_price, distributor_details
 `
 
 type CreateBatchParams struct {
-	ProductID    pgtype.UUID    `json:"product_id"`
-	BatchNo      string         `json:"batch_no"`
-	ExpiryDate   pgtype.Date    `json:"expiry_date"`
-	Mrp          pgtype.Numeric `json:"mrp"`
-	BuyingPrice  pgtype.Numeric `json:"buying_price"`
-	SellingPrice pgtype.Numeric `json:"selling_price"`
-	PurchaseQty  int32          `json:"purchase_qty"`
-	BoxNo        *string        `json:"box_no"`
+	ProductID          pgtype.UUID    `json:"product_id"`
+	BatchNo            string         `json:"batch_no"`
+	ExpiryDate         pgtype.Date    `json:"expiry_date"`
+	Mrp                pgtype.Numeric `json:"mrp"`
+	BuyingPrice        pgtype.Numeric `json:"buying_price"`
+	SellingPrice       pgtype.Numeric `json:"selling_price"`
+	PurchaseQty        int32          `json:"purchase_qty"`
+	BoxNo              *string        `json:"box_no"`
+	PurchaseGstRate    pgtype.Numeric `json:"purchase_gst_rate"`
+	LandingPrice       pgtype.Numeric `json:"landing_price"`
+	DistributorDetails *string        `json:"distributor_details"`
 }
 
 func (q *Queries) CreateBatch(ctx context.Context, arg CreateBatchParams) (Batch, error) {
@@ -38,6 +42,9 @@ func (q *Queries) CreateBatch(ctx context.Context, arg CreateBatchParams) (Batch
 		arg.SellingPrice,
 		arg.PurchaseQty,
 		arg.BoxNo,
+		arg.PurchaseGstRate,
+		arg.LandingPrice,
+		arg.DistributorDetails,
 	)
 	var i Batch
 	err := row.Scan(
@@ -52,6 +59,9 @@ func (q *Queries) CreateBatch(ctx context.Context, arg CreateBatchParams) (Batch
 		&i.SoldQty,
 		&i.BoxNo,
 		&i.CreatedAt,
+		&i.PurchaseGstRate,
+		&i.LandingPrice,
+		&i.DistributorDetails,
 	)
 	return i, err
 }
@@ -73,7 +83,7 @@ func (q *Queries) DeductBatchStock(ctx context.Context, arg DeductBatchStockPara
 }
 
 const getBatch = `-- name: GetBatch :one
-SELECT batch_id, product_id, batch_no, expiry_date, mrp, buying_price, selling_price, purchase_qty, sold_qty, box_no, created_at FROM batches WHERE batch_id = $1
+SELECT batch_id, product_id, batch_no, expiry_date, mrp, buying_price, selling_price, purchase_qty, sold_qty, box_no, created_at, purchase_gst_rate, landing_price, distributor_details FROM batches WHERE batch_id = $1
 `
 
 func (q *Queries) GetBatch(ctx context.Context, batchID pgtype.UUID) (Batch, error) {
@@ -91,12 +101,15 @@ func (q *Queries) GetBatch(ctx context.Context, batchID pgtype.UUID) (Batch, err
 		&i.SoldQty,
 		&i.BoxNo,
 		&i.CreatedAt,
+		&i.PurchaseGstRate,
+		&i.LandingPrice,
+		&i.DistributorDetails,
 	)
 	return i, err
 }
 
 const listActiveBatchesForProduct = `-- name: ListActiveBatchesForProduct :many
-SELECT b.batch_id, b.product_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price, b.purchase_qty, b.sold_qty, b.box_no, b.created_at,
+SELECT b.batch_id, b.product_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price, b.purchase_qty, b.sold_qty, b.box_no, b.created_at, b.purchase_gst_rate, b.landing_price, b.distributor_details,
        (b.purchase_qty - b.sold_qty) AS available_stock
 FROM batches b
 WHERE b.product_id = $1
@@ -106,18 +119,21 @@ ORDER BY b.expiry_date ASC
 `
 
 type ListActiveBatchesForProductRow struct {
-	BatchID        pgtype.UUID        `json:"batch_id"`
-	ProductID      pgtype.UUID        `json:"product_id"`
-	BatchNo        string             `json:"batch_no"`
-	ExpiryDate     pgtype.Date        `json:"expiry_date"`
-	Mrp            pgtype.Numeric     `json:"mrp"`
-	BuyingPrice    pgtype.Numeric     `json:"buying_price"`
-	SellingPrice   pgtype.Numeric     `json:"selling_price"`
-	PurchaseQty    int32              `json:"purchase_qty"`
-	SoldQty        int32              `json:"sold_qty"`
-	BoxNo          *string            `json:"box_no"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	AvailableStock int32              `json:"available_stock"`
+	BatchID            pgtype.UUID        `json:"batch_id"`
+	ProductID          pgtype.UUID        `json:"product_id"`
+	BatchNo            string             `json:"batch_no"`
+	ExpiryDate         pgtype.Date        `json:"expiry_date"`
+	Mrp                pgtype.Numeric     `json:"mrp"`
+	BuyingPrice        pgtype.Numeric     `json:"buying_price"`
+	SellingPrice       pgtype.Numeric     `json:"selling_price"`
+	PurchaseQty        int32              `json:"purchase_qty"`
+	SoldQty            int32              `json:"sold_qty"`
+	BoxNo              *string            `json:"box_no"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	PurchaseGstRate    pgtype.Numeric     `json:"purchase_gst_rate"`
+	LandingPrice       pgtype.Numeric     `json:"landing_price"`
+	DistributorDetails []byte             `json:"distributor_details"`
+	AvailableStock     int32              `json:"available_stock"`
 }
 
 func (q *Queries) ListActiveBatchesForProduct(ctx context.Context, productID pgtype.UUID) ([]ListActiveBatchesForProductRow, error) {
@@ -141,6 +157,9 @@ func (q *Queries) ListActiveBatchesForProduct(ctx context.Context, productID pgt
 			&i.SoldQty,
 			&i.BoxNo,
 			&i.CreatedAt,
+			&i.PurchaseGstRate,
+			&i.LandingPrice,
+			&i.DistributorDetails,
 			&i.AvailableStock,
 		); err != nil {
 			return nil, err
@@ -154,7 +173,7 @@ func (q *Queries) ListActiveBatchesForProduct(ctx context.Context, productID pgt
 }
 
 const listBatchesForProduct = `-- name: ListBatchesForProduct :many
-SELECT b.batch_id, b.product_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price, b.purchase_qty, b.sold_qty, b.box_no, b.created_at,
+SELECT b.batch_id, b.product_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price, b.purchase_qty, b.sold_qty, b.box_no, b.created_at, b.purchase_gst_rate, b.landing_price, b.distributor_details,
        (b.purchase_qty - b.sold_qty) AS available_stock
 FROM batches b
 WHERE b.product_id = $1
@@ -162,18 +181,21 @@ ORDER BY b.created_at DESC
 `
 
 type ListBatchesForProductRow struct {
-	BatchID        pgtype.UUID        `json:"batch_id"`
-	ProductID      pgtype.UUID        `json:"product_id"`
-	BatchNo        string             `json:"batch_no"`
-	ExpiryDate     pgtype.Date        `json:"expiry_date"`
-	Mrp            pgtype.Numeric     `json:"mrp"`
-	BuyingPrice    pgtype.Numeric     `json:"buying_price"`
-	SellingPrice   pgtype.Numeric     `json:"selling_price"`
-	PurchaseQty    int32              `json:"purchase_qty"`
-	SoldQty        int32              `json:"sold_qty"`
-	BoxNo          *string            `json:"box_no"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	AvailableStock int32              `json:"available_stock"`
+	BatchID            pgtype.UUID        `json:"batch_id"`
+	ProductID          pgtype.UUID        `json:"product_id"`
+	BatchNo            string             `json:"batch_no"`
+	ExpiryDate         pgtype.Date        `json:"expiry_date"`
+	Mrp                pgtype.Numeric     `json:"mrp"`
+	BuyingPrice        pgtype.Numeric     `json:"buying_price"`
+	SellingPrice       pgtype.Numeric     `json:"selling_price"`
+	PurchaseQty        int32              `json:"purchase_qty"`
+	SoldQty            int32              `json:"sold_qty"`
+	BoxNo              *string            `json:"box_no"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	PurchaseGstRate    pgtype.Numeric     `json:"purchase_gst_rate"`
+	LandingPrice       pgtype.Numeric     `json:"landing_price"`
+	DistributorDetails []byte             `json:"distributor_details"`
+	AvailableStock     int32              `json:"available_stock"`
 }
 
 func (q *Queries) ListBatchesForProduct(ctx context.Context, productID pgtype.UUID) ([]ListBatchesForProductRow, error) {
@@ -197,6 +219,9 @@ func (q *Queries) ListBatchesForProduct(ctx context.Context, productID pgtype.UU
 			&i.SoldQty,
 			&i.BoxNo,
 			&i.CreatedAt,
+			&i.PurchaseGstRate,
+			&i.LandingPrice,
+			&i.DistributorDetails,
 			&i.AvailableStock,
 		); err != nil {
 			return nil, err
@@ -212,7 +237,7 @@ func (q *Queries) ListBatchesForProduct(ctx context.Context, productID pgtype.UU
 const listInventory = `-- name: ListInventory :many
 SELECT p.product_id, p.name, p.company_name, p.sku, p.hsn_code,
        b.batch_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price,
-       b.purchase_qty, b.sold_qty, b.box_no,
+       b.purchase_qty, b.sold_qty, b.box_no, b.purchase_gst_rate, b.landing_price, b.distributor_details,
        (b.purchase_qty - b.sold_qty) AS available_stock
 FROM products p
 JOIN batches b ON b.product_id = p.product_id
@@ -220,21 +245,24 @@ ORDER BY p.name, b.expiry_date ASC
 `
 
 type ListInventoryRow struct {
-	ProductID      pgtype.UUID    `json:"product_id"`
-	Name           string         `json:"name"`
-	CompanyName    string         `json:"company_name"`
-	Sku            *string        `json:"sku"`
-	HsnCode        *string        `json:"hsn_code"`
-	BatchID        pgtype.UUID    `json:"batch_id"`
-	BatchNo        string         `json:"batch_no"`
-	ExpiryDate     pgtype.Date    `json:"expiry_date"`
-	Mrp            pgtype.Numeric `json:"mrp"`
-	BuyingPrice    pgtype.Numeric `json:"buying_price"`
-	SellingPrice   pgtype.Numeric `json:"selling_price"`
-	PurchaseQty    int32          `json:"purchase_qty"`
-	SoldQty        int32          `json:"sold_qty"`
-	BoxNo          *string        `json:"box_no"`
-	AvailableStock int32          `json:"available_stock"`
+	ProductID          pgtype.UUID    `json:"product_id"`
+	Name               string         `json:"name"`
+	CompanyName        string         `json:"company_name"`
+	Sku                *string        `json:"sku"`
+	HsnCode            *string        `json:"hsn_code"`
+	BatchID            pgtype.UUID    `json:"batch_id"`
+	BatchNo            string         `json:"batch_no"`
+	ExpiryDate         pgtype.Date    `json:"expiry_date"`
+	Mrp                pgtype.Numeric `json:"mrp"`
+	BuyingPrice        pgtype.Numeric `json:"buying_price"`
+	SellingPrice       pgtype.Numeric `json:"selling_price"`
+	PurchaseQty        int32          `json:"purchase_qty"`
+	SoldQty            int32          `json:"sold_qty"`
+	BoxNo              *string        `json:"box_no"`
+	PurchaseGstRate    pgtype.Numeric `json:"purchase_gst_rate"`
+	LandingPrice       pgtype.Numeric `json:"landing_price"`
+	DistributorDetails json.RawMessage `json:"distributor_details"`
+	AvailableStock     int32          `json:"available_stock"`
 }
 
 func (q *Queries) ListInventory(ctx context.Context) ([]ListInventoryRow, error) {
@@ -261,6 +289,9 @@ func (q *Queries) ListInventory(ctx context.Context) ([]ListInventoryRow, error)
 			&i.PurchaseQty,
 			&i.SoldQty,
 			&i.BoxNo,
+			&i.PurchaseGstRate,
+			&i.LandingPrice,
+			&i.DistributorDetails,
 			&i.AvailableStock,
 		); err != nil {
 			return nil, err
@@ -312,19 +343,23 @@ func (q *Queries) RestoreBatchStock(ctx context.Context, arg RestoreBatchStockPa
 const updateBatch = `-- name: UpdateBatch :one
 UPDATE batches
 SET buying_price = $2, selling_price = $3, mrp = $4,
-    expiry_date = $5, purchase_qty = $6, box_no = $7
+    expiry_date = $5, purchase_qty = $6, box_no = $7,
+    purchase_gst_rate = $8, landing_price = $9, distributor_details = $10::jsonb
 WHERE batch_id = $1
-RETURNING batch_id, product_id, batch_no, expiry_date, mrp, buying_price, selling_price, purchase_qty, sold_qty, box_no, created_at
+RETURNING batch_id, product_id, batch_no, expiry_date, mrp, buying_price, selling_price, purchase_qty, sold_qty, box_no, created_at, purchase_gst_rate, landing_price, distributor_details
 `
 
 type UpdateBatchParams struct {
-	BatchID      pgtype.UUID    `json:"batch_id"`
-	BuyingPrice  pgtype.Numeric `json:"buying_price"`
-	SellingPrice pgtype.Numeric `json:"selling_price"`
-	Mrp          pgtype.Numeric `json:"mrp"`
-	ExpiryDate   pgtype.Date    `json:"expiry_date"`
-	PurchaseQty  int32          `json:"purchase_qty"`
-	BoxNo        *string        `json:"box_no"`
+	BatchID            pgtype.UUID    `json:"batch_id"`
+	BuyingPrice        pgtype.Numeric `json:"buying_price"`
+	SellingPrice       pgtype.Numeric `json:"selling_price"`
+	Mrp                pgtype.Numeric `json:"mrp"`
+	ExpiryDate         pgtype.Date    `json:"expiry_date"`
+	PurchaseQty        int32          `json:"purchase_qty"`
+	BoxNo              *string        `json:"box_no"`
+	PurchaseGstRate    pgtype.Numeric `json:"purchase_gst_rate"`
+	LandingPrice       pgtype.Numeric `json:"landing_price"`
+	DistributorDetails *string        `json:"distributor_details"`
 }
 
 func (q *Queries) UpdateBatch(ctx context.Context, arg UpdateBatchParams) (Batch, error) {
@@ -336,6 +371,9 @@ func (q *Queries) UpdateBatch(ctx context.Context, arg UpdateBatchParams) (Batch
 		arg.ExpiryDate,
 		arg.PurchaseQty,
 		arg.BoxNo,
+		arg.PurchaseGstRate,
+		arg.LandingPrice,
+		arg.DistributorDetails,
 	)
 	var i Batch
 	err := row.Scan(
@@ -350,6 +388,9 @@ func (q *Queries) UpdateBatch(ctx context.Context, arg UpdateBatchParams) (Batch
 		&i.SoldQty,
 		&i.BoxNo,
 		&i.CreatedAt,
+		&i.PurchaseGstRate,
+		&i.LandingPrice,
+		&i.DistributorDetails,
 	)
 	return i, err
 }

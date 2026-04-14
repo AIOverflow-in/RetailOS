@@ -111,3 +111,90 @@ func (q *Queries) GSTSlabBreakdown(ctx context.Context, arg GSTSlabBreakdownPara
 	}
 	return items, nil
 }
+
+const purchaseGSTSlabBreakdown = `-- name: PurchaseGSTSlabBreakdown :many
+SELECT
+    b.purchase_gst_rate AS gst_rate,
+    COALESCE(SUM(b.buying_price * b.purchase_qty), 0)::numeric(14,2)   AS buying_value,
+    COALESCE(SUM((b.landing_price - b.buying_price) * b.purchase_qty), 0)::numeric(14,2) AS input_gst,
+    COALESCE(SUM(b.landing_price * b.purchase_qty), 0)::numeric(14,2)   AS landing_value
+FROM batches b
+WHERE b.created_at >= $1
+  AND b.created_at <= $2
+  AND b.purchase_gst_rate IS NOT NULL
+GROUP BY b.purchase_gst_rate
+ORDER BY b.purchase_gst_rate
+`
+
+type PurchaseGSTSlabBreakdownParams struct {
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	CreatedAt_2 pgtype.Timestamptz `json:"created_at_2"`
+}
+
+type PurchaseGSTSlabBreakdownRow struct {
+	GstRate      pgtype.Numeric `json:"gst_rate"`
+	BuyingValue  pgtype.Numeric `json:"buying_value"`
+	InputGst     pgtype.Numeric `json:"input_gst"`
+	LandingValue pgtype.Numeric `json:"landing_value"`
+}
+
+func (q *Queries) PurchaseGSTSlabBreakdown(ctx context.Context, arg PurchaseGSTSlabBreakdownParams) ([]PurchaseGSTSlabBreakdownRow, error) {
+	rows, err := q.db.Query(ctx, purchaseGSTSlabBreakdown, arg.CreatedAt, arg.CreatedAt_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PurchaseGSTSlabBreakdownRow
+	for rows.Next() {
+		var i PurchaseGSTSlabBreakdownRow
+		if err := rows.Scan(
+			&i.GstRate,
+			&i.BuyingValue,
+			&i.InputGst,
+			&i.LandingValue,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const purchaseGSTSummary = `-- name: PurchaseGSTSummary :one
+SELECT
+    COUNT(*)::bigint                                               AS total_batches,
+    COALESCE(SUM(b.buying_price * b.purchase_qty), 0)::numeric(14,2)   AS total_buying_value,
+    COALESCE(SUM((b.landing_price - b.buying_price) * b.purchase_qty), 0)::numeric(14,2) AS total_input_gst,
+    COALESCE(SUM(b.landing_price * b.purchase_qty), 0)::numeric(14,2)   AS total_landing_value
+FROM batches b
+WHERE b.created_at >= $1
+  AND b.created_at <= $2
+  AND b.purchase_gst_rate IS NOT NULL
+`
+
+type PurchaseGSTSummaryParams struct {
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	CreatedAt_2 pgtype.Timestamptz `json:"created_at_2"`
+}
+
+type PurchaseGSTSummaryRow struct {
+	TotalBatches      int64          `json:"total_batches"`
+	TotalBuyingValue  pgtype.Numeric `json:"total_buying_value"`
+	TotalInputGst     pgtype.Numeric `json:"total_input_gst"`
+	TotalLandingValue pgtype.Numeric `json:"total_landing_value"`
+}
+
+func (q *Queries) PurchaseGSTSummary(ctx context.Context, arg PurchaseGSTSummaryParams) (PurchaseGSTSummaryRow, error) {
+	row := q.db.QueryRow(ctx, purchaseGSTSummary, arg.CreatedAt, arg.CreatedAt_2)
+	var i PurchaseGSTSummaryRow
+	err := row.Scan(
+		&i.TotalBatches,
+		&i.TotalBuyingValue,
+		&i.TotalInputGst,
+		&i.TotalLandingValue,
+	)
+	return i, err
+}
