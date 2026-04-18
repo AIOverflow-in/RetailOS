@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { MessageCircle } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
-import { generateBill } from '@/lib/generateBill'
+import { generateBill, sendBillViaWhatsApp } from '@/lib/generateBill'
+import type { BillData } from '@/lib/generateBill'
 import { clearCart, setIsInState, setPaymentMode, selectCartTotals } from '@/store/cartSlice'
 import type { RootState } from '@/store'
 import CustomerLookup from '@/components/billing/CustomerLookup'
@@ -21,6 +23,7 @@ export default function BillingPage() {
   const totals    = useSelector(selectCartTotals)
   const [addKey, setAddKey] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [lastBill, setLastBill] = useState<BillData | null>(null)
 
   async function completeOrder() {
     if (items.length === 0) { toast.error('Add at least one item'); return }
@@ -73,7 +76,7 @@ export default function BillingPage() {
           lineTotal: parseFloat((taxable + totalTax).toFixed(2)),
         }
       })
-      await generateBill({
+      const billData: BillData = {
         orderNumber: order.order_number,
         orderDate: order.created_at,
         customerName: cartCustomer.name || null,
@@ -88,7 +91,9 @@ export default function BillingPage() {
         totalAmount: order.total_amount,
         settings,
         shopName,
-      })
+      }
+      await generateBill(billData)
+      if (billData.customerPhone) setLastBill(billData)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to create order')
     } finally {
@@ -100,6 +105,29 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-5">
+
+      {/* WhatsApp send banner */}
+      {lastBill?.customerPhone && (
+        <div className="flex items-center justify-between bg-[#F6FFF6] border border-emerald-200 rounded-lg px-4 py-2.5">
+          <p className="text-body-sm text-emerald-700">
+            Bill ready — send to {lastBill.customerPhone} on WhatsApp?
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={async () => { await sendBillViaWhatsApp(lastBill); setLastBill(null) }}
+              className="flex items-center gap-1.5 text-body-sm font-medium text-emerald-700 hover:text-emerald-900 transition-colors"
+            >
+              <MessageCircle className="w-3.5 h-3.5" /> Send Bill
+            </button>
+            <button
+              onClick={() => setLastBill(null)}
+              className="text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-start justify-between">

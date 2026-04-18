@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Printer } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import type { OrderDetail, ShopSettings } from '@/types'
 import { fmtCurrency, fmtDate } from '@/lib/gst'
-import { buildBillData, generateBill } from '@/lib/generateBill'
+import { buildBillData, generateBill, sendBillViaWhatsApp } from '@/lib/generateBill'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -100,6 +100,18 @@ export default function OrderDetailPage() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          )}
+          {order.customer_phone && (
+            <button
+              onClick={async () => {
+                if (!data || !settings) return
+                const shopName = localStorage.getItem('shop_name') ?? ''
+                await sendBillViaWhatsApp(buildBillData(data, settings, shopName))
+              }}
+              className="flex items-center gap-1.5 text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors"
+            >
+              <MessageCircle className="w-3.5 h-3.5" /> Send Bill
+            </button>
           )}
           <button
             onClick={async () => {

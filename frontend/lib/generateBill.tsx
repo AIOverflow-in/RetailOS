@@ -43,7 +43,7 @@ export function buildBillData(
   }
 }
 
-export async function generateBill(data: BillData): Promise<void> {
+async function buildPdfBlob(data: BillData): Promise<Blob> {
   let googleReviewQr: string | undefined
   if (data.settings.google_review_link) {
     const QRCode = await import('qrcode')
@@ -54,8 +54,31 @@ export async function generateBill(data: BillData): Promise<void> {
   }
   const { pdf } = await import('@react-pdf/renderer')
   const { BillDocument } = await import('@/components/bill/BillDocument')
-  const blob = await pdf(<BillDocument data={{ ...data, googleReviewQr }} />).toBlob()
+  return pdf(<BillDocument data={{ ...data, googleReviewQr }} />).toBlob()
+}
+
+export async function generateBill(data: BillData): Promise<void> {
+  const blob = await buildPdfBlob(data)
   const url = URL.createObjectURL(blob)
   window.open(url, '_blank')
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
+}
+
+export async function sendBillViaWhatsApp(data: BillData): Promise<void> {
+  const blob = await buildPdfBlob(data)
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `Bill-${data.orderNumber}.pdf`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+
+  const digits = (data.customerPhone ?? '').replace(/\D/g, '')
+  const waPhone = digits.startsWith('91') ? digits : `91${digits}`
+  const text = encodeURIComponent(
+    `Hi ${data.customerName ?? 'there'}, your bill for order ${data.orderNumber} from ${data.shopName} is ₹${data.totalAmount}. Please find the PDF attached.`,
+  )
+  window.open(`https://wa.me/${waPhone}?text=${text}`, '_blank')
 }
