@@ -10,14 +10,6 @@
 
 ## Backend
 
-### ENV (`backend/.env`)
-
-```env
-DATABASE_URL=postgresql://neondb_owner:npg_X1nhs4cdOiaJ@ep-ancient-surf-adyu7k5y-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-JWT_SECRET=retailos-super-secret-jwt-key-2025
-ADMIN_SECRET_KEY=retailos-admin-2025
-PORT=8080
-```
 
 ### Run
 
