@@ -9,7 +9,8 @@ ALTER TABLE batches
 ALTER TABLE batches DROP CONSTRAINT IF EXISTS batches_buying_price_selling_price_mrp_check;
 ALTER TABLE batches DROP CONSTRAINT IF EXISTS "batches_buying_price_selling_price_mrp_check";
 
--- Add the new constraint that accounts for landing_price
+-- Add the new constraint that accounts for landing_price (drop first to make idempotent)
+ALTER TABLE batches DROP CONSTRAINT IF EXISTS batches_price_check;
 ALTER TABLE batches ADD CONSTRAINT batches_price_check
   CHECK (
     COALESCE(landing_price, buying_price) < selling_price

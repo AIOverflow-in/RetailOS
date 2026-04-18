@@ -69,6 +69,7 @@ func main() {
 	dashboardHandler := handlers.NewDashboardHandler(pool)
 	reportHandler := handlers.NewReportHandler(pool)
 	settingsHandler := handlers.NewSettingsHandler(pool)
+	distributorHandler := handlers.NewDistributorHandler(pool)
 
 	// Router
 	r := chi.NewRouter()
@@ -144,6 +145,13 @@ func main() {
 		// Reports
 		r.Get("/reports/gst", reportHandler.GSTReport)
 		r.Get("/reports/gst/export", reportHandler.GSTReportCSV)
+
+		// Distributors
+		r.Get("/distributors", distributorHandler.ListDistributors)
+		r.Post("/distributors", distributorHandler.CreateDistributor)
+		r.Put("/distributors/{id}", distributorHandler.UpdateDistributor)
+		r.Delete("/distributors/{id}", distributorHandler.DeleteDistributor)
+		r.Get("/distributors/{id}/batches", distributorHandler.ListBatchesByDistributor)
 
 		// Settings
 		r.Get("/settings", settingsHandler.GetSettings)

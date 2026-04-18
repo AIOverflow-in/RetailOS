@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
-import type { Product } from '@/types'
+import type { Distributor, Product } from '@/types'
 import { useProductSearch } from '@/lib/useProductSearch'
+import { getCachedDistributors, setCachedDistributors } from '@/lib/distributorCache'
 import { ArrowLeft } from 'lucide-react'
 
 export default function AddStockPage() {
@@ -28,11 +29,19 @@ export default function AddStockPage() {
   const [purchaseQty, setPurchaseQty] = useState('')
   const [boxNo, setBoxNo] = useState('')
   const [purchaseGSTRate, setPurchaseGSTRate] = useState<number | ''>('')
-  const [distributorName, setDistributorName] = useState('')
-  const [distributorLocation, setDistributorLocation] = useState('')
-  const [distributorPhone, setDistributorPhone] = useState('')
-  const [distributorInvoiceNo, setDistributorInvoiceNo] = useState('')
+  const [distributorId, setDistributorId] = useState('')
+  const [purchaseInvoiceNo, setPurchaseInvoiceNo] = useState('')
+  const [distributors, setDistributors] = useState<Distributor[]>([])
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const cached = getCachedDistributors()
+    if (cached) { setDistributors(cached); return }
+    api.listDistributors().then(list => {
+      setDistributors(list ?? [])
+      setCachedDistributors(list ?? [])
+    }).catch(() => {})
+  }, [])
 
   function selectProduct(p: Product) {
     setSelectedProduct(p)
@@ -78,22 +87,14 @@ export default function AddStockPage() {
         }) as { product_id: string }
         productId = p.product_id
       }
-      const distributorDetails = (distributorName || distributorLocation || distributorPhone || distributorInvoiceNo)
-        ? {
-            name: distributorName || undefined,
-            location: distributorLocation || undefined,
-            phone: distributorPhone || undefined,
-            invoice_no: distributorInvoiceNo || undefined,
-          }
-        : null
-
       await api.createBatch({
         product_id: productId, batch_no: batchNo, expiry_date: expiryDate,
         mrp: parseFloat(mrp), buying_price: parseFloat(buyingPrice),
         selling_price: parseFloat(sellingPrice), purchase_qty: parseInt(purchaseQty),
         box_no: boxNo || null,
         purchase_gst_rate: typeof purchaseGSTRate === 'number' ? purchaseGSTRate : undefined,
-        distributor_details: distributorDetails,
+        distributor_id: distributorId || null,
+        purchase_invoice_no: purchaseInvoiceNo.trim() || null,
       })
       toast.success('Stock added')
       router.push('/inventory')
@@ -257,26 +258,23 @@ export default function AddStockPage() {
 
           </div>
 
-          {/* Right column: Distributor Details + Submit */}
+          {/* Right column: Distributor + Submit */}
           <div className="flex flex-col gap-4">
             <div className="bg-white rounded-lg border border-[#EBEBEB] p-4 space-y-3">
-              <p className="text-caption font-medium text-[#BBBBBB]">Distributor Details <span className="font-normal text-[#DDDDDD]">(optional)</span></p>
+              <p className="text-caption font-medium text-[#BBBBBB]">Distributor <span className="font-normal text-[#DDDDDD]">(optional)</span></p>
               <div className="space-y-2.5">
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Distributor name</p>
-                  <input className={inp} placeholder="e.g., ABC Pharma" value={distributorName} onChange={e => setDistributorName(e.target.value)} />
+                  <p className="text-caption text-[#BBBBBB]">Distributor</p>
+                  <select className={inp} value={distributorId} onChange={e => setDistributorId(e.target.value)}>
+                    <option value="">None</option>
+                    {distributors.filter(d => d.is_active).map(d => (
+                      <option key={d.distributor_id} value={d.distributor_id}>{d.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Location</p>
-                  <input className={inp} placeholder="e.g., Mumbai" value={distributorLocation} onChange={e => setDistributorLocation(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Phone</p>
-                  <input className={inp} placeholder="e.g., 9876543210" value={distributorPhone} onChange={e => setDistributorPhone(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Invoice no.</p>
-                  <input className={inp} placeholder="e.g., INV-2026-001" value={distributorInvoiceNo} onChange={e => setDistributorInvoiceNo(e.target.value)} />
+                  <p className="text-caption text-[#BBBBBB]">Purchase Invoice No.</p>
+                  <input className={inp} placeholder="e.g., INV-2026-001" value={purchaseInvoiceNo} onChange={e => setPurchaseInvoiceNo(e.target.value)} />
                 </div>
               </div>
             </div>

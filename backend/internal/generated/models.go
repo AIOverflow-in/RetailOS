@@ -5,8 +5,6 @@
 package generated
 
 import (
-	"encoding/json"
-
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -24,7 +22,9 @@ type Batch struct {
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	PurchaseGstRate    pgtype.Numeric     `json:"purchase_gst_rate"`
 	LandingPrice       pgtype.Numeric     `json:"landing_price"`
-	DistributorDetails json.RawMessage    `json:"distributor_details"`
+	DistributorDetails []byte             `json:"distributor_details"`
+	DistributorID      pgtype.UUID        `json:"distributor_id"`
+	PurchaseInvoiceNo  *string            `json:"purchase_invoice_no"`
 }
 
 type Customer struct {
@@ -34,6 +34,16 @@ type Customer struct {
 	Age        *int32             `json:"age"`
 	VisitCount int32              `json:"visit_count"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
+type Distributor struct {
+	DistributorID pgtype.UUID        `json:"distributor_id"`
+	Name          string             `json:"name"`
+	Phone         *string            `json:"phone"`
+	Address       *string            `json:"address"`
+	Email         *string            `json:"email"`
+	IsActive      bool               `json:"is_active"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }
 
 type Order struct {

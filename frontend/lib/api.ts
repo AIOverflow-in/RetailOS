@@ -1,4 +1,4 @@
-import type { ShopSettings } from '@/types'
+import type { Distributor, DistributorBatchRow, ShopSettings } from '@/types'
 import { toast } from 'sonner'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
@@ -91,8 +91,9 @@ export const api = {
   updateBatch: (id: string, data: {
     buying_price: number; selling_price: number; mrp: number;
     expiry_date: string; purchase_qty: number; box_no?: string | null;
-    purchase_gst_rate?: number;
-    distributor_details?: { name?: string; location?: string; phone?: string; invoice_no?: string } | null
+    purchase_gst_rate?: number | null;
+    distributor_id?: string | null;
+    purchase_invoice_no?: string | null;
   }) =>
     request(`/batches/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
@@ -137,6 +138,18 @@ export const api = {
     request<any>(`/reports/gst?from=${from}&to=${to}`),
   gstReportExportURL: (from: string, to: string) =>
     `${BASE_URL}/reports/gst/export?from=${from}&to=${to}`,
+
+  // Distributors
+  listDistributors: (q = '') =>
+    request<Distributor[]>(`/distributors?q=${encodeURIComponent(q)}`),
+  createDistributor: (data: { name: string; phone?: string | null; address?: string | null; email?: string | null }) =>
+    request<Distributor>('/distributors', { method: 'POST', body: JSON.stringify(data) }),
+  updateDistributor: (id: string, data: { name: string; phone?: string | null; address?: string | null; email?: string | null; is_active: boolean }) =>
+    request<Distributor>(`/distributors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteDistributor: (id: string) =>
+    request(`/distributors/${id}`, { method: 'DELETE' }),
+  listBatchesByDistributor: (id: string) =>
+    request<DistributorBatchRow[]>(`/distributors/${id}/batches`),
 
   // Settings
   getSettings: () => request<ShopSettings>('/settings'),

@@ -23,6 +23,7 @@ var tenantMigrations = []string{
 	"internal/migrations/tenant/000006_add_payment_mode_to_orders.up.sql",
 	"internal/migrations/tenant/000007_create_stock_adjustments.up.sql",
 	"internal/migrations/tenant/000008_add_purchase_gst_to_batches.up.sql",
+	"internal/migrations/tenant/000009_create_distributors_and_migrate.up.sql",
 }
 
 // RunPublicMigrations runs migrations in migrations/public/ against the public schema.

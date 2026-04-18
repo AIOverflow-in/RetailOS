@@ -1,6 +1,6 @@
 -- name: CreateBatch :one
-INSERT INTO batches (product_id, batch_no, expiry_date, mrp, buying_price, selling_price, purchase_qty, box_no, purchase_gst_rate, landing_price, distributor_details)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
+INSERT INTO batches (product_id, batch_no, expiry_date, mrp, buying_price, selling_price, purchase_qty, box_no, purchase_gst_rate, landing_price, distributor_id, purchase_invoice_no)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 RETURNING *;
 
 -- name: ListBatchesForProduct :many
@@ -42,15 +42,18 @@ SELECT * FROM batches WHERE batch_id = $1;
 UPDATE batches
 SET buying_price = $2, selling_price = $3, mrp = $4,
     expiry_date = $5, purchase_qty = $6, box_no = $7,
-    purchase_gst_rate = $8, landing_price = $9, distributor_details = $10::jsonb
+    purchase_gst_rate = $8, landing_price = $9, distributor_id = $10, purchase_invoice_no = $11
 WHERE batch_id = $1
 RETURNING *;
 
 -- name: ListInventory :many
 SELECT p.product_id, p.name, p.company_name, p.sku, p.hsn_code,
        b.batch_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price,
-       b.purchase_qty, b.sold_qty, b.box_no, b.purchase_gst_rate, b.landing_price, b.distributor_details,
+       b.purchase_qty, b.sold_qty, b.box_no, b.purchase_gst_rate, b.landing_price,
+       b.distributor_id, b.purchase_invoice_no,
+       d.name AS distributor_name,
        (b.purchase_qty - b.sold_qty) AS available_stock
 FROM products p
 JOIN batches b ON b.product_id = p.product_id
+LEFT JOIN distributors d ON d.distributor_id = b.distributor_id
 ORDER BY p.name, b.expiry_date ASC;

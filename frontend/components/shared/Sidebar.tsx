@@ -8,17 +8,18 @@ import type { RootState } from '@/store'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Receipt, Package, ClipboardList, BarChart2,
-  Users, LogOut, Plus, Settings,
+  Users, LogOut, Plus, Settings, Truck,
 } from 'lucide-react'
 
 const NAV = [
-  { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-  { href: '/billing',   label: 'Billing',   Icon: Receipt },
-  { href: '/inventory', label: 'Inventory', Icon: Package },
-  { href: '/orders',    label: 'Orders',    Icon: ClipboardList },
-  { href: '/customers', label: 'Customers', Icon: Users },
-  { href: '/reports',   label: 'Reports',   Icon: BarChart2 },
-  { href: '/settings',  label: 'Settings',  Icon: Settings },
+  { href: '/dashboard',    label: 'Dashboard',    Icon: LayoutDashboard },
+  { href: '/billing',      label: 'Billing',      Icon: Receipt },
+  { href: '/inventory',    label: 'Inventory',    Icon: Package },
+  { href: '/distributors', label: 'Distributors', Icon: Truck },
+  { href: '/orders',       label: 'Orders',       Icon: ClipboardList },
+  { href: '/customers',    label: 'Customers',    Icon: Users },
+  { href: '/reports',      label: 'Reports',      Icon: BarChart2 },
+  { href: '/settings',     label: 'Settings',     Icon: Settings },
 ]
 
 export default function Sidebar() {

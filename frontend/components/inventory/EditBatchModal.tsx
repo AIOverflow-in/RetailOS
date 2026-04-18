@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
+import { getCachedDistributors, setCachedDistributors } from '@/lib/distributorCache'
+import type { Distributor } from '@/types'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -19,12 +21,8 @@ interface BatchInfo {
   box_no: string | null
   purchase_gst_rate: number | null
   landing_price: number | null
-  distributor_details: {
-    name?: string
-    location?: string
-    phone?: string
-    invoice_no?: string
-  } | null
+  distributor_id: string | null
+  purchase_invoice_no: string | null
 }
 
 interface Props {
@@ -45,12 +43,19 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
   const [purchaseQty, setPurchaseQty] = useState('')
   const [boxNo, setBoxNo] = useState('')
   const [purchaseGSTRate, setPurchaseGSTRate] = useState<number | ''>('')
-  const [distributorName, setDistributorName] = useState('')
-  const [distributorLocation, setDistributorLocation] = useState('')
-  const [distributorPhone, setDistributorPhone] = useState('')
-  const [distributorInvoiceNo, setDistributorInvoiceNo] = useState('')
-  const [showDistributorDetails, setShowDistributorDetails] = useState(false)
+  const [distributorId, setDistributorId] = useState('')
+  const [purchaseInvoiceNo, setPurchaseInvoiceNo] = useState('')
+  const [distributors, setDistributors] = useState<Distributor[]>([])
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const cached = getCachedDistributors()
+    if (cached) { setDistributors(cached); return }
+    api.listDistributors().then(list => {
+      setDistributors(list ?? [])
+      setCachedDistributors(list ?? [])
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (open && batch) {
@@ -61,11 +66,8 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
       setPurchaseQty(String(batch.purchase_qty))
       setBoxNo(batch.box_no ?? '')
       setPurchaseGSTRate(batch.purchase_gst_rate ?? '')
-      setDistributorName(batch.distributor_details?.name ?? '')
-      setDistributorLocation(batch.distributor_details?.location ?? '')
-      setDistributorPhone(batch.distributor_details?.phone ?? '')
-      setDistributorInvoiceNo(batch.distributor_details?.invoice_no ?? '')
-      setShowDistributorDetails(!!(batch.distributor_details && Object.values(batch.distributor_details).some(v => v)))
+      setDistributorId(batch.distributor_id ?? '')
+      setPurchaseInvoiceNo(batch.purchase_invoice_no ?? '')
     }
   }, [open, batch])
 
@@ -94,15 +96,6 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
       return
     }
 
-    const distributorDetails = (distributorName || distributorLocation || distributorPhone || distributorInvoiceNo)
-      ? {
-          name: distributorName || undefined,
-          location: distributorLocation || undefined,
-          phone: distributorPhone || undefined,
-          invoice_no: distributorInvoiceNo || undefined,
-        }
-      : null
-
     setSaving(true)
     try {
       await api.updateBatch(batch.batch_id, {
@@ -112,8 +105,9 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
         expiry_date: expiryDate,
         purchase_qty: pq,
         box_no: boxNo.trim() || null,
-        purchase_gst_rate: typeof purchaseGSTRate === 'number' ? purchaseGSTRate : undefined,
-        distributor_details: distributorDetails,
+        purchase_gst_rate: typeof purchaseGSTRate === 'number' ? purchaseGSTRate : null,
+        distributor_id: distributorId || null,
+        purchase_invoice_no: purchaseInvoiceNo.trim() || null,
       })
       toast.success('Batch updated')
       onOpenChange(false)
@@ -193,35 +187,20 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
               </div>
             )}
           </div>
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => setShowDistributorDetails(!showDistributorDetails)}
-              className="flex items-center gap-2 text-caption font-medium text-[#BBBBBB] hover:text-[#111] transition-colors"
-            >
-              <span className="text-lg">{showDistributorDetails ? '▼' : '▶'}</span>
-              Distributor Details (Optional)
-            </button>
-            {showDistributorDetails && (
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="space-y-1">
-                  <p className="text-caption font-medium text-[#BBBBBB]">Name</p>
-                  <input className={fieldCls} placeholder="e.g., ABC Pharma" value={distributorName} onChange={e => setDistributorName(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-caption font-medium text-[#BBBBBB]">Location</p>
-                  <input className={fieldCls} placeholder="e.g., Mumbai" value={distributorLocation} onChange={e => setDistributorLocation(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-caption font-medium text-[#BBBBBB]">Phone</p>
-                  <input className={fieldCls} placeholder="e.g., 9876543210" value={distributorPhone} onChange={e => setDistributorPhone(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-caption font-medium text-[#BBBBBB]">Invoice No.</p>
-                  <input className={fieldCls} placeholder="e.g., INV-2026-001" value={distributorInvoiceNo} onChange={e => setDistributorInvoiceNo(e.target.value)} />
-                </div>
-              </div>
-            )}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <p className="text-caption font-medium text-[#BBBBBB]">Distributor</p>
+              <select className={fieldCls} value={distributorId} onChange={e => setDistributorId(e.target.value)}>
+                <option value="">None</option>
+                {distributors.filter(d => d.is_active).map(d => (
+                  <option key={d.distributor_id} value={d.distributor_id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <p className="text-caption font-medium text-[#BBBBBB]">Invoice No.</p>
+              <input className={fieldCls} placeholder="e.g., INV-2026-001" value={purchaseInvoiceNo} onChange={e => setPurchaseInvoiceNo(e.target.value)} />
+            </div>
           </div>
           <button
             type="submit"

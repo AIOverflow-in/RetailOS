@@ -31,7 +31,7 @@ export default function InventoryPage() {
     batch_id: string; batch_no: string; buying_price: number; selling_price: number;
     mrp: number; expiry_date: string; purchase_qty: number; sold_qty: number; box_no: string | null;
     purchase_gst_rate: number | null; landing_price: number | null;
-    distributor_details: { name?: string; location?: string; phone?: string; invoice_no?: string } | null
+    distributor_id: string | null; purchase_invoice_no: string | null;
   } | null>(null)
   const [editBatchOpen, setEditBatchOpen] = useState(false)
 
@@ -188,7 +188,8 @@ export default function InventoryPage() {
                                 box_no: r.box_no,
                                 purchase_gst_rate: r.purchase_gst_rate ?? null,
                                 landing_price: r.landing_price ?? null,
-                                distributor_details: r.distributor_details ?? null,
+                                distributor_id: r.distributor_id ?? null,
+                                purchase_invoice_no: r.purchase_invoice_no ?? null,
                               })
                               setEditBatchOpen(true)
                             }}

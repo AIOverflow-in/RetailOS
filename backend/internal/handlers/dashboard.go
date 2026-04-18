@@ -56,11 +56,19 @@ func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Distributor stats (top 5 by stock value)
+	distributorStats, err := q.DashboardDistributorStats(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not fetch distributor stats")
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"total_sales":   sales.TotalSales,
-		"order_count":   sales.OrderCount,
-		"low_stock":     lowStock,
-		"expiring_soon": expiring,
-		"payment_split": split,
+		"total_sales":       sales.TotalSales,
+		"order_count":       sales.OrderCount,
+		"low_stock":         lowStock,
+		"expiring_soon":     expiring,
+		"payment_split":     split,
+		"distributor_stats": distributorStats,
 	})
 }

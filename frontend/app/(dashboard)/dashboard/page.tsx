@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const lowStock = data?.low_stock ?? 0
   const expiring = data?.expiring_soon ?? 0
   const paymentSplit = data?.payment_split ?? []
+  const distributorStats = data?.distributor_stats ?? []
 
   return (
     <div className="space-y-6">
@@ -79,6 +80,34 @@ export default function DashboardPage() {
                 <p className="text-heading-xs font-bold text-[#111]">{fmtCurrency(Number(p.total))}</p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top Distributors */}
+      {distributorStats.length > 0 && (
+        <div className="bg-white rounded-lg border border-[#EBEBEB] p-5">
+          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide mb-4">Top Distributors (by Stock Value)</p>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#F2F2F2]">
+                  {['Distributor', 'Batches', 'Total Purchased', 'Stock Value'].map(h => (
+                    <th key={h} className="text-left py-2 px-3 text-caption font-medium text-[#BBBBBB]">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {distributorStats.map(d => (
+                  <tr key={d.distributor_id} className="border-b border-[#F7F7F7] last:border-0">
+                    <td className="py-2.5 px-3 text-body font-medium text-[#111]">{d.distributor_name}</td>
+                    <td className="py-2.5 px-3 text-body text-[#888]">{d.batch_count}</td>
+                    <td className="py-2.5 px-3 text-body text-[#888]">{d.total_purchase_qty} units</td>
+                    <td className="py-2.5 px-3 text-body font-medium text-[#111]">{fmtCurrency(Number(d.total_stock_value))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

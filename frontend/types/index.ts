@@ -6,6 +6,37 @@ export interface LoginResponse {
   schema_name: string
 }
 
+// ─── Distributors ────────────────────────────────────────────────────────────
+
+export interface Distributor {
+  distributor_id: string
+  name: string
+  phone: string | null
+  address: string | null
+  email: string | null
+  is_active: boolean
+  created_at: string
+}
+
+export interface DistributorBatchRow {
+  product_id: string
+  product_name: string
+  company_name: string
+  batch_id: string
+  batch_no: string
+  expiry_date: string
+  mrp: number
+  buying_price: number
+  selling_price: number
+  purchase_qty: number
+  sold_qty: number
+  box_no: string | null
+  purchase_gst_rate: number | null
+  landing_price: number | null
+  purchase_invoice_no: string | null
+  available_stock: number
+}
+
 // ─── Products & Batches ──────────────────────────────────────────────────────
 
 export interface Product {
@@ -32,12 +63,9 @@ export interface Batch {
   created_at: string
   purchase_gst_rate: number | null
   landing_price: number | null
-  distributor_details: {
-    name?: string
-    location?: string
-    phone?: string
-    invoice_no?: string
-  } | null
+  distributor_id: string | null
+  distributor_name: string | null
+  purchase_invoice_no: string | null
 }
 
 export interface InventoryRow {
@@ -58,12 +86,9 @@ export interface InventoryRow {
   available_stock: number
   purchase_gst_rate: number | null
   landing_price: number | null
-  distributor_details: {
-    name?: string
-    location?: string
-    phone?: string
-    invoice_no?: string
-  } | null
+  distributor_id: string | null
+  distributor_name: string | null
+  purchase_invoice_no: string | null
 }
 
 // ─── Customers ───────────────────────────────────────────────────────────────
@@ -155,6 +180,13 @@ export interface DashboardData {
   low_stock: number
   expiring_soon: number
   payment_split: { payment_mode: string; total: number }[]
+  distributor_stats: {
+    distributor_id: string
+    distributor_name: string
+    batch_count: number
+    total_purchase_qty: number
+    total_stock_value: number
+  }[]
 }
 
 // ─── Stock Adjustments ──────────────────────────────────────────────────

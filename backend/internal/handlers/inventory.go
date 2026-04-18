@@ -143,21 +143,17 @@ func (h *InventoryHandler) ListActiveBatches(w http.ResponseWriter, r *http.Requ
 
 func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		ProductID       string   `json:"product_id"`
-		BatchNo         string   `json:"batch_no"`
-		ExpiryDate      string   `json:"expiry_date"` // YYYY-MM-DD
-		MRP             float64  `json:"mrp"`
-		BuyingPrice     float64  `json:"buying_price"`
-		SellingPrice    float64  `json:"selling_price"`
-		PurchaseQty     int32    `json:"purchase_qty"`
-		BoxNo           *string  `json:"box_no"`
-		PurchaseGSTRate *float64 `json:"purchase_gst_rate"`
-		DistributorDetails *struct {
-			Name      *string `json:"name"`
-			Location  *string `json:"location"`
-			Phone     *string `json:"phone"`
-			InvoiceNo *string `json:"invoice_no"`
-		} `json:"distributor_details"`
+		ProductID         string   `json:"product_id"`
+		BatchNo           string   `json:"batch_no"`
+		ExpiryDate        string   `json:"expiry_date"` // YYYY-MM-DD
+		MRP               float64  `json:"mrp"`
+		BuyingPrice       float64  `json:"buying_price"`
+		SellingPrice      float64  `json:"selling_price"`
+		PurchaseQty       int32    `json:"purchase_qty"`
+		BoxNo             *string  `json:"box_no"`
+		PurchaseGSTRate   *float64 `json:"purchase_gst_rate"`
+		DistributorID     *string  `json:"distributor_id"`
+		PurchaseInvoiceNo *string  `json:"purchase_invoice_no"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -231,28 +227,30 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 		purchaseGstRateNumeric = numericFromFloat(*body.PurchaseGSTRate)
 	}
 
-	var distributorDetailsStr *string
-	if body.DistributorDetails != nil {
-		b, _ := json.Marshal(body.DistributorDetails)
-		s := string(b)
-		distributorDetailsStr = &s
+	var distributorID pgtype.UUID
+	if body.DistributorID != nil && *body.DistributorID != "" {
+		if err := distributorID.Scan(*body.DistributorID); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid distributor_id")
+			return
+		}
 	}
 
 	conn := middleware.ConnFromCtx(r.Context())
 	queries := generated.New(conn)
 
 	batch, err := queries.CreateBatch(r.Context(), generated.CreateBatchParams{
-		ProductID:          pid,
-		BatchNo:            body.BatchNo,
-		ExpiryDate:         expiryDate,
-		Mrp:                mrp,
-		BuyingPrice:        buyingPrice,
-		SellingPrice:       sellingPrice,
-		PurchaseQty:        body.PurchaseQty,
-		BoxNo:              body.BoxNo,
-		PurchaseGstRate:    purchaseGstRateNumeric,
-		LandingPrice:       landingPriceNumeric,
-		DistributorDetails: distributorDetailsStr,
+		ProductID:         pid,
+		BatchNo:           body.BatchNo,
+		ExpiryDate:        expiryDate,
+		Mrp:               mrp,
+		BuyingPrice:       buyingPrice,
+		SellingPrice:      sellingPrice,
+		PurchaseQty:       body.PurchaseQty,
+		BoxNo:             body.BoxNo,
+		PurchaseGstRate:   purchaseGstRateNumeric,
+		LandingPrice:      landingPriceNumeric,
+		DistributorID:     distributorID,
+		PurchaseInvoiceNo: body.PurchaseInvoiceNo,
 	})
 	if err != nil {
 		writeError(w, http.StatusConflict, "batch creation failed: "+err.Error())
@@ -325,19 +323,15 @@ func (h *InventoryHandler) UpdateBatch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		BuyingPrice     float64  `json:"buying_price"`
-		SellingPrice    float64  `json:"selling_price"`
-		MRP             float64  `json:"mrp"`
-		ExpiryDate      string   `json:"expiry_date"`
-		PurchaseQty     int32    `json:"purchase_qty"`
-		BoxNo           *string  `json:"box_no"`
-		PurchaseGSTRate *float64 `json:"purchase_gst_rate"`
-		DistributorDetails *struct {
-			Name      *string `json:"name"`
-			Location  *string `json:"location"`
-			Phone     *string `json:"phone"`
-			InvoiceNo *string `json:"invoice_no"`
-		} `json:"distributor_details"`
+		BuyingPrice       float64  `json:"buying_price"`
+		SellingPrice      float64  `json:"selling_price"`
+		MRP               float64  `json:"mrp"`
+		ExpiryDate        string   `json:"expiry_date"`
+		PurchaseQty       int32    `json:"purchase_qty"`
+		BoxNo             *string  `json:"box_no"`
+		PurchaseGSTRate   *float64 `json:"purchase_gst_rate"`
+		DistributorID     *string  `json:"distributor_id"`
+		PurchaseInvoiceNo *string  `json:"purchase_invoice_no"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -407,24 +401,26 @@ func (h *InventoryHandler) UpdateBatch(w http.ResponseWriter, r *http.Request) {
 		purchaseGstRateNumeric = numericFromFloat(*body.PurchaseGSTRate)
 	}
 
-	var distributorDetailsStr *string
-	if body.DistributorDetails != nil {
-		b, _ := json.Marshal(body.DistributorDetails)
-		s := string(b)
-		distributorDetailsStr = &s
+	var distributorID pgtype.UUID
+	if body.DistributorID != nil && *body.DistributorID != "" {
+		if err := distributorID.Scan(*body.DistributorID); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid distributor_id")
+			return
+		}
 	}
 
 	batch, err := queries.UpdateBatch(r.Context(), generated.UpdateBatchParams{
-		BatchID:            bid,
-		BuyingPrice:        numericFromFloat(body.BuyingPrice),
-		SellingPrice:       numericFromFloat(body.SellingPrice),
-		Mrp:                numericFromFloat(body.MRP),
-		ExpiryDate:         expiryDate,
-		PurchaseQty:        body.PurchaseQty,
-		BoxNo:              body.BoxNo,
-		PurchaseGstRate:    purchaseGstRateNumeric,
-		LandingPrice:       landingPriceNumeric,
-		DistributorDetails: distributorDetailsStr,
+		BatchID:           bid,
+		BuyingPrice:       numericFromFloat(body.BuyingPrice),
+		SellingPrice:      numericFromFloat(body.SellingPrice),
+		Mrp:               numericFromFloat(body.MRP),
+		ExpiryDate:        expiryDate,
+		PurchaseQty:       body.PurchaseQty,
+		BoxNo:             body.BoxNo,
+		PurchaseGstRate:   purchaseGstRateNumeric,
+		LandingPrice:      landingPriceNumeric,
+		DistributorID:     distributorID,
+		PurchaseInvoiceNo: body.PurchaseInvoiceNo,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "could not update batch: "+err.Error())
