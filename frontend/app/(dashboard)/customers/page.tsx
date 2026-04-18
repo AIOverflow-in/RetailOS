@@ -8,6 +8,7 @@ import { fmtDate } from '@/lib/gst'
 import TableSkeleton from '@/components/shared/TableSkeleton'
 import Pagination from '@/components/shared/Pagination'
 import EditCustomerModal from '@/components/customers/EditCustomerModal'
+import { Tooltip } from '@/components/ui/tooltip'
 
 const PAGE_SIZE = 20
 
@@ -73,7 +74,7 @@ export default function CustomersPage() {
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Name', 'Phone', 'Age', 'Visits', 'Joined', ''].map(h => (
-                    <th key={h || 'actions'} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
+                    <th key={h || 'actions'} className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -91,13 +92,14 @@ export default function CustomersPage() {
                     <td className="py-3 px-4 text-body text-[#999]">{c.visit_count}</td>
                     <td className="py-3 px-4 text-body-sm text-[#999]">{fmtDate(c.created_at)}</td>
                     <td className="py-3 px-2">
-                      <button
-                        onClick={() => { setEditCustomer(c); setEditOpen(true) }}
-                        className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
-                        title="Edit customer"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
+                      <Tooltip content="Edit customer">
+                        <button
+                          onClick={() => { setEditCustomer(c); setEditOpen(true) }}
+                          className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      </Tooltip>
                     </td>
                   </tr>
                 ))}

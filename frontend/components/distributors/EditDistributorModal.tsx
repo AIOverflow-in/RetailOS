@@ -70,19 +70,19 @@ export default function EditDistributorModal({ distributor, open, onOpenChange, 
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Name <span className="text-red-400">*</span></p>
+            <p className="text-caption font-medium text-label">Name <span className="text-red-400">*</span></p>
             <input className={fieldCls} value={name} onChange={e => setName(e.target.value)} required />
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Phone (optional)</p>
+            <p className="text-caption font-medium text-label">Phone (optional)</p>
             <input className={fieldCls} value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 15))} />
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Address (optional)</p>
+            <p className="text-caption font-medium text-label">Address (optional)</p>
             <input className={fieldCls} value={address} onChange={e => setAddress(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Email (optional)</p>
+            <p className="text-caption font-medium text-label">Email (optional)</p>
             <input type="email" className={fieldCls} value={email} onChange={e => setEmail(e.target.value)} />
           </div>
           <label className="flex items-center gap-2 cursor-pointer select-none">

@@ -89,7 +89,7 @@ export default function OrdersPage() {
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Bill No', 'Customer', 'Phone', 'Date', 'Total', 'Payment', 'Status', ''].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
+                    <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -120,14 +120,14 @@ export default function OrdersPage() {
                       <div className="flex items-center gap-4">
                         <Link
                           href={`/orders/${o.order_id}`}
-                          className="text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors"
+                          className="text-body-sm font-medium border border-[#E0E0E0] rounded-md px-2 py-0.5 text-[#555555] hover:bg-[#F5F5F5] hover:border-[#C8C8C8] transition-colors"
                         >
                           View
                         </Link>
                         <AlertDialog>
                           <AlertDialogTrigger
                             render={
-                              <button className="text-body-sm text-[#DDDDDD] hover:text-red-500 transition-colors">
+                              <button className="text-body-sm font-medium border border-red-200 rounded-md px-2 py-0.5 text-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors">
                                 Delete
                               </button>
                             }

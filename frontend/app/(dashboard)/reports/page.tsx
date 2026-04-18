@@ -57,11 +57,11 @@ export default function ReportsPage() {
       {/* Date range controls */}
       <div className="bg-white rounded-lg border border-[#EBEBEB] p-5 flex flex-wrap items-end gap-4">
         <div className="space-y-1.5">
-          <p className="text-caption font-medium text-[#BBBBBB]">From</p>
+          <p className="text-caption font-medium text-label">From</p>
           <input type="date" className={`${dateInput} w-40`} value={from} onChange={e => setFrom(e.target.value)} />
         </div>
         <div className="space-y-1.5">
-          <p className="text-caption font-medium text-[#BBBBBB]">To</p>
+          <p className="text-caption font-medium text-label">To</p>
           <input type="date" className={`${dateInput} w-40`} value={to} onChange={e => setTo(e.target.value)} />
         </div>
         <div className="flex gap-2">
@@ -113,7 +113,7 @@ export default function ReportsPage() {
                   <thead>
                     <tr className="border-b border-[#F2F2F2]">
                       {['GST Rate', 'Taxable Value', 'CGST', 'SGST', 'IGST', 'Total'].map(h => (
-                        <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB]">{h}</th>
+                        <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-label">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -154,7 +154,7 @@ export default function ReportsPage() {
                     <thead>
                       <tr className="border-b border-[#F2F2F2]">
                         {['GST Rate', 'Buying Value', 'Input GST', 'Landing Value'].map(h => (
-                          <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB]">{h}</th>
+                          <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-label">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -186,7 +186,7 @@ export default function ReportsPage() {
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-white rounded-lg border border-[#EBEBEB] p-4">
-      <p className="text-caption font-medium text-[#BBBBBB] mb-2">{label}</p>
+      <p className="text-caption font-medium text-label mb-2">{label}</p>
       <p className="text-heading-sm font-bold tracking-tight text-[#111]">{value}</p>
     </div>
   )

@@ -66,15 +66,15 @@ export default function EditCustomerModal({ customer, open, onOpenChange, onSave
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Name</p>
+            <p className="text-caption font-medium text-label">Name</p>
             <input className={fieldCls} value={name} onChange={e => setName(e.target.value)} required />
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Phone (10 digits)</p>
+            <p className="text-caption font-medium text-label">Phone (10 digits)</p>
             <input className={fieldCls} value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} required maxLength={10} />
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Age (optional)</p>
+            <p className="text-caption font-medium text-label">Age (optional)</p>
             <input type="number" min="0" max="150" className={fieldCls} value={age} onChange={e => setAge(e.target.value)} />
           </div>
           <button

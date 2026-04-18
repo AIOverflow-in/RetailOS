@@ -11,6 +11,7 @@ import Pagination from '@/components/shared/Pagination'
 import EditProductModal from '@/components/inventory/EditProductModal'
 import EditBatchModal from '@/components/inventory/EditBatchModal'
 import StockAdjustmentModal from '@/components/inventory/StockAdjustmentModal'
+import { Tooltip } from '@/components/ui/tooltip'
 
 const PAGE_SIZE = 20
 
@@ -121,7 +122,7 @@ export default function InventoryPage() {
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Product', 'Company', 'Batch', 'Expiry', 'MRP', 'Selling', 'Stock', 'HSN', ''].map(h => (
-                    <th key={h || 'actions'} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
+                    <th key={h || 'actions'} className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -158,63 +159,66 @@ export default function InventoryPage() {
                       <td className="py-3 px-4 text-body-sm text-[#CCCCCC] font-mono">{r.hsn_code ?? '\u2014'}</td>
                       <td className="py-3 px-2">
                         <div className="flex items-center gap-0.5">
-                          <button
-                            onClick={() => {
-                              setEditProduct({
-                                product_id: r.product_id,
-                                name: r.name,
-                                company_name: r.company_name,
-                                sku: r.sku,
-                                hsn_code: r.hsn_code,
-                              })
-                              setEditProductOpen(true)
-                            }}
-                            className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
-                            title="Edit product"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditBatch({
-                                batch_id: r.batch_id,
-                                batch_no: r.batch_no,
-                                buying_price: r.buying_price,
-                                selling_price: r.selling_price,
-                                mrp: r.mrp,
-                                expiry_date: r.expiry_date,
-                                purchase_qty: r.purchase_qty,
-                                sold_qty: r.sold_qty,
-                                box_no: r.box_no,
-                                purchase_gst_rate: r.purchase_gst_rate ?? null,
-                                landing_price: r.landing_price ?? null,
-                                distributor_id: r.distributor_id ?? null,
-                                purchase_invoice_no: r.purchase_invoice_no ?? null,
-                              })
-                              setEditBatchOpen(true)
-                            }}
-                            className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
-                            title="Edit batch"
-                          >
-                            <SlidersHorizontal className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setAdjustBatch({
-                                batch_id: r.batch_id,
-                                batch_no: r.batch_no,
-                                name: r.name,
-                                purchase_qty: r.purchase_qty,
-                                sold_qty: r.sold_qty,
-                                available_stock: r.available_stock,
-                              })
-                              setAdjustOpen(true)
-                            }}
-                            className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
-                            title="Adjust stock"
-                          >
-                            <PackageMinus className="w-3.5 h-3.5" />
-                          </button>
+                          <Tooltip content="Edit product">
+                            <button
+                              onClick={() => {
+                                setEditProduct({
+                                  product_id: r.product_id,
+                                  name: r.name,
+                                  company_name: r.company_name,
+                                  sku: r.sku,
+                                  hsn_code: r.hsn_code,
+                                })
+                                setEditProductOpen(true)
+                              }}
+                              className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Edit batch">
+                            <button
+                              onClick={() => {
+                                setEditBatch({
+                                  batch_id: r.batch_id,
+                                  batch_no: r.batch_no,
+                                  buying_price: r.buying_price,
+                                  selling_price: r.selling_price,
+                                  mrp: r.mrp,
+                                  expiry_date: r.expiry_date,
+                                  purchase_qty: r.purchase_qty,
+                                  sold_qty: r.sold_qty,
+                                  box_no: r.box_no,
+                                  purchase_gst_rate: r.purchase_gst_rate ?? null,
+                                  landing_price: r.landing_price ?? null,
+                                  distributor_id: r.distributor_id ?? null,
+                                  purchase_invoice_no: r.purchase_invoice_no ?? null,
+                                })
+                                setEditBatchOpen(true)
+                              }}
+                              className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
+                            >
+                              <SlidersHorizontal className="w-3.5 h-3.5" />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Adjust stock">
+                            <button
+                              onClick={() => {
+                                setAdjustBatch({
+                                  batch_id: r.batch_id,
+                                  batch_no: r.batch_no,
+                                  name: r.name,
+                                  purchase_qty: r.purchase_qty,
+                                  sold_qty: r.sold_qty,
+                                  available_stock: r.available_stock,
+                                })
+                                setAdjustOpen(true)
+                              }}
+                              className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
+                            >
+                              <PackageMinus className="w-3.5 h-3.5" />
+                            </button>
+                          </Tooltip>
                         </div>
                       </td>
                     </tr>

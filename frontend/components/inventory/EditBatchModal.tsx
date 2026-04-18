@@ -130,41 +130,41 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
-              <p className="text-caption font-medium text-[#BBBBBB]">Buying Price</p>
+              <p className="text-caption font-medium text-label">Buying Price</p>
               <input type="number" step="0.01" min="0" className={fieldCls} value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-caption font-medium text-[#BBBBBB]">Selling Price</p>
+              <p className="text-caption font-medium text-label">Selling Price</p>
               <input type="number" step="0.01" min="0" className={fieldCls} value={sellingPrice} onChange={e => setSellingPrice(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-caption font-medium text-[#BBBBBB]">MRP</p>
+              <p className="text-caption font-medium text-label">MRP</p>
               <input type="number" step="0.01" min="0" className={fieldCls} value={mrp} onChange={e => setMrp(e.target.value)} required />
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Expiry Date</p>
+            <p className="text-caption font-medium text-label">Expiry Date</p>
             <input type="date" className={fieldCls} value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <p className="text-caption font-medium text-[#BBBBBB]">Purchase Qty</p>
+              <p className="text-caption font-medium text-label">Purchase Qty</p>
               <input type="number" min="0" className={fieldCls} value={purchaseQty} onChange={e => setPurchaseQty(e.target.value)} required />
             </div>
             <div className="space-y-1">
               <p className="text-caption font-medium text-[#999]">
-                Sold Qty <span className="text-[#CCCCCC]">(read-only)</span>
+                Sold Qty <span className="text-[#888888]">(read-only)</span>
               </p>
               <input className={fieldCls + ' bg-[#F7F7F7] text-[#999] cursor-not-allowed'} value={batch?.sold_qty ?? 0} disabled />
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Box No (optional)</p>
+            <p className="text-caption font-medium text-label">Box No (optional)</p>
             <input className={fieldCls} value={boxNo} onChange={e => setBoxNo(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <p className="text-caption font-medium text-[#BBBBBB]">Purchase GST Rate (%)</p>
+              <p className="text-caption font-medium text-label">Purchase GST Rate (%)</p>
               <select
                 className={fieldCls}
                 value={purchaseGSTRate}
@@ -180,7 +180,7 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
             </div>
             {purchaseGSTRate !== '' && (
               <div className="space-y-1">
-                <p className="text-caption font-medium text-[#BBBBBB]">Landing Price (₹)</p>
+                <p className="text-caption font-medium text-label">Landing Price (₹)</p>
                 <div className={fieldCls + ' bg-[#F7F7F7] text-[#666] flex items-center'}>
                   {buyingPrice ? (parseFloat(buyingPrice) * (1 + (typeof purchaseGSTRate === 'number' ? purchaseGSTRate : 0) / 100)).toFixed(2) : '—'}
                 </div>
@@ -189,7 +189,7 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <p className="text-caption font-medium text-[#BBBBBB]">Distributor</p>
+              <p className="text-caption font-medium text-label">Distributor</p>
               <select className={fieldCls} value={distributorId} onChange={e => setDistributorId(e.target.value)}>
                 <option value="">None</option>
                 {distributors.filter(d => d.is_active).map(d => (
@@ -198,7 +198,7 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
               </select>
             </div>
             <div className="space-y-1">
-              <p className="text-caption font-medium text-[#BBBBBB]">Invoice No.</p>
+              <p className="text-caption font-medium text-label">Invoice No.</p>
               <input className={fieldCls} placeholder="e.g., INV-2026-001" value={purchaseInvoiceNo} onChange={e => setPurchaseInvoiceNo(e.target.value)} />
             </div>
           </div>

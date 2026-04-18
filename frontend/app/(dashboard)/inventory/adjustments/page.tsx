@@ -69,7 +69,7 @@ export default function AdjustmentsPage() {
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Product', 'Batch', 'Change', 'Reason', 'Notes', 'Date'].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
+                    <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap">
                       {h}
                     </th>
                   ))}

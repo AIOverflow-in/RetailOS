@@ -46,23 +46,23 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
         <div className="bg-white rounded-lg border border-[#EBEBEB] p-5">
-          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">Today's Sales</p>
+          <p className="text-caption font-medium text-label uppercase tracking-wide">Today's Sales</p>
           <p className="text-heading font-bold text-[#111] mt-2">{fmtCurrency(sales)}</p>
         </div>
 
         <div className="bg-white rounded-lg border border-[#EBEBEB] p-5">
-          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">Orders Today</p>
+          <p className="text-caption font-medium text-label uppercase tracking-wide">Orders Today</p>
           <p className="text-heading font-bold text-[#111] mt-2">{orders}</p>
         </div>
 
         <Link href="/inventory" className="bg-white rounded-lg border border-[#EBEBEB] p-5 hover:border-amber-300 transition-colors">
-          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">Low Stock</p>
+          <p className="text-caption font-medium text-label uppercase tracking-wide">Low Stock</p>
           <p className={`text-heading font-bold mt-2 ${lowStock > 0 ? 'text-amber-500' : 'text-[#111]'}`}>{lowStock}</p>
           <p className="text-caption text-[#CCCCCC] mt-1">batches below 10 units</p>
         </Link>
 
         <Link href="/inventory" className="bg-white rounded-lg border border-[#EBEBEB] p-5 hover:border-amber-300 transition-colors">
-          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">Expiring Soon</p>
+          <p className="text-caption font-medium text-label uppercase tracking-wide">Expiring Soon</p>
           <p className={`text-heading font-bold mt-2 ${expiring > 0 ? 'text-amber-500' : 'text-[#111]'}`}>{expiring}</p>
           <p className="text-caption text-[#CCCCCC] mt-1">within 60 days</p>
         </Link>
@@ -72,7 +72,7 @@ export default function DashboardPage() {
       {/* Payment Mode Breakdown */}
       {paymentSplit.length > 0 && (
         <div className="bg-white rounded-lg border border-[#EBEBEB] p-5">
-          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide mb-4">Payment Breakdown (Today)</p>
+          <p className="text-caption font-medium text-label uppercase tracking-wide mb-4">Payment Breakdown (Today)</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {paymentSplit.map(p => (
               <div key={p.payment_mode} className="space-y-1">
@@ -87,13 +87,13 @@ export default function DashboardPage() {
       {/* Top Distributors */}
       {distributorStats.length > 0 && (
         <div className="bg-white rounded-lg border border-[#EBEBEB] p-5">
-          <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide mb-4">Top Distributors (by Stock Value)</p>
+          <p className="text-caption font-medium text-label uppercase tracking-wide mb-4">Top Distributors (by Stock Value)</p>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Distributor', 'Batches', 'Total Purchased', 'Stock Value'].map(h => (
-                    <th key={h} className="text-left py-2 px-3 text-caption font-medium text-[#BBBBBB]">{h}</th>
+                    <th key={h} className="text-left py-2 px-3 text-caption font-medium text-label">{h}</th>
                   ))}
                 </tr>
               </thead>

@@ -137,7 +137,7 @@ export default function BillingPage() {
         </div>
         <div className="mt-2 flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-caption text-[#BBBBBB]">GST</span>
+            <span className="text-caption text-label">GST</span>
             <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-body-sm bg-white">
               <button
                 className={`px-3 py-1.5 font-medium transition-colors ${isInState ? 'bg-[#111] text-white' : 'text-[#888] hover:bg-[#F5F5F5]'}`}
@@ -150,7 +150,7 @@ export default function BillingPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-caption text-[#BBBBBB]">Payment</span>
+            <span className="text-caption text-label">Payment</span>
             <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-body-sm bg-white">
               {(['cash', 'upi', 'card', 'mixed'] as const).map(mode => (
                 <button
@@ -166,7 +166,7 @@ export default function BillingPage() {
 
       {/* Customer */}
       <div className="bg-white rounded-lg border border-[#EBEBEB] p-4">
-        <p className="text-caption font-medium text-[#BBBBBB] mb-3">Customer</p>
+        <p className="text-caption font-medium text-label mb-3">Customer</p>
         <CustomerLookup />
       </div>
 
@@ -180,7 +180,7 @@ export default function BillingPage() {
             <thead>
               <tr className="border-b border-[#F2F2F2]">
                 {HEADERS.map(h => (
-                  <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
+                  <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap">
                     {h}
                   </th>
                 ))}

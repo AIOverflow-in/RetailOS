@@ -99,7 +99,7 @@ export default function SuperAdminDashboard() {
                     { label: 'Order prefix (e.g. INV)', val: orderPrefix, set: (v: string) => setOrderPrefix(v.toUpperCase()), type: 'text' },
                   ].map(({ label, val, set, type }) => (
                     <div key={label} className="space-y-1">
-                      <p className="text-caption font-medium text-[#BBBBBB]">{label}</p>
+                      <p className="text-caption font-medium text-label">{label}</p>
                       <input type={type} className={fieldCls} value={val} onChange={e => set(e.target.value)} required />
                     </div>
                   ))}
@@ -134,7 +134,7 @@ export default function SuperAdminDashboard() {
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
                   {['Shop', 'Username', 'Created', 'Status', ''].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB]">{h}</th>
+                    <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-label">{h}</th>
                   ))}
                 </tr>
               </thead>

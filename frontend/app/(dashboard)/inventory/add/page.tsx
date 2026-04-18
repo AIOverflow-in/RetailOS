@@ -128,7 +128,7 @@ export default function AddStockPage() {
 
             {/* Product */}
             <div className="bg-white rounded-lg border border-[#EBEBEB] p-4 space-y-3">
-              <p className="text-caption font-medium text-[#BBBBBB]">Product</p>
+              <p className="text-caption font-medium text-label">Product</p>
               <div className="relative">
                 <input
                   className={inp}
@@ -185,7 +185,7 @@ export default function AddStockPage() {
                     { label: 'HSN Code', val: newHsn, set: setNewHsn },
                   ].map(({ label, val, set }) => (
                     <div key={label} className="space-y-1">
-                      <p className="text-caption text-[#BBBBBB]">{label}</p>
+                      <p className="text-caption text-label">{label}</p>
                       <input className={inp} value={val} onChange={e => set(e.target.value)} required={label.includes('*')} />
                     </div>
                   ))}
@@ -195,22 +195,22 @@ export default function AddStockPage() {
 
             {/* Batch Details */}
             <div className="bg-white rounded-lg border border-[#EBEBEB] p-4 space-y-3">
-              <p className="text-caption font-medium text-[#BBBBBB]">Batch Details</p>
+              <p className="text-caption font-medium text-label">Batch Details</p>
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Batch no. *</p>
+                  <p className="text-caption text-label">Batch no. *</p>
                   <input className={inp} value={batchNo} onChange={e => setBatchNo(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Expiry date *</p>
+                  <p className="text-caption text-label">Expiry date *</p>
                   <input type="date" className={inp} value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Buying price (₹) *</p>
+                  <p className="text-caption text-label">Buying price (₹) *</p>
                   <input type="number" min={0} step={0.01} className={inp} value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Purchase GST Rate (%)</p>
+                  <p className="text-caption text-label">Purchase GST Rate (%)</p>
                   <select
                     className={inp}
                     value={purchaseGSTRate}
@@ -226,30 +226,30 @@ export default function AddStockPage() {
                 </div>
                 {purchaseGSTRate !== '' && (
                   <div className="space-y-1">
-                    <p className="text-caption text-[#BBBBBB]">Landing Price (₹)</p>
+                    <p className="text-caption text-label">Landing Price (₹)</p>
                     <div className="w-full h-8 px-3 py-1.5 text-body bg-[#F7F7F7] border border-[#E5E5E5] rounded-lg text-[#666] flex items-center">
                       {buyingPrice ? (parseFloat(buyingPrice) * (1 + (typeof purchaseGSTRate === 'number' ? purchaseGSTRate : 0) / 100)).toFixed(2) : '—'}
                     </div>
                   </div>
                 )}
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Selling price (₹) *</p>
+                  <p className="text-caption text-label">Selling price (₹) *</p>
                   <input type="number" min={0} step={0.01}
                     className={priceError?.includes('Selling') ? errInp : inp}
                     value={sellingPrice} onChange={e => setSellingPrice(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">MRP (₹) *</p>
+                  <p className="text-caption text-label">MRP (₹) *</p>
                   <input type="number" min={0} step={0.01}
                     className={priceError?.includes('MRP') ? errInp : inp}
                     value={mrp} onChange={e => setMrp(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Purchase qty *</p>
+                  <p className="text-caption text-label">Purchase qty *</p>
                   <input type="number" min={1} className={inp} value={purchaseQty} onChange={e => setPurchaseQty(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Box no.</p>
+                  <p className="text-caption text-label">Box no.</p>
                   <input className={inp} value={boxNo} onChange={e => setBoxNo(e.target.value)} />
                 </div>
               </div>
@@ -261,10 +261,10 @@ export default function AddStockPage() {
           {/* Right column: Distributor + Submit */}
           <div className="flex flex-col gap-4">
             <div className="bg-white rounded-lg border border-[#EBEBEB] p-4 space-y-3">
-              <p className="text-caption font-medium text-[#BBBBBB]">Distributor <span className="font-normal text-[#DDDDDD]">(optional)</span></p>
+              <p className="text-caption font-medium text-label">Distributor <span className="font-normal text-[#DDDDDD]">(optional)</span></p>
               <div className="space-y-2.5">
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Distributor</p>
+                  <p className="text-caption text-label">Distributor</p>
                   <select className={inp} value={distributorId} onChange={e => setDistributorId(e.target.value)}>
                     <option value="">None</option>
                     {distributors.filter(d => d.is_active).map(d => (
@@ -273,7 +273,7 @@ export default function AddStockPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-[#BBBBBB]">Purchase Invoice No.</p>
+                  <p className="text-caption text-label">Purchase Invoice No.</p>
                   <input className={inp} placeholder="e.g., INV-2026-001" value={purchaseInvoiceNo} onChange={e => setPurchaseInvoiceNo(e.target.value)} />
                 </div>
               </div>

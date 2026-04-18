@@ -71,19 +71,19 @@ export default function EditProductModal({ product, open, onOpenChange, onSaved 
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Product name</p>
+            <p className="text-caption font-medium text-label">Product name</p>
             <input className={fieldCls} value={name} onChange={e => setName(e.target.value)} required />
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Company</p>
+            <p className="text-caption font-medium text-label">Company</p>
             <input className={fieldCls} value={companyName} onChange={e => setCompanyName(e.target.value)} required />
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">SKU (optional)</p>
+            <p className="text-caption font-medium text-label">SKU (optional)</p>
             <input className={fieldCls} value={sku} onChange={e => setSku(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">HSN Code (optional)</p>
+            <p className="text-caption font-medium text-label">HSN Code (optional)</p>
             <input className={fieldCls} value={hsnCode} onChange={e => setHsnCode(e.target.value)} />
           </div>
           <button
