@@ -76,7 +76,7 @@ export default function SettingsPage() {
         <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">
 
           <div className="space-y-1.5">
-            <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">
+            <p className="text-caption font-medium text-label uppercase tracking-wide">
               Store Address
             </p>
             <textarea
@@ -89,7 +89,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">
+            <p className="text-caption font-medium text-label uppercase tracking-wide">
               GSTIN
             </p>
             <input
@@ -102,7 +102,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">
+            <p className="text-caption font-medium text-label uppercase tracking-wide">
               Drug License Number
             </p>
             <input
@@ -114,7 +114,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">
+            <p className="text-caption font-medium text-label uppercase tracking-wide">
               Food License Number (FSSAI)
             </p>
             <input
@@ -126,7 +126,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">
+            <p className="text-caption font-medium text-label uppercase tracking-wide">
               Other License Details
             </p>
             <textarea
@@ -139,7 +139,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">
+            <p className="text-caption font-medium text-label uppercase tracking-wide">
               Store Policies
             </p>
             <textarea
@@ -152,7 +152,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-1.5">
-            <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">
+            <p className="text-caption font-medium text-label uppercase tracking-wide">
               Google Review Link
             </p>
             <input

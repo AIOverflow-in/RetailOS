@@ -4,7 +4,7 @@ import {
   Package,
   BarChart3,
   FileText,
-  Users,
+  Truck,
   Shield,
   CheckCircle2,
   ArrowRight,
@@ -22,7 +22,7 @@ const features = [
     icon: ShoppingCart,
     title: 'Lightning-fast Billing',
     description:
-      'Search products by name or company, pick a batch, enter quantity — bill done in under 30 seconds. Auto-calculates CGST, SGST, and IGST on every line item.',
+      'Search products by name or company, pick a batch, enter quantity — bill done in under 30 seconds. Auto-calculates CGST, SGST, and IGST on every line item. Full order history with one-click returns that automatically restore stock.',
   },
   {
     icon: Package,
@@ -38,15 +38,15 @@ const features = [
   },
   {
     icon: FileText,
-    title: 'Indian-standard Invoices',
+    title: 'Professional PDF Bills',
     description:
-      'Sequential bill numbers in format INV/0042/25-26, aligned with Indian financial year (April–March). Each invoice carries HSN codes and GST breakdown per item.',
+      'Real PDFs — not browser print — open in a new tab instantly. Each bill includes shop GSTIN, drug/food licences, MRP and expiry per line item, patient age, GST summary table, and an optional Google Review QR code.',
   },
   {
-    icon: Users,
-    title: 'Customer Profiles',
+    icon: Truck,
+    title: 'Distributor Management',
     description:
-      'Look up customers by their 10-digit phone number. New patients are created automatically on first purchase. Visit count tracked across orders.',
+      'Maintain a distributor directory and link every stock batch to its supplier with a purchase invoice number. See your top 5 distributors by stock value on the dashboard and filter all stock by distributor.',
   },
   {
     icon: Shield,
@@ -61,7 +61,7 @@ const steps = [
     number: '01',
     title: 'Add your stock',
     description:
-      'Create products with HSN codes and add batches with MRP, buying price, selling price, and expiry date. Your inventory is live instantly.',
+      'Create products with HSN codes, add batches with MRP, buying price, selling price, and expiry date, and link each batch to a distributor with a purchase invoice number. Your inventory is live instantly.',
   },
   {
     number: '02',
@@ -81,7 +81,7 @@ const stats = [
   { value: '< 30s', label: 'Average bill creation time' },
   { value: '100%', label: 'GST compliant (CGST/SGST/IGST)' },
   { value: '₹0', label: 'Setup or hidden fees' },
-  { value: '24 / 7', label: 'Cloud availability' },
+  { value: 'v1.3', label: 'Latest release — April 2026' },
 ]
 
 const inventoryRows = [
@@ -162,7 +162,7 @@ function Hero() {
         </div>
 
         <p className="mt-5 text-xs text-zinc-500">
-          No setup fee &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; ₹10 / shop / month
+          No setup fee &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; ₹799 / shop / month
         </p>
       </div>
     </section>
@@ -411,15 +411,17 @@ function Pricing() {
           <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-white/10 mb-5">
             <IndianRupee className="h-6 w-6 text-white" />
           </div>
-          <div className="text-5xl font-bold text-white mb-1">₹10</div>
+          <div className="text-5xl font-bold text-white mb-1">₹799</div>
           <div className="text-zinc-400 text-sm mb-8">per shop / per month</div>
 
           <ul className="space-y-3 text-left mb-8">
             {[
               'Unlimited bills & invoices',
               'Unlimited products & batches',
-              'Complete order history',
+              'Complete order history & one-click returns',
               'GST reports + CSV export',
+              'Distributor management & stock linking',
+              'Professional PDF bill generation',
               'Customer management',
               'Secure cloud storage (NeonDB)',
               'Multi-device access (web)',
@@ -436,7 +438,7 @@ function Pricing() {
             href={`${APP_URL}/login`}
             className="block w-full rounded-md bg-white py-3 text-sm font-semibold text-zinc-950 hover:bg-zinc-100 transition-colors"
           >
-            Get started — ₹10/month
+            Get started — ₹799/month
           </a>
           <p className="mt-3 text-xs text-zinc-500 flex items-center justify-center gap-1">
             <Clock className="h-3 w-3" />
@@ -462,7 +464,7 @@ function CTA() {
             href={`${APP_URL}/login`}
             className="inline-flex items-center gap-2 rounded-md bg-white px-8 py-3 text-sm font-semibold text-zinc-950 hover:bg-zinc-100 transition-colors"
           >
-            Start for ₹10/month <ArrowRight className="h-4 w-4" />
+            Start for ₹799/month <ArrowRight className="h-4 w-4" />
           </a>
         </div>
       </div>

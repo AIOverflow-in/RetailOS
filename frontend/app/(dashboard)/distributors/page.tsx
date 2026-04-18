@@ -9,6 +9,7 @@ import type { Distributor, DistributorBatchRow } from '@/types'
 import TableSkeleton from '@/components/shared/TableSkeleton'
 import AddDistributorModal from '@/components/distributors/AddDistributorModal'
 import EditDistributorModal from '@/components/distributors/EditDistributorModal'
+import { Tooltip } from '@/components/ui/tooltip'
 
 function fmtCurrency(n: number) {
   return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -119,7 +120,7 @@ export default function DistributorsPage() {
             <thead>
               <tr className="border-b border-[#F2F2F2]">
                 {['Name', 'Phone', 'Email', 'Address', 'Status', ''].map(h => (
-                  <th key={h || 'actions'} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">
+                  <th key={h || 'actions'} className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap">
                     {h}
                   </th>
                 ))}
@@ -142,21 +143,23 @@ export default function DistributorsPage() {
                   </td>
                   <td className="py-3 px-2">
                     <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => { setEditDistributor(d); setEditOpen(true) }}
-                        className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
-                        title="Edit"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(d)}
-                        disabled={deleting === d.distributor_id}
-                        className="p-1.5 rounded-md text-[#CCCCCC] hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <Tooltip content="Edit distributor">
+                        <button
+                          onClick={() => { setEditDistributor(d); setEditOpen(true) }}
+                          className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Delete distributor">
+                        <button
+                          onClick={() => handleDelete(d)}
+                          disabled={deleting === d.distributor_id}
+                          className="p-1.5 rounded-md text-[#CCCCCC] hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </Tooltip>
                     </div>
                   </td>
                 </tr>
@@ -195,7 +198,7 @@ export default function DistributorsPage() {
                 <thead>
                   <tr className="border-b border-[#F2F2F2]">
                     {['Product', 'Batch No', 'Expiry', 'MRP', 'Selling', 'Available', 'Invoice No'].map(h => (
-                      <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB] whitespace-nowrap">{h}</th>
+                      <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>

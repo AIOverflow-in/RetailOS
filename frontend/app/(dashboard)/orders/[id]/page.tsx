@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Printer } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import type { OrderDetail, ShopSettings } from '@/types'
 import { fmtCurrency, fmtDate } from '@/lib/gst'
-import { buildBillData, generateBill } from '@/lib/generateBill'
+import { buildBillData, generateBill, sendBillViaWhatsApp } from '@/lib/generateBill'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip } from '@/components/ui/tooltip'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -68,7 +69,7 @@ export default function OrderDetailPage() {
       <div className="flex items-center justify-between print:hidden">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors"
+          className="flex items-center gap-1.5 text-body-sm font-medium border border-[#E0E0E0] rounded-lg px-3 h-8 text-[#555555] hover:bg-[#F5F5F5] hover:border-[#C8C8C8] transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </button>
@@ -101,16 +102,32 @@ export default function OrderDetailPage() {
               </AlertDialogContent>
             </AlertDialog>
           )}
-          <button
-            onClick={async () => {
-              if (!data || !settings) return
-              const shopName = localStorage.getItem('shop_name') ?? ''
-              await generateBill(buildBillData(data, settings, shopName))
-            }}
-            className="flex items-center gap-1.5 text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors"
-          >
-            <Printer className="w-3.5 h-3.5" /> Print
-          </button>
+          {order.customer_phone && (
+            <Tooltip content="Send bill via WhatsApp">
+              <button
+                onClick={async () => {
+                  if (!data || !settings) return
+                  const shopName = localStorage.getItem('shop_name') ?? ''
+                  await sendBillViaWhatsApp(buildBillData(data, settings, shopName))
+                }}
+                className="flex items-center gap-1.5 text-body-sm font-medium border border-[#E0E0E0] rounded-lg px-3 h-8 text-[#555555] hover:bg-[#F5F5F5] hover:border-[#C8C8C8] transition-colors"
+              >
+                <MessageCircle className="w-3.5 h-3.5" /> Send Bill
+              </button>
+            </Tooltip>
+          )}
+          <Tooltip content="Generate PDF bill">
+            <button
+              onClick={async () => {
+                if (!data || !settings) return
+                const shopName = localStorage.getItem('shop_name') ?? ''
+                await generateBill(buildBillData(data, settings, shopName))
+              }}
+              className="flex items-center gap-1.5 text-body-sm font-medium border border-[#E0E0E0] rounded-lg px-3 h-8 text-[#555555] hover:bg-[#F5F5F5] hover:border-[#C8C8C8] transition-colors"
+            >
+              <Printer className="w-3.5 h-3.5" /> Print
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -130,12 +147,12 @@ export default function OrderDetailPage() {
       {order.customer_name && (
         <div className="bg-white rounded-lg border border-[#EBEBEB] px-5 py-4 grid grid-cols-2 gap-4">
           <div>
-            <p className="text-caption font-medium text-[#BBBBBB] mb-1">Customer</p>
+            <p className="text-caption font-medium text-label mb-1">Customer</p>
             <p className="text-body font-medium text-[#111]">{order.customer_name}</p>
           </div>
           {order.customer_phone && (
             <div>
-              <p className="text-caption font-medium text-[#BBBBBB] mb-1">Phone</p>
+              <p className="text-caption font-medium text-label mb-1">Phone</p>
               <p className="text-body font-medium text-[#111]">{order.customer_phone}</p>
             </div>
           )}
@@ -148,7 +165,7 @@ export default function OrderDetailPage() {
           <thead>
             <tr className="border-b border-[#F2F2F2]">
               {['Product', 'Batch', 'Qty', 'Sale Price', 'GST', 'Total'].map(h => (
-                <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-[#BBBBBB]">{h}</th>
+                <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-label">{h}</th>
               ))}
             </tr>
           </thead>

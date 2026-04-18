@@ -95,7 +95,7 @@ export default function StockAdjustmentModal({ batch, open, onOpenChange, onSave
 
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Qty Change (+ to add, - to remove)</p>
+            <p className="text-caption font-medium text-label">Qty Change (+ to add, - to remove)</p>
             <input
               type="number"
               className={fieldCls}
@@ -106,7 +106,7 @@ export default function StockAdjustmentModal({ batch, open, onOpenChange, onSave
             />
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Reason</p>
+            <p className="text-caption font-medium text-label">Reason</p>
             <select
               className={fieldCls}
               value={reason}
@@ -118,7 +118,7 @@ export default function StockAdjustmentModal({ batch, open, onOpenChange, onSave
             </select>
           </div>
           <div className="space-y-1">
-            <p className="text-caption font-medium text-[#BBBBBB]">Notes (optional)</p>
+            <p className="text-caption font-medium text-label">Notes (optional)</p>
             <textarea
               className={fieldCls + ' h-16 py-2 resize-none'}
               value={notes}
