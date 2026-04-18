@@ -5,8 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
-import type { OrderDetail } from '@/types'
+import type { OrderDetail, ShopSettings } from '@/types'
 import { fmtCurrency, fmtDate } from '@/lib/gst'
+import { buildBillData, generateBill } from '@/lib/generateBill'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -18,6 +19,7 @@ export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [data, setData] = useState<OrderDetail | null>(null)
+  const [settings, setSettings] = useState<ShopSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [returning, setReturning] = useState(false)
 
@@ -25,7 +27,10 @@ export default function OrderDetailPage() {
     api.getOrder(id).then(setData).finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [id])
+  useEffect(() => {
+    load()
+    api.getSettings().then(setSettings)
+  }, [id])
 
   async function handleReturn() {
     setReturning(true)
@@ -97,7 +102,11 @@ export default function OrderDetailPage() {
             </AlertDialog>
           )}
           <button
-            onClick={() => window.print()}
+            onClick={async () => {
+              if (!data || !settings) return
+              const shopName = localStorage.getItem('shop_name') ?? ''
+              await generateBill(buildBillData(data, settings, shopName))
+            }}
             className="flex items-center gap-1.5 text-body-sm text-[#AAAAAA] hover:text-[#111] transition-colors"
           >
             <Printer className="w-3.5 h-3.5" /> Print

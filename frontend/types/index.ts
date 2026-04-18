@@ -94,6 +94,8 @@ export interface OrderItem {
   sgst_amount: number
   igst_amount: number
   line_total: number
+  mrp: number
+  expiry_date: string
 }
 
 export type PaymentMode = 'cash' | 'upi' | 'card' | 'mixed'
@@ -104,6 +106,7 @@ export interface Order {
   customer_id: string | null
   customer_name: string | null
   customer_phone: string | null
+  customer_age: number | null
   cgst_total: number
   sgst_total: number
   igst_total: number
@@ -219,4 +222,5 @@ export interface ShopSettings {
   food_license?: string
   other_licenses?: string
   store_policies?: string
+  google_review_link?: string
 }

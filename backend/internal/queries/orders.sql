@@ -42,13 +42,20 @@ WHERE o.status = 'active'
 -- name: GetOrderByID :one
 SELECT o.*,
        c.name  AS customer_name,
-       c.phone AS customer_phone
+       c.phone AS customer_phone,
+       c.age   AS customer_age
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
 WHERE o.order_id = $1;
 
 -- name: GetOrderItems :many
-SELECT * FROM order_items WHERE order_id = $1;
+SELECT oi.item_id, oi.order_id, oi.batch_id, oi.product_name, oi.batch_no,
+       oi.qty, oi.sale_price, oi.gst_rate, oi.cgst_amount, oi.sgst_amount, oi.igst_amount, oi.line_total,
+       b.mrp,
+       b.expiry_date
+FROM order_items oi
+JOIN batches b ON oi.batch_id = b.batch_id
+WHERE oi.order_id = $1;
 
 -- name: SoftDeleteOrder :exec
 UPDATE orders SET status = 'deleted' WHERE order_id = $1;

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
+import { generateBill } from '@/lib/generateBill'
 import { clearCart, setIsInState, setPaymentMode, selectCartTotals } from '@/store/cartSlice'
 import type { RootState } from '@/store'
 import CustomerLookup from '@/components/billing/CustomerLookup'
@@ -24,14 +25,19 @@ export default function BillingPage() {
   async function completeOrder() {
     if (items.length === 0) { toast.error('Add at least one item'); return }
     setLoading(true)
+    // Capture cart state before clearing
+    const cartItems = items
+    const cartIsInState = isInState
+    const cartCustomer = customer
+    const cartPaymentMode = paymentMode
     try {
       const order = await api.createOrder({
-        is_in_state: isInState,
-        payment_mode: paymentMode,
-        phone: customer.phone || null,
-        name:  customer.name  || null,
-        age:   customer.age ? parseInt(customer.age) : null,
-        items: items.map(i => ({
+        is_in_state: cartIsInState,
+        payment_mode: cartPaymentMode,
+        phone: cartCustomer.phone || null,
+        name:  cartCustomer.name  || null,
+        age:   cartCustomer.age ? parseInt(cartCustomer.age) : null,
+        items: cartItems.map(i => ({
           batch_id:     i.batchId,
           product_name: i.productName,
           batch_no:     i.batchNo,
@@ -43,7 +49,46 @@ export default function BillingPage() {
       toast.success(`Bill created: ${order.order_number}`)
       dispatch(clearCart())
       setAddKey(k => k + 1)
-      window.print()
+
+      // Build bill data from cart + returned order, then open PDF
+      const settings = await api.getSettings()
+      const shopName = localStorage.getItem('shop_name') ?? ''
+      const billItems = cartItems.map(i => {
+        const taxable = i.salePrice * i.qty
+        const totalTax = parseFloat((taxable * (i.gstRate / 100)).toFixed(2))
+        const cgst = cartIsInState ? parseFloat((totalTax / 2).toFixed(2)) : 0
+        const sgst = cartIsInState ? parseFloat((totalTax / 2).toFixed(2)) : 0
+        const igst = cartIsInState ? 0 : totalTax
+        return {
+          productName: i.productName,
+          batchNo: i.batchNo,
+          expiryDate: i.expiryDate,
+          mrp: i.mrp,
+          qty: i.qty,
+          salePrice: i.salePrice,
+          gstRate: i.gstRate,
+          cgstAmount: cgst,
+          sgstAmount: sgst,
+          igstAmount: igst,
+          lineTotal: parseFloat((taxable + totalTax).toFixed(2)),
+        }
+      })
+      await generateBill({
+        orderNumber: order.order_number,
+        orderDate: order.created_at,
+        customerName: cartCustomer.name || null,
+        customerPhone: cartCustomer.phone || null,
+        customerAge: cartCustomer.age ? parseInt(cartCustomer.age) : null,
+        paymentMode: cartPaymentMode,
+        isInState: cartIsInState,
+        items: billItems,
+        cgstTotal: order.cgst_total,
+        sgstTotal: order.sgst_total,
+        igstTotal: order.igst_total,
+        totalAmount: order.total_amount,
+        settings,
+        shopName,
+      })
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to create order')
     } finally {

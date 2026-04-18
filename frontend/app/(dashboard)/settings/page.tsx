@@ -21,6 +21,7 @@ export default function SettingsPage() {
   const [foodLicense, setFoodLicense] = useState('')
   const [otherLicenses, setOtherLicenses] = useState('')
   const [storePolicies, setStorePolicies] = useState('')
+  const [googleReviewLink, setGoogleReviewLink] = useState('')
 
   useEffect(() => {
     api.getSettings()
@@ -31,6 +32,7 @@ export default function SettingsPage() {
         setFoodLicense(s.food_license ?? '')
         setOtherLicenses(s.other_licenses ?? '')
         setStorePolicies(s.store_policies ?? '')
+        setGoogleReviewLink(s.google_review_link ?? '')
       })
       .catch(err => toast.error(err.message || 'Could not load settings'))
       .finally(() => setLoading(false))
@@ -46,6 +48,7 @@ export default function SettingsPage() {
       food_license: foodLicense.trim(),
       other_licenses: otherLicenses.trim(),
       store_policies: storePolicies.trim(),
+      google_review_link: googleReviewLink.trim() || undefined,
     }
     try {
       await api.updateSettings(payload)
@@ -145,6 +148,19 @@ export default function SettingsPage() {
               value={storePolicies}
               onChange={e => setStorePolicies(e.target.value)}
               placeholder="Return, exchange or refund policies to show on bills"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-caption font-medium text-[#BBBBBB] uppercase tracking-wide">
+              Google Review Link
+            </p>
+            <input
+              className={fieldCls}
+              value={googleReviewLink}
+              onChange={e => setGoogleReviewLink(e.target.value)}
+              placeholder="https://g.page/r/..."
+              type="url"
             />
           </div>
 

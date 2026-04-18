@@ -151,7 +151,8 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 const getOrderByID = `-- name: GetOrderByID :one
 SELECT o.order_id, o.order_number, o.customer_id, o.cgst_total, o.sgst_total, o.igst_total, o.total_amount, o.status, o.created_at, o.payment_mode,
        c.name  AS customer_name,
-       c.phone AS customer_phone
+       c.phone AS customer_phone,
+       c.age   AS customer_age
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
 WHERE o.order_id = $1
@@ -170,6 +171,7 @@ type GetOrderByIDRow struct {
 	PaymentMode   string             `json:"payment_mode"`
 	CustomerName  *string            `json:"customer_name"`
 	CustomerPhone *string            `json:"customer_phone"`
+	CustomerAge   *int32             `json:"customer_age"`
 }
 
 func (q *Queries) GetOrderByID(ctx context.Context, orderID pgtype.UUID) (GetOrderByIDRow, error) {
@@ -188,23 +190,47 @@ func (q *Queries) GetOrderByID(ctx context.Context, orderID pgtype.UUID) (GetOrd
 		&i.PaymentMode,
 		&i.CustomerName,
 		&i.CustomerPhone,
+		&i.CustomerAge,
 	)
 	return i, err
 }
 
 const getOrderItems = `-- name: GetOrderItems :many
-SELECT item_id, order_id, batch_id, product_name, batch_no, qty, sale_price, gst_rate, cgst_amount, sgst_amount, igst_amount, line_total FROM order_items WHERE order_id = $1
+SELECT oi.item_id, oi.order_id, oi.batch_id, oi.product_name, oi.batch_no,
+       oi.qty, oi.sale_price, oi.gst_rate, oi.cgst_amount, oi.sgst_amount, oi.igst_amount, oi.line_total,
+       b.mrp,
+       b.expiry_date
+FROM order_items oi
+JOIN batches b ON oi.batch_id = b.batch_id
+WHERE oi.order_id = $1
 `
 
-func (q *Queries) GetOrderItems(ctx context.Context, orderID pgtype.UUID) ([]OrderItem, error) {
+type GetOrderItemsRow struct {
+	ItemID      pgtype.UUID    `json:"item_id"`
+	OrderID     pgtype.UUID    `json:"order_id"`
+	BatchID     pgtype.UUID    `json:"batch_id"`
+	ProductName string         `json:"product_name"`
+	BatchNo     string         `json:"batch_no"`
+	Qty         int32          `json:"qty"`
+	SalePrice   pgtype.Numeric `json:"sale_price"`
+	GstRate     pgtype.Numeric `json:"gst_rate"`
+	CgstAmount  pgtype.Numeric `json:"cgst_amount"`
+	SgstAmount  pgtype.Numeric `json:"sgst_amount"`
+	IgstAmount  pgtype.Numeric `json:"igst_amount"`
+	LineTotal   pgtype.Numeric `json:"line_total"`
+	Mrp         pgtype.Numeric `json:"mrp"`
+	ExpiryDate  pgtype.Date    `json:"expiry_date"`
+}
+
+func (q *Queries) GetOrderItems(ctx context.Context, orderID pgtype.UUID) ([]GetOrderItemsRow, error) {
 	rows, err := q.db.Query(ctx, getOrderItems, orderID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []OrderItem
+	var items []GetOrderItemsRow
 	for rows.Next() {
-		var i OrderItem
+		var i GetOrderItemsRow
 		if err := rows.Scan(
 			&i.ItemID,
 			&i.OrderID,
@@ -218,6 +244,8 @@ func (q *Queries) GetOrderItems(ctx context.Context, orderID pgtype.UUID) ([]Ord
 			&i.SgstAmount,
 			&i.IgstAmount,
 			&i.LineTotal,
+			&i.Mrp,
+			&i.ExpiryDate,
 		); err != nil {
 			return nil, err
 		}
