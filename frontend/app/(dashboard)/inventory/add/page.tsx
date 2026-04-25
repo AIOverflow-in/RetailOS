@@ -7,7 +7,26 @@ import { api } from '@/lib/api'
 import type { Distributor, Product } from '@/types'
 import { useProductSearch } from '@/lib/useProductSearch'
 import { getCachedDistributors, setCachedDistributors } from '@/lib/distributorCache'
-import { ArrowLeft } from 'lucide-react'
+import { Tooltip } from '@/components/ui/tooltip'
+import { ArrowLeft, Info } from 'lucide-react'
+
+function LabelWithInfo({ text, tip }: { text: string; tip: string }) {
+  return (
+    <div className="flex items-center gap-1">
+      <p className="text-caption text-label">{text}</p>
+      <Tooltip content={tip}>
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label="More info"
+          className="text-[#BBBBBB] hover:text-[#666] transition-colors leading-none"
+        >
+          <Info className="w-3 h-3" />
+        </button>
+      </Tooltip>
+    </div>
+  )
+}
 
 export default function AddStockPage() {
   const router = useRouter()
@@ -67,10 +86,11 @@ export default function AddStockPage() {
 
   const b = parseFloat(buyingPrice), s = parseFloat(sellingPrice), m = parseFloat(mrp)
   const gstRate = typeof purchaseGSTRate === 'number' ? purchaseGSTRate : 0
-  const landingPrice = b * (1 + gstRate / 100)
+  // Buying price is GST-inclusive; landing price is the pre-GST cost basis.
+  const landingPrice = gstRate > 0 ? b / (1 + gstRate / 100) : b
   const costPrice = gstRate > 0 ? landingPrice : b
   const priceError =
-    buyingPrice && sellingPrice && costPrice >= s ? 'Selling price must be > landing price' :
+    buyingPrice && sellingPrice && costPrice >= s ? `Selling price must be > ${gstRate > 0 ? 'landing' : 'buying'} price` :
     sellingPrice && mrp && s >= m ? 'MRP must be > selling price' : null
 
   async function handleSubmit(e: React.FormEvent) {
@@ -198,19 +218,19 @@ export default function AddStockPage() {
               <p className="text-caption font-medium text-label">Batch Details</p>
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="space-y-1">
-                  <p className="text-caption text-label">Batch no. *</p>
+                  <LabelWithInfo text="Batch no. *" tip="Manufacturer batch identifier printed on the pack." />
                   <input className={inp} value={batchNo} onChange={e => setBatchNo(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-label">Expiry date *</p>
+                  <LabelWithInfo text="Expiry date *" tip="Expiry date printed on the pack." />
                   <input type="date" className={inp} value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-label">Buying price (₹) *</p>
+                  <LabelWithInfo text="Buying price (incl. GST, ₹) *" tip="Per-unit price you paid the distributor, including GST. Enter the figure on the invoice." />
                   <input type="number" min={0} step={0.01} className={inp} value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-label">Purchase GST Rate (%)</p>
+                  <LabelWithInfo text="Purchase GST Rate (%)" tip="GST rate charged by the distributor on this purchase." />
                   <select
                     className={inp}
                     value={purchaseGSTRate}
@@ -226,30 +246,34 @@ export default function AddStockPage() {
                 </div>
                 {purchaseGSTRate !== '' && (
                   <div className="space-y-1">
-                    <p className="text-caption text-label">Landing Price (₹)</p>
+                    <LabelWithInfo text="Landing Price (excl. GST, ₹)" tip="Buying price net of GST. Auto-calculated, not editable." />
                     <div className="w-full h-8 px-3 py-1.5 text-body bg-[#F7F7F7] border border-[#E5E5E5] rounded-lg text-[#666] flex items-center">
-                      {buyingPrice ? (parseFloat(buyingPrice) * (1 + (typeof purchaseGSTRate === 'number' ? purchaseGSTRate : 0) / 100)).toFixed(2) : '—'}
+                      {buyingPrice && typeof purchaseGSTRate === 'number' && purchaseGSTRate > 0
+                        ? (parseFloat(buyingPrice) / (1 + purchaseGSTRate / 100)).toFixed(2)
+                        : buyingPrice && purchaseGSTRate === 0
+                          ? parseFloat(buyingPrice).toFixed(2)
+                          : '—'}
                     </div>
                   </div>
                 )}
                 <div className="space-y-1">
-                  <p className="text-caption text-label">Selling price (₹) *</p>
+                  <LabelWithInfo text="Selling price (₹) *" tip="Per-unit price (incl. GST) shown to customers at checkout." />
                   <input type="number" min={0} step={0.01}
                     className={priceError?.includes('Selling') ? errInp : inp}
                     value={sellingPrice} onChange={e => setSellingPrice(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-label">MRP (₹) *</p>
+                  <LabelWithInfo text="MRP (₹) *" tip="Maximum retail price printed on the pack." />
                   <input type="number" min={0} step={0.01}
                     className={priceError?.includes('MRP') ? errInp : inp}
                     value={mrp} onChange={e => setMrp(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-label">Purchase qty *</p>
+                  <LabelWithInfo text="Purchase qty *" tip="Number of units received in this batch." />
                   <input type="number" min={1} className={inp} value={purchaseQty} onChange={e => setPurchaseQty(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-label">Box no.</p>
+                  <LabelWithInfo text="Box no." tip="Storage box or shelf identifier for locating stock." />
                   <input className={inp} value={boxNo} onChange={e => setBoxNo(e.target.value)} />
                 </div>
               </div>
@@ -264,7 +288,7 @@ export default function AddStockPage() {
               <p className="text-caption font-medium text-label">Distributor <span className="font-normal text-[#DDDDDD]">(optional)</span></p>
               <div className="space-y-2.5">
                 <div className="space-y-1">
-                  <p className="text-caption text-label">Distributor</p>
+                  <LabelWithInfo text="Distributor" tip="Supplier this batch was purchased from." />
                   <select className={inp} value={distributorId} onChange={e => setDistributorId(e.target.value)}>
                     <option value="">None</option>
                     {distributors.filter(d => d.is_active).map(d => (
@@ -273,7 +297,7 @@ export default function AddStockPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-caption text-label">Purchase Invoice No.</p>
+                  <LabelWithInfo text="Purchase Invoice No." tip="Invoice number from the distributor for this purchase." />
                   <input className={inp} placeholder="e.g., INV-2026-001" value={purchaseInvoiceNo} onChange={e => setPurchaseInvoiceNo(e.target.value)} />
                 </div>
               </div>

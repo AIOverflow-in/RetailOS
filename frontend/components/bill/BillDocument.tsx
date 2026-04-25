@@ -200,17 +200,17 @@ export function BillDocument({ data }: { data: BillData }) {
           </View>
           <View style={s.infoRow}>
             <View style={s.infoCellBorder}>
-              <Text style={s.infoLabel}>Patient Name</Text>
+              <Text style={s.infoLabel}>Customer Name</Text>
               <Text style={s.infoValue}>{customerName || '—'}</Text>
             </View>
             <View style={s.infoCell}>
-              <Text style={s.infoLabel}>Patient Contact Number</Text>
+              <Text style={s.infoLabel}>Customer Contact Number</Text>
               <Text style={s.infoValue}>{customerPhone || '—'}</Text>
             </View>
           </View>
           <View style={s.infoRowLast}>
             <View style={s.infoCellBorder}>
-              <Text style={s.infoLabel}>Patient Age</Text>
+              <Text style={s.infoLabel}>Customer Age</Text>
               <Text style={s.infoValue}>{customerAge != null ? String(customerAge) : '—'}</Text>
             </View>
             <View style={s.infoCell}>
@@ -225,10 +225,10 @@ export function BillDocument({ data }: { data: BillData }) {
           {/* Header */}
           <View style={s.tableHeaderRow}>
             <Text style={[s.th, s.colSNo]}>S No</Text>
-            <Text style={[s.th, s.colMed]}>Medicine Name</Text>
+            <Text style={[s.th, s.colMed]}>Product Name</Text>
             <Text style={[s.th, s.colMRP, { textAlign: 'right' }]}>MRP</Text>
             <Text style={[s.th, s.colQty, { textAlign: 'center' }]}>Qty</Text>
-            <Text style={[s.th, s.colPrice, { textAlign: 'right' }]}>Price Per Strip</Text>
+            <Text style={[s.th, s.colPrice, { textAlign: 'right' }]}>Price</Text>
             {isInState ? (
               <>
                 <Text style={[s.th, s.colGstPct, { textAlign: 'center' }]}>CGST %</Text>

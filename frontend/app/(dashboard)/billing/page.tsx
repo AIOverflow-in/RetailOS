@@ -5,31 +5,44 @@ import { MessageCircle } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
+import { getCachedSettings, setCachedSettings } from '@/lib/settingsCache'
 import { generateBill, sendBillViaWhatsApp } from '@/lib/generateBill'
 import type { BillData } from '@/lib/generateBill'
-import { clearCart, setIsInState, setPaymentMode, selectCartTotals } from '@/store/cartSlice'
+import { clearCart, setIsInState, setPaymentMode } from '@/store/cartSlice'
 import type { RootState } from '@/store'
 import CustomerLookup from '@/components/billing/CustomerLookup'
-import LineItem from '@/components/billing/LineItem'
-import AddItemBar from '@/components/billing/AddItemBar'
 import CartSummary from '@/components/billing/CartSummary'
+import BillingTable, {
+  emptyRow,
+  isCompleteRow,
+  type BillingRow,
+} from '@/components/billing/BillingTable'
 
 export default function BillingPage() {
   const dispatch = useDispatch()
-  const items    = useSelector((s: RootState) => s.cart.items)
   const isInState = useSelector((s: RootState) => s.cart.isInState)
-  const customer    = useSelector((s: RootState) => s.cart.customer)
+  const customer = useSelector((s: RootState) => s.cart.customer)
   const paymentMode = useSelector((s: RootState) => s.cart.paymentMode)
-  const totals    = useSelector(selectCartTotals)
-  const [addKey, setAddKey] = useState(0)
+
+  const [rows, setRows] = useState<BillingRow[]>(() => [emptyRow()])
   const [loading, setLoading] = useState(false)
   const [lastBill, setLastBill] = useState<BillData | null>(null)
 
-  async function completeOrder() {
-    if (items.length === 0) { toast.error('Add at least one item'); return }
+  async function placeOrder() {
+    const completeRows = rows.filter(isCompleteRow)
+    if (completeRows.length === 0) {
+      toast.error('Add at least one item')
+      return
+    }
+    if (!customer.name.trim()) {
+      toast.error('Customer name is required')
+      return
+    }
+    if (customer.phone.length !== 10) {
+      toast.error('Customer phone is required (10 digits)')
+      return
+    }
     setLoading(true)
-    // Capture cart state before clearing
-    const cartItems = items
     const cartIsInState = isInState
     const cartCustomer = customer
     const cartPaymentMode = paymentMode
@@ -38,38 +51,41 @@ export default function BillingPage() {
         is_in_state: cartIsInState,
         payment_mode: cartPaymentMode,
         phone: cartCustomer.phone || null,
-        name:  cartCustomer.name  || null,
-        age:   cartCustomer.age ? parseInt(cartCustomer.age) : null,
-        items: cartItems.map(i => ({
-          batch_id:     i.batchId,
-          product_name: i.productName,
-          batch_no:     i.batchNo,
-          qty:          i.qty,
-          sale_price:   i.salePrice,
-          gst_rate:     i.gstRate,
+        name: cartCustomer.name || null,
+        age: cartCustomer.age ? parseInt(cartCustomer.age) : null,
+        items: completeRows.map(r => ({
+          batch_id: r.batchId as string,
+          product_name: r.productName as string,
+          batch_no: r.batchNo as string,
+          qty: r.qty,
+          sale_price: r.salePrice,
+          gst_rate: r.gstRate,
         })),
       })
       toast.success(`Bill created: ${order.order_number}`)
+      setRows([emptyRow()])
       dispatch(clearCart())
-      setAddKey(k => k + 1)
 
-      // Build bill data from cart + returned order, then open PDF
-      const settings = await api.getSettings()
+      let settings = getCachedSettings()
+      if (!settings) {
+        settings = await api.getSettings()
+        setCachedSettings(settings)
+      }
       const shopName = localStorage.getItem('shop_name') ?? ''
-      const billItems = cartItems.map(i => {
-        const taxable = i.salePrice * i.qty
-        const totalTax = parseFloat((taxable * (i.gstRate / 100)).toFixed(2))
+      const billItems = completeRows.map(r => {
+        const taxable = r.salePrice * r.qty
+        const totalTax = parseFloat((taxable * (r.gstRate / 100)).toFixed(2))
         const cgst = cartIsInState ? parseFloat((totalTax / 2).toFixed(2)) : 0
         const sgst = cartIsInState ? parseFloat((totalTax / 2).toFixed(2)) : 0
         const igst = cartIsInState ? 0 : totalTax
         return {
-          productName: i.productName,
-          batchNo: i.batchNo,
-          expiryDate: i.expiryDate,
-          mrp: i.mrp,
-          qty: i.qty,
-          salePrice: i.salePrice,
-          gstRate: i.gstRate,
+          productName: r.productName as string,
+          batchNo: r.batchNo as string,
+          expiryDate: r.expiryDate as string,
+          mrp: r.mrp ?? 0,
+          qty: r.qty,
+          salePrice: r.salePrice,
+          gstRate: r.gstRate,
           cgstAmount: cgst,
           sgstAmount: sgst,
           igstAmount: igst,
@@ -101,12 +117,22 @@ export default function BillingPage() {
     }
   }
 
-  const HEADERS = ['Product', 'Batch', 'Expiry', 'MRP', 'Sale Price', 'Qty', 'GST', 'Stock', 'Total', '']
+  const completeRows = rows.filter(isCompleteRow)
+  const grandTotal = completeRows.reduce(
+    (sum, r) => sum + r.salePrice * r.qty * (1 + r.gstRate / 100),
+    0,
+  )
+
+  const missing: string[] = []
+  if (completeRows.length === 0) missing.push('Add at least one item')
+  if (!customer.name.trim()) missing.push('Customer name')
+  if (customer.phone.length !== 10) missing.push('Customer phone (10 digits)')
+  const placeOrderDisabled = loading || missing.length > 0
+  const placeOrderTooltip = missing.length > 0 ? `Required: ${missing.join(', ')}` : ''
 
   return (
     <div className="space-y-5">
 
-      {/* WhatsApp send banner */}
       {lastBill?.customerPhone && (
         <div className="flex items-center justify-between bg-[#F6FFF6] border border-emerald-200 rounded-lg px-4 py-2.5">
           <p className="text-body-sm text-emerald-700">
@@ -129,7 +155,6 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">New Bill</h1>
@@ -164,68 +189,36 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* Customer */}
       <div className="bg-white rounded-lg border border-[#EBEBEB] p-4">
         <p className="text-caption font-medium text-label mb-3">Customer</p>
         <CustomerLookup />
       </div>
 
-      {/* Add item bar — OUTSIDE the table, no overflow clipping */}
-      <AddItemBar key={addKey} isInState={isInState} onAdd={() => setAddKey(k => k + 1)} />
+      <BillingTable rows={rows} setRows={setRows} />
 
-      {/* Cart items table — only shown when items exist */}
-      {items.length > 0 && (
-        <div className="bg-white rounded-lg border border-[#EBEBEB] overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#F2F2F2]">
-                {HEADERS.map(h => (
-                  <th key={h} className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {items.map(item => (
-                <LineItem
-                  key={item.batchId}
-                  batchId={item.batchId}
-                  productName={item.productName}
-                  batchNo={item.batchNo}
-                  expiryDate={item.expiryDate}
-                  mrp={item.mrp}
-                  availableStock={item.availableStock}
-                  qty={item.qty}
-                  salePrice={item.salePrice}
-                  gstRate={item.gstRate}
-                  isInState={isInState}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Footer */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
-        <CartSummary />
+        <CartSummary rows={rows} isInState={isInState} />
         <div className="flex items-center gap-2">
-          {items.length > 0 && (
+          {completeRows.length > 0 && (
             <button
-              onClick={() => { dispatch(clearCart()); setAddKey(k => k + 1) }}
+              onClick={() => { setRows([emptyRow()]); dispatch(clearCart()) }}
               className="h-9 px-4 text-body border border-[#E5E5E5] rounded-lg text-[#888] hover:border-[#CCCCCC] hover:text-[#111] transition-colors"
             >
               Clear
             </button>
           )}
-          <button
-            onClick={completeOrder}
-            disabled={loading || items.length === 0}
-            className="h-9 px-5 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors min-w-[160px]"
+          <span
+            title={placeOrderTooltip}
+            className={placeOrderDisabled ? 'cursor-not-allowed' : undefined}
           >
-            {loading ? 'Processing…' : `Complete — ₹${totals.total.toFixed(2)}`}
-          </button>
+            <button
+              onClick={placeOrder}
+              disabled={placeOrderDisabled}
+              className="h-9 px-5 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 disabled:pointer-events-none transition-colors min-w-[160px]"
+            >
+              {loading ? 'Processing…' : `Place Order — ₹${grandTotal.toFixed(2)}`}
+            </button>
+          </span>
         </div>
       </div>
     </div>

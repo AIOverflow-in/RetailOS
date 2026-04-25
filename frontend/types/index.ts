@@ -89,6 +89,7 @@ export interface InventoryRow {
   distributor_id: string | null
   distributor_name: string | null
   purchase_invoice_no: string | null
+  created_at: string
 }
 
 // ─── Customers ───────────────────────────────────────────────────────────────
@@ -113,6 +114,7 @@ export interface OrderItem {
   product_name: string
   batch_no: string
   qty: number
+  returned_qty: number
   sale_price: number
   gst_rate: number
   cgst_amount: number
@@ -139,6 +141,8 @@ export interface Order {
   payment_mode: PaymentMode
   status: string
   created_at: string
+  updated_at: string | null
+  return_comment: string | null
 }
 
 export interface OrderDetail {
@@ -148,21 +152,7 @@ export interface OrderDetail {
 
 // ─── Cart (Redux state) ───────────────────────────────────────────────────────
 
-export interface CartItem {
-  batchId: string
-  productId: string
-  productName: string
-  batchNo: string
-  expiryDate: string
-  mrp: number
-  availableStock: number
-  qty: number
-  salePrice: number
-  gstRate: GSTRate
-}
-
 export interface CartState {
-  items: CartItem[]
   isInState: boolean
   paymentMode: PaymentMode
   customer: {

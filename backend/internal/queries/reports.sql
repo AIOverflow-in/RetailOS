@@ -32,7 +32,7 @@ ORDER BY oi.gst_rate;
 SELECT
     COUNT(*)::bigint                                               AS total_batches,
     COALESCE(SUM(b.buying_price * b.purchase_qty), 0)::numeric(14,2)   AS total_buying_value,
-    COALESCE(SUM((b.landing_price - b.buying_price) * b.purchase_qty), 0)::numeric(14,2) AS total_input_gst,
+    COALESCE(SUM((b.buying_price - b.landing_price) * b.purchase_qty), 0)::numeric(14,2) AS total_input_gst,
     COALESCE(SUM(b.landing_price * b.purchase_qty), 0)::numeric(14,2)   AS total_landing_value
 FROM batches b
 WHERE b.created_at >= $1
@@ -43,7 +43,7 @@ WHERE b.created_at >= $1
 SELECT
     b.purchase_gst_rate AS gst_rate,
     COALESCE(SUM(b.buying_price * b.purchase_qty), 0)::numeric(14,2)   AS buying_value,
-    COALESCE(SUM((b.landing_price - b.buying_price) * b.purchase_qty), 0)::numeric(14,2) AS input_gst,
+    COALESCE(SUM((b.buying_price - b.landing_price) * b.purchase_qty), 0)::numeric(14,2) AS input_gst,
     COALESCE(SUM(b.landing_price * b.purchase_qty), 0)::numeric(14,2)   AS landing_value
 FROM batches b
 WHERE b.created_at >= $1

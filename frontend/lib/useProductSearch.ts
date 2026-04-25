@@ -73,5 +73,7 @@ export function useProductSearch() {
     triggerPreload,
     setQuery,
     setSuggestions,
+    allProducts,
+    catalogExceedsCap,
   }
 }

@@ -31,6 +31,7 @@ const authSlice = createSlice({
       localStorage.removeItem('token')
       localStorage.removeItem('shop_name')
       localStorage.removeItem('schema_name')
+      localStorage.removeItem('shop_settings')
     },
   },
 })

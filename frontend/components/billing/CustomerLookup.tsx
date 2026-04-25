@@ -41,7 +41,7 @@ export default function CustomerLookup() {
   return (
     <div className="flex gap-3 flex-wrap items-end">
       <div className="space-y-1.5">
-        <p className="text-caption text-label font-medium">Phone</p>
+        <p className="text-caption text-label font-medium">Phone<span className="text-red-500 ml-0.5">*</span></p>
         <div className="relative">
           <input
             className={`${inputClass} w-36`}
@@ -56,7 +56,7 @@ export default function CustomerLookup() {
         </div>
       </div>
       <div className="space-y-1.5">
-        <p className="text-caption text-label font-medium">Name</p>
+        <p className="text-caption text-label font-medium">Name<span className="text-red-500 ml-0.5">*</span></p>
         <input
           className={`${inputClass} w-48`}
           placeholder="Patient name"

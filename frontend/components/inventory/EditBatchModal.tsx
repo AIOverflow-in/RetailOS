@@ -80,11 +80,12 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
     const m = parseFloat(mrp)
     const pq = parseInt(purchaseQty, 10)
     const gstRate = typeof purchaseGSTRate === 'number' ? purchaseGSTRate : 0
-    const landingPrice = bp * (1 + gstRate / 100)
+    // Buying price is GST-inclusive; landing is the pre-GST cost basis.
+    const landingPrice = gstRate > 0 ? bp / (1 + gstRate / 100) : bp
     const costPrice = gstRate > 0 ? landingPrice : bp
 
     if (costPrice >= sp) {
-      toast.error('Selling price must be greater than landing price')
+      toast.error(`Selling price must be greater than ${gstRate > 0 ? 'landing' : 'buying'} price`)
       return
     }
     if (sp >= m) {
@@ -130,7 +131,7 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
-              <p className="text-caption font-medium text-label">Buying Price</p>
+              <p className="text-caption font-medium text-label">Buying Price (incl. GST)</p>
               <input type="number" step="0.01" min="0" className={fieldCls} value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} required />
             </div>
             <div className="space-y-1">
@@ -180,9 +181,13 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
             </div>
             {purchaseGSTRate !== '' && (
               <div className="space-y-1">
-                <p className="text-caption font-medium text-label">Landing Price (₹)</p>
+                <p className="text-caption font-medium text-label">Landing Price (excl. GST, ₹)</p>
                 <div className={fieldCls + ' bg-[#F7F7F7] text-[#666] flex items-center'}>
-                  {buyingPrice ? (parseFloat(buyingPrice) * (1 + (typeof purchaseGSTRate === 'number' ? purchaseGSTRate : 0) / 100)).toFixed(2) : '—'}
+                  {buyingPrice && typeof purchaseGSTRate === 'number' && purchaseGSTRate > 0
+                    ? (parseFloat(buyingPrice) / (1 + purchaseGSTRate / 100)).toFixed(2)
+                    : buyingPrice && purchaseGSTRate === 0
+                      ? parseFloat(buyingPrice).toFixed(2)
+                      : '—'}
                 </div>
               </div>
             )}

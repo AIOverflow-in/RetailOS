@@ -251,7 +251,7 @@ const listInventory = `-- name: ListInventory :many
 SELECT p.product_id, p.name, p.company_name, p.sku, p.hsn_code,
        b.batch_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price,
        b.purchase_qty, b.sold_qty, b.box_no, b.purchase_gst_rate, b.landing_price,
-       b.distributor_id, b.purchase_invoice_no,
+       b.distributor_id, b.purchase_invoice_no, b.created_at,
        d.name AS distributor_name,
        (b.purchase_qty - b.sold_qty) AS available_stock
 FROM products p
@@ -261,26 +261,27 @@ ORDER BY p.name, b.expiry_date ASC
 `
 
 type ListInventoryRow struct {
-	ProductID         pgtype.UUID    `json:"product_id"`
-	Name              string         `json:"name"`
-	CompanyName       string         `json:"company_name"`
-	Sku               *string        `json:"sku"`
-	HsnCode           *string        `json:"hsn_code"`
-	BatchID           pgtype.UUID    `json:"batch_id"`
-	BatchNo           string         `json:"batch_no"`
-	ExpiryDate        pgtype.Date    `json:"expiry_date"`
-	Mrp               pgtype.Numeric `json:"mrp"`
-	BuyingPrice       pgtype.Numeric `json:"buying_price"`
-	SellingPrice      pgtype.Numeric `json:"selling_price"`
-	PurchaseQty       int32          `json:"purchase_qty"`
-	SoldQty           int32          `json:"sold_qty"`
-	BoxNo             *string        `json:"box_no"`
-	PurchaseGstRate   pgtype.Numeric `json:"purchase_gst_rate"`
-	LandingPrice      pgtype.Numeric `json:"landing_price"`
-	DistributorID     pgtype.UUID    `json:"distributor_id"`
-	PurchaseInvoiceNo *string        `json:"purchase_invoice_no"`
-	DistributorName   *string        `json:"distributor_name"`
-	AvailableStock    int32          `json:"available_stock"`
+	ProductID         pgtype.UUID        `json:"product_id"`
+	Name              string             `json:"name"`
+	CompanyName       string             `json:"company_name"`
+	Sku               *string            `json:"sku"`
+	HsnCode           *string            `json:"hsn_code"`
+	BatchID           pgtype.UUID        `json:"batch_id"`
+	BatchNo           string             `json:"batch_no"`
+	ExpiryDate        pgtype.Date        `json:"expiry_date"`
+	Mrp               pgtype.Numeric     `json:"mrp"`
+	BuyingPrice       pgtype.Numeric     `json:"buying_price"`
+	SellingPrice      pgtype.Numeric     `json:"selling_price"`
+	PurchaseQty       int32              `json:"purchase_qty"`
+	SoldQty           int32              `json:"sold_qty"`
+	BoxNo             *string            `json:"box_no"`
+	PurchaseGstRate   pgtype.Numeric     `json:"purchase_gst_rate"`
+	LandingPrice      pgtype.Numeric     `json:"landing_price"`
+	DistributorID     pgtype.UUID        `json:"distributor_id"`
+	PurchaseInvoiceNo *string            `json:"purchase_invoice_no"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	DistributorName   *string            `json:"distributor_name"`
+	AvailableStock    int32              `json:"available_stock"`
 }
 
 func (q *Queries) ListInventory(ctx context.Context) ([]ListInventoryRow, error) {
@@ -311,6 +312,7 @@ func (q *Queries) ListInventory(ctx context.Context) ([]ListInventoryRow, error)
 			&i.LandingPrice,
 			&i.DistributorID,
 			&i.PurchaseInvoiceNo,
+			&i.CreatedAt,
 			&i.DistributorName,
 			&i.AvailableStock,
 		); err != nil {

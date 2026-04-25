@@ -141,6 +141,7 @@ func main() {
 		r.Get("/orders/{id}", orderHandler.GetOrder)
 		r.Delete("/orders/{id}", orderHandler.SoftDeleteOrder)
 		r.Post("/orders/{id}/return", orderHandler.ReturnOrder)
+		r.Post("/orders/{id}/edit", orderHandler.EditOrder)
 
 		// Reports
 		r.Get("/reports/gst", reportHandler.GSTReport)

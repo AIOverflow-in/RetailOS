@@ -50,7 +50,7 @@ RETURNING *;
 SELECT p.product_id, p.name, p.company_name, p.sku, p.hsn_code,
        b.batch_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price,
        b.purchase_qty, b.sold_qty, b.box_no, b.purchase_gst_rate, b.landing_price,
-       b.distributor_id, b.purchase_invoice_no,
+       b.distributor_id, b.purchase_invoice_no, b.created_at,
        d.name AS distributor_name,
        (b.purchase_qty - b.sold_qty) AS available_stock
 FROM products p

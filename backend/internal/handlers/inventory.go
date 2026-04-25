@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -170,10 +171,11 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Compute landing price if GST rate is provided
+	// Buying price is GST-inclusive (matches the figure on the distributor invoice).
+	// Landing price is the pre-GST cost basis: landing = buying / (1 + gst/100).
 	var landingPrice *float64
 	if body.PurchaseGSTRate != nil && *body.PurchaseGSTRate > 0 {
-		lp := body.BuyingPrice * (1 + *body.PurchaseGSTRate/100)
+		lp := math.Round(body.BuyingPrice/(1+*body.PurchaseGSTRate/100)*100) / 100
 		landingPrice = &lp
 	}
 
@@ -183,7 +185,11 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 		costPrice = *landingPrice
 	}
 	if costPrice >= body.SellingPrice {
-		writeError(w, http.StatusBadRequest, "selling_price must be greater than landing_price" + map[bool]string{true: "", false: " (or buying_price)"}[landingPrice == nil])
+		field := "landing_price"
+		if landingPrice == nil {
+			field = "buying_price"
+		}
+		writeError(w, http.StatusBadRequest, "selling_price must be greater than "+field)
 		return
 	}
 	if body.SellingPrice >= body.MRP {
@@ -338,10 +344,11 @@ func (h *InventoryHandler) UpdateBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Compute landing price if GST rate is provided
+	// Buying price is GST-inclusive (matches the figure on the distributor invoice).
+	// Landing price is the pre-GST cost basis: landing = buying / (1 + gst/100).
 	var landingPrice *float64
 	if body.PurchaseGSTRate != nil && *body.PurchaseGSTRate > 0 {
-		lp := body.BuyingPrice * (1 + *body.PurchaseGSTRate/100)
+		lp := math.Round(body.BuyingPrice/(1+*body.PurchaseGSTRate/100)*100) / 100
 		landingPrice = &lp
 	}
 
@@ -351,11 +358,11 @@ func (h *InventoryHandler) UpdateBatch(w http.ResponseWriter, r *http.Request) {
 		costPrice = *landingPrice
 	}
 	if costPrice >= body.SellingPrice {
-		msgSuffix := ""
+		field := "landing_price"
 		if landingPrice == nil {
-			msgSuffix = " (or buying_price)"
+			field = "buying_price"
 		}
-		writeError(w, http.StatusBadRequest, "selling_price must be greater than landing_price"+msgSuffix)
+		writeError(w, http.StatusBadRequest, "selling_price must be greater than "+field)
 		return
 	}
 	if body.SellingPrice >= body.MRP {

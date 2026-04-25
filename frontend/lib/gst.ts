@@ -1,4 +1,10 @@
-import type { CartItem, GSTRate } from '@/types'
+import type { GSTRate } from '@/types'
+
+interface TaxableLine {
+  salePrice: number
+  qty: number
+  gstRate: GSTRate
+}
 
 export const GST_RATES: GSTRate[] = [0, 5, 12, 18, 28]
 
@@ -26,7 +32,7 @@ export function calcGST(
   return { cgst: 0, sgst: 0, igst: totalTax }
 }
 
-export function calcCartTotals(items: CartItem[], isInState: boolean) {
+export function calcCartTotals(items: TaxableLine[], isInState: boolean) {
   let cgst = 0
   let sgst = 0
   let igst = 0

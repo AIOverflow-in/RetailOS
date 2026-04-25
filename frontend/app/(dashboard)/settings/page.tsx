@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
+import { getCachedSettings, setCachedSettings } from '@/lib/settingsCache'
 import type { ShopSettings } from '@/types'
 
 const fieldCls =
@@ -12,27 +13,42 @@ const textareaCls =
   'w-full px-3 py-2 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors resize-none'
 
 export default function SettingsPage() {
-  const [loading, setLoading] = useState(true)
+  const cached = typeof window !== 'undefined' ? getCachedSettings() : null
+
+  const [loading, setLoading] = useState(!cached)
   const [saving, setSaving] = useState(false)
 
-  const [storeAddress, setStoreAddress] = useState('')
-  const [gstin, setGstin] = useState('')
-  const [drugLicense, setDrugLicense] = useState('')
-  const [foodLicense, setFoodLicense] = useState('')
-  const [otherLicenses, setOtherLicenses] = useState('')
-  const [storePolicies, setStorePolicies] = useState('')
-  const [googleReviewLink, setGoogleReviewLink] = useState('')
+  const [storeAddress, setStoreAddress] = useState(cached?.store_address ?? '')
+  const [gstin, setGstin] = useState(cached?.gstin ?? '')
+  const [drugLicense, setDrugLicense] = useState(cached?.drug_license ?? '')
+  const [foodLicense, setFoodLicense] = useState(cached?.food_license ?? '')
+  const [otherLicenses, setOtherLicenses] = useState(cached?.other_licenses ?? '')
+  const [storePolicies, setStorePolicies] = useState(cached?.store_policies ?? '')
+  const [googleReviewLink, setGoogleReviewLink] = useState(cached?.google_review_link ?? '')
 
   useEffect(() => {
     api.getSettings()
       .then(s => {
-        setStoreAddress(s.store_address ?? '')
-        setGstin(s.gstin ?? '')
-        setDrugLicense(s.drug_license ?? '')
-        setFoodLicense(s.food_license ?? '')
-        setOtherLicenses(s.other_licenses ?? '')
-        setStorePolicies(s.store_policies ?? '')
-        setGoogleReviewLink(s.google_review_link ?? '')
+        const fresh: ShopSettings = {
+          store_address: s.store_address ?? '',
+          gstin: s.gstin ?? '',
+          drug_license: s.drug_license ?? '',
+          food_license: s.food_license ?? '',
+          other_licenses: s.other_licenses ?? '',
+          store_policies: s.store_policies ?? '',
+          google_review_link: s.google_review_link ?? '',
+        }
+        const prev = getCachedSettings()
+        if (!prev || JSON.stringify(prev) !== JSON.stringify(fresh)) {
+          setStoreAddress(fresh.store_address!)
+          setGstin(fresh.gstin!)
+          setDrugLicense(fresh.drug_license!)
+          setFoodLicense(fresh.food_license!)
+          setOtherLicenses(fresh.other_licenses!)
+          setStorePolicies(fresh.store_policies!)
+          setGoogleReviewLink(fresh.google_review_link ?? '')
+          setCachedSettings(fresh)
+        }
       })
       .catch(err => toast.error(err.message || 'Could not load settings'))
       .finally(() => setLoading(false))
@@ -52,6 +68,7 @@ export default function SettingsPage() {
     }
     try {
       await api.updateSettings(payload)
+      setCachedSettings(payload)
       toast.success('Settings saved')
     } catch (err: any) {
       toast.error(err.message || 'Save failed')

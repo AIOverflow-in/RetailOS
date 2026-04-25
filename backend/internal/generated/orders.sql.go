@@ -26,17 +26,35 @@ const countOrdersFiltered = `-- name: CountOrdersFiltered :one
 SELECT COUNT(*)
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.status = 'active'
+WHERE o.status <> 'deleted'
   AND (
       $1::text = ''
       OR o.order_number ILIKE '%' || $1 || '%'
       OR c.name         ILIKE '%' || $1 || '%'
       OR c.phone        ILIKE '%' || $1 || '%'
   )
+  AND ($2::text[] IS NULL OR o.status       = ANY($2::text[]))
+  AND ($3::text[] IS NULL OR o.payment_mode = ANY($3::text[]))
+  AND ($4::date   IS NULL OR o.created_at::date >= $4::date)
+  AND ($5::date   IS NULL OR o.created_at::date <= $5::date)
 `
 
-func (q *Queries) CountOrdersFiltered(ctx context.Context, dollar_1 string) (int64, error) {
-	row := q.db.QueryRow(ctx, countOrdersFiltered, dollar_1)
+type CountOrdersFilteredParams struct {
+	Column1 string      `json:"column_1"`
+	Column2 []string    `json:"column_2"`
+	Column3 []string    `json:"column_3"`
+	Column4 pgtype.Date `json:"column_4"`
+	Column5 pgtype.Date `json:"column_5"`
+}
+
+func (q *Queries) CountOrdersFiltered(ctx context.Context, arg CountOrdersFilteredParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countOrdersFiltered,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -57,7 +75,7 @@ func (q *Queries) CountOrdersInFY(ctx context.Context, createdAt pgtype.Timestam
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders (order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, payment_mode)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING order_id, order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, status, created_at, payment_mode
+RETURNING order_id, order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, status, created_at, payment_mode, updated_at, return_comment
 `
 
 type CreateOrderParams struct {
@@ -92,6 +110,8 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.Status,
 		&i.CreatedAt,
 		&i.PaymentMode,
+		&i.UpdatedAt,
+		&i.ReturnComment,
 	)
 	return i, err
 }
@@ -99,7 +119,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 const createOrderItem = `-- name: CreateOrderItem :one
 INSERT INTO order_items (order_id, batch_id, product_name, batch_no, qty, sale_price, gst_rate, cgst_amount, sgst_amount, igst_amount, line_total)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING item_id, order_id, batch_id, product_name, batch_no, qty, sale_price, gst_rate, cgst_amount, sgst_amount, igst_amount, line_total
+RETURNING item_id, order_id, batch_id, product_name, batch_no, qty, sale_price, gst_rate, cgst_amount, sgst_amount, igst_amount, line_total, returned_qty
 `
 
 type CreateOrderItemParams struct {
@@ -144,12 +164,14 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 		&i.SgstAmount,
 		&i.IgstAmount,
 		&i.LineTotal,
+		&i.ReturnedQty,
 	)
 	return i, err
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT o.order_id, o.order_number, o.customer_id, o.cgst_total, o.sgst_total, o.igst_total, o.total_amount, o.status, o.created_at, o.payment_mode,
+SELECT o.order_id, o.order_number, o.customer_id, o.cgst_total, o.sgst_total, o.igst_total,
+       o.total_amount, o.status, o.created_at, o.payment_mode, o.updated_at, o.return_comment,
        c.name  AS customer_name,
        c.phone AS customer_phone,
        c.age   AS customer_age
@@ -169,6 +191,8 @@ type GetOrderByIDRow struct {
 	Status        string             `json:"status"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	PaymentMode   string             `json:"payment_mode"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	ReturnComment *string            `json:"return_comment"`
 	CustomerName  *string            `json:"customer_name"`
 	CustomerPhone *string            `json:"customer_phone"`
 	CustomerAge   *int32             `json:"customer_age"`
@@ -188,6 +212,8 @@ func (q *Queries) GetOrderByID(ctx context.Context, orderID pgtype.UUID) (GetOrd
 		&i.Status,
 		&i.CreatedAt,
 		&i.PaymentMode,
+		&i.UpdatedAt,
+		&i.ReturnComment,
 		&i.CustomerName,
 		&i.CustomerPhone,
 		&i.CustomerAge,
@@ -195,9 +221,53 @@ func (q *Queries) GetOrderByID(ctx context.Context, orderID pgtype.UUID) (GetOrd
 	return i, err
 }
 
+const getOrderItemByID = `-- name: GetOrderItemByID :one
+SELECT oi.item_id, oi.order_id, oi.batch_id, oi.product_name, oi.batch_no,
+       oi.qty, oi.returned_qty, oi.sale_price, oi.gst_rate, oi.cgst_amount, oi.sgst_amount, oi.igst_amount, oi.line_total
+FROM order_items oi
+WHERE oi.item_id = $1
+`
+
+type GetOrderItemByIDRow struct {
+	ItemID      pgtype.UUID    `json:"item_id"`
+	OrderID     pgtype.UUID    `json:"order_id"`
+	BatchID     pgtype.UUID    `json:"batch_id"`
+	ProductName string         `json:"product_name"`
+	BatchNo     string         `json:"batch_no"`
+	Qty         int32          `json:"qty"`
+	ReturnedQty int32          `json:"returned_qty"`
+	SalePrice   pgtype.Numeric `json:"sale_price"`
+	GstRate     pgtype.Numeric `json:"gst_rate"`
+	CgstAmount  pgtype.Numeric `json:"cgst_amount"`
+	SgstAmount  pgtype.Numeric `json:"sgst_amount"`
+	IgstAmount  pgtype.Numeric `json:"igst_amount"`
+	LineTotal   pgtype.Numeric `json:"line_total"`
+}
+
+func (q *Queries) GetOrderItemByID(ctx context.Context, itemID pgtype.UUID) (GetOrderItemByIDRow, error) {
+	row := q.db.QueryRow(ctx, getOrderItemByID, itemID)
+	var i GetOrderItemByIDRow
+	err := row.Scan(
+		&i.ItemID,
+		&i.OrderID,
+		&i.BatchID,
+		&i.ProductName,
+		&i.BatchNo,
+		&i.Qty,
+		&i.ReturnedQty,
+		&i.SalePrice,
+		&i.GstRate,
+		&i.CgstAmount,
+		&i.SgstAmount,
+		&i.IgstAmount,
+		&i.LineTotal,
+	)
+	return i, err
+}
+
 const getOrderItems = `-- name: GetOrderItems :many
 SELECT oi.item_id, oi.order_id, oi.batch_id, oi.product_name, oi.batch_no,
-       oi.qty, oi.sale_price, oi.gst_rate, oi.cgst_amount, oi.sgst_amount, oi.igst_amount, oi.line_total,
+       oi.qty, oi.returned_qty, oi.sale_price, oi.gst_rate, oi.cgst_amount, oi.sgst_amount, oi.igst_amount, oi.line_total,
        b.mrp,
        b.expiry_date
 FROM order_items oi
@@ -212,6 +282,7 @@ type GetOrderItemsRow struct {
 	ProductName string         `json:"product_name"`
 	BatchNo     string         `json:"batch_no"`
 	Qty         int32          `json:"qty"`
+	ReturnedQty int32          `json:"returned_qty"`
 	SalePrice   pgtype.Numeric `json:"sale_price"`
 	GstRate     pgtype.Numeric `json:"gst_rate"`
 	CgstAmount  pgtype.Numeric `json:"cgst_amount"`
@@ -238,6 +309,7 @@ func (q *Queries) GetOrderItems(ctx context.Context, orderID pgtype.UUID) ([]Get
 			&i.ProductName,
 			&i.BatchNo,
 			&i.Qty,
+			&i.ReturnedQty,
 			&i.SalePrice,
 			&i.GstRate,
 			&i.CgstAmount,
@@ -263,21 +335,35 @@ SELECT o.order_id, o.order_number, o.total_amount, o.status, o.payment_mode, o.c
        c.phone AS customer_phone
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.status = 'active'
+WHERE o.status <> 'deleted'
   AND (
       $1::text = ''
       OR o.order_number ILIKE '%' || $1 || '%'
       OR c.name         ILIKE '%' || $1 || '%'
       OR c.phone        ILIKE '%' || $1 || '%'
   )
-ORDER BY o.created_at DESC
-LIMIT $2 OFFSET $3
+  AND ($2::text[] IS NULL OR o.status       = ANY($2::text[]))
+  AND ($3::text[] IS NULL OR o.payment_mode = ANY($3::text[]))
+  AND ($4::date   IS NULL OR o.created_at::date >= $4::date)
+  AND ($5::date   IS NULL OR o.created_at::date <= $5::date)
+ORDER BY
+  CASE WHEN $6::text = 'date_asc'   THEN o.created_at   END ASC  NULLS LAST,
+  CASE WHEN $6::text = 'date_desc'  THEN o.created_at   END DESC NULLS LAST,
+  CASE WHEN $6::text = 'total_asc'  THEN o.total_amount END ASC  NULLS LAST,
+  CASE WHEN $6::text = 'total_desc' THEN o.total_amount END DESC NULLS LAST,
+  o.created_at DESC
+LIMIT $7 OFFSET $8
 `
 
 type ListOrdersParams struct {
-	Column1 string `json:"column_1"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	Column1 string      `json:"column_1"`
+	Column2 []string    `json:"column_2"`
+	Column3 []string    `json:"column_3"`
+	Column4 pgtype.Date `json:"column_4"`
+	Column5 pgtype.Date `json:"column_5"`
+	Column6 string      `json:"column_6"`
+	Limit   int32       `json:"limit"`
+	Offset  int32       `json:"offset"`
 }
 
 type ListOrdersRow struct {
@@ -292,7 +378,16 @@ type ListOrdersRow struct {
 }
 
 func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListOrdersRow, error) {
-	rows, err := q.db.Query(ctx, listOrders, arg.Column1, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listOrders,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
+		arg.Column6,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -335,5 +430,77 @@ UPDATE orders SET status = 'deleted' WHERE order_id = $1
 
 func (q *Queries) SoftDeleteOrder(ctx context.Context, orderID pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, softDeleteOrder, orderID)
+	return err
+}
+
+const updateOrderAfterEdit = `-- name: UpdateOrderAfterEdit :exec
+UPDATE orders
+SET status = $2, return_comment = $3,
+    cgst_total = $4, sgst_total = $5, igst_total = $6,
+    total_amount = $7, updated_at = NOW()
+WHERE order_id = $1
+`
+
+type UpdateOrderAfterEditParams struct {
+	OrderID       pgtype.UUID    `json:"order_id"`
+	Status        string         `json:"status"`
+	ReturnComment *string        `json:"return_comment"`
+	CgstTotal     pgtype.Numeric `json:"cgst_total"`
+	SgstTotal     pgtype.Numeric `json:"sgst_total"`
+	IgstTotal     pgtype.Numeric `json:"igst_total"`
+	TotalAmount   pgtype.Numeric `json:"total_amount"`
+}
+
+func (q *Queries) UpdateOrderAfterEdit(ctx context.Context, arg UpdateOrderAfterEditParams) error {
+	_, err := q.db.Exec(ctx, updateOrderAfterEdit,
+		arg.OrderID,
+		arg.Status,
+		arg.ReturnComment,
+		arg.CgstTotal,
+		arg.SgstTotal,
+		arg.IgstTotal,
+		arg.TotalAmount,
+	)
+	return err
+}
+
+const updateOrderItemQuantity = `-- name: UpdateOrderItemQuantity :exec
+UPDATE order_items
+SET qty = $2, cgst_amount = $3, sgst_amount = $4, igst_amount = $5, line_total = $6
+WHERE item_id = $1
+`
+
+type UpdateOrderItemQuantityParams struct {
+	ItemID     pgtype.UUID    `json:"item_id"`
+	Qty        int32          `json:"qty"`
+	CgstAmount pgtype.Numeric `json:"cgst_amount"`
+	SgstAmount pgtype.Numeric `json:"sgst_amount"`
+	IgstAmount pgtype.Numeric `json:"igst_amount"`
+	LineTotal  pgtype.Numeric `json:"line_total"`
+}
+
+func (q *Queries) UpdateOrderItemQuantity(ctx context.Context, arg UpdateOrderItemQuantityParams) error {
+	_, err := q.db.Exec(ctx, updateOrderItemQuantity,
+		arg.ItemID,
+		arg.Qty,
+		arg.CgstAmount,
+		arg.SgstAmount,
+		arg.IgstAmount,
+		arg.LineTotal,
+	)
+	return err
+}
+
+const updateOrderItemReturnedQty = `-- name: UpdateOrderItemReturnedQty :exec
+UPDATE order_items SET returned_qty = returned_qty + $2 WHERE item_id = $1
+`
+
+type UpdateOrderItemReturnedQtyParams struct {
+	ItemID      pgtype.UUID `json:"item_id"`
+	ReturnedQty int32       `json:"returned_qty"`
+}
+
+func (q *Queries) UpdateOrderItemReturnedQty(ctx context.Context, arg UpdateOrderItemReturnedQtyParams) error {
+	_, err := q.db.Exec(ctx, updateOrderItemReturnedQty, arg.ItemID, arg.ReturnedQty)
 	return err
 }

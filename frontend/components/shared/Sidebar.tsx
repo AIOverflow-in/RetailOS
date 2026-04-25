@@ -1,14 +1,15 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { clearAuth } from '@/store/authSlice'
-import type { RootState } from '@/store'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Receipt, Package, ClipboardList, BarChart2,
   Users, LogOut, Plus, Settings, Truck,
+  PanelLeftOpen, PanelLeftClose,
 } from 'lucide-react'
 
 const NAV = [
@@ -26,7 +27,12 @@ export default function Sidebar() {
   const pathname = usePathname()
   const router   = useRouter()
   const dispatch = useDispatch()
-  const shopName = useSelector((s: RootState) => s.auth.shopName)
+  const [shopName, setShopName] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState(true)
+
+  useEffect(() => {
+    setShopName(localStorage.getItem('shop_name'))
+  }, [])
 
   const activeNav = NAV.find(({ href }) => pathname.startsWith(href))
 
@@ -42,9 +48,20 @@ export default function Sidebar() {
       <aside className="flex flex-col w-[56px] shrink-0 bg-[#F0F0F0] items-center pt-3 pb-4 gap-1">
 
         {/* Logo */}
-        <div className="w-8 h-8 rounded-xl bg-[#111] flex items-center justify-center mb-3 shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-[#111] flex items-center justify-center mb-2 shrink-0">
           <span className="text-white text-caption font-bold tracking-tight">R</span>
         </div>
+
+        {/* Collapse toggle */}
+        <button
+          onClick={() => setExpanded(v => !v)}
+          title={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+          className="w-8 h-8 flex items-center justify-center rounded-xl text-[#999] hover:bg-black/[0.06] hover:text-[#333] transition-all shrink-0 mb-1"
+        >
+          {expanded
+            ? <PanelLeftClose strokeWidth={1.5} className="w-4 h-4" />
+            : <PanelLeftOpen  strokeWidth={1.5} className="w-4 h-4" />}
+        </button>
 
         {/* Nav icons */}
         {NAV.map(({ href, Icon }) => {
@@ -78,6 +95,7 @@ export default function Sidebar() {
       </aside>
 
       {/* ── Text panel ────────────────────────── */}
+      {expanded && (
       <aside className="flex flex-col w-[224px] shrink-0 bg-white border-r border-[#EBEBEB]">
 
         {/* Header — shop name + active page tab */}
@@ -149,6 +167,7 @@ export default function Sidebar() {
           </button>
         </div>
       </aside>
+      )}
     </div>
   )
 }
