@@ -47,16 +47,18 @@ type Distributor struct {
 }
 
 type Order struct {
-	OrderID     pgtype.UUID        `json:"order_id"`
-	OrderNumber string             `json:"order_number"`
-	CustomerID  pgtype.UUID        `json:"customer_id"`
-	CgstTotal   pgtype.Numeric     `json:"cgst_total"`
-	SgstTotal   pgtype.Numeric     `json:"sgst_total"`
-	IgstTotal   pgtype.Numeric     `json:"igst_total"`
-	TotalAmount pgtype.Numeric     `json:"total_amount"`
-	Status      string             `json:"status"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	PaymentMode string             `json:"payment_mode"`
+	OrderID       pgtype.UUID        `json:"order_id"`
+	OrderNumber   string             `json:"order_number"`
+	CustomerID    pgtype.UUID        `json:"customer_id"`
+	CgstTotal     pgtype.Numeric     `json:"cgst_total"`
+	SgstTotal     pgtype.Numeric     `json:"sgst_total"`
+	IgstTotal     pgtype.Numeric     `json:"igst_total"`
+	TotalAmount   pgtype.Numeric     `json:"total_amount"`
+	Status        string             `json:"status"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	PaymentMode   string             `json:"payment_mode"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	ReturnComment *string            `json:"return_comment"`
 }
 
 type OrderItem struct {
@@ -72,6 +74,7 @@ type OrderItem struct {
 	SgstAmount  pgtype.Numeric `json:"sgst_amount"`
 	IgstAmount  pgtype.Numeric `json:"igst_amount"`
 	LineTotal   pgtype.Numeric `json:"line_total"`
+	ReturnedQty int32          `json:"returned_qty"`
 }
 
 type Product struct {

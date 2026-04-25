@@ -132,6 +132,18 @@ export const api = {
     request(`/orders/${id}`, { method: 'DELETE' }),
   returnOrder: (id: string) =>
     request(`/orders/${id}/return`, { method: 'POST' }),
+  editOrder: (id: string, data: {
+    edits: { item_id: string; new_qty: number }[]
+    additions: {
+      batch_id: string; product_name: string; batch_no: string
+      qty: number; sale_price: number; gst_rate: number
+    }[]
+    comment: string
+  }) =>
+    request<{ status: string }>(`/orders/${id}/edit`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 
   // Reports
   gstReport: (from: string, to: string) =>

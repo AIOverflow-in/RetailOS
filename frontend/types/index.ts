@@ -113,6 +113,7 @@ export interface OrderItem {
   product_name: string
   batch_no: string
   qty: number
+  returned_qty: number
   sale_price: number
   gst_rate: number
   cgst_amount: number
@@ -139,6 +140,8 @@ export interface Order {
   payment_mode: PaymentMode
   status: string
   created_at: string
+  updated_at: string | null
+  return_comment: string | null
 }
 
 export interface OrderDetail {
