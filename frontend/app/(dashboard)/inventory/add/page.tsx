@@ -257,11 +257,23 @@ export default function AddStockPage() {
                   </div>
                 )}
                 <div className="space-y-1">
-                  <LabelWithInfo text="Selling price (₹) *" tip="Per-unit price (incl. GST) shown to customers at checkout." />
+                  <LabelWithInfo text="Selling price (incl. GST, ₹) *" tip="Per-unit price (incl. GST) shown to customers at checkout." />
                   <input type="number" min={0} step={0.01}
                     className={priceError?.includes('Selling') ? errInp : inp}
                     value={sellingPrice} onChange={e => setSellingPrice(e.target.value)} required />
                 </div>
+                {purchaseGSTRate !== '' && (
+                  <div className="space-y-1">
+                    <LabelWithInfo text="Selling price (excl. GST, ₹)" tip="Selling price net of GST. Auto-calculated, not editable." />
+                    <div className="w-full h-8 px-3 py-1.5 text-body bg-[#F7F7F7] border border-[#E5E5E5] rounded-lg text-[#666] flex items-center">
+                      {sellingPrice && typeof purchaseGSTRate === 'number' && purchaseGSTRate > 0
+                        ? (parseFloat(sellingPrice) / (1 + purchaseGSTRate / 100)).toFixed(2)
+                        : sellingPrice && purchaseGSTRate === 0
+                          ? parseFloat(sellingPrice).toFixed(2)
+                          : '—'}
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-1">
                   <LabelWithInfo text="MRP (₹) *" tip="Maximum retail price printed on the pack." />
                   <input type="number" min={0} step={0.01}

@@ -39,18 +39,26 @@ export function isCompleteRow(r: BillingRow): boolean {
   return !!r.productId && !!r.batchId
 }
 
-const HEADERS = [
-  'Product',
-  'Batch',
-  'Expiry',
-  'MRP',
-  'Box',
-  'Sale Price',
-  'Qty',
-  'GST',
-  'Stock',
-  'Total',
-  '',
+const HEADERS: { label: React.ReactNode; nowrap?: boolean }[] = [
+  { label: 'Product', nowrap: true },
+  { label: 'Batch', nowrap: true },
+  { label: 'MRP', nowrap: true },
+  { label: 'Box', nowrap: true },
+  {
+    label: (
+      <>
+        Sale Price
+        <br />
+        <span className="text-[#AAAAAA]">(incl. GST)</span>
+      </>
+    ),
+  },
+  { label: 'Qty', nowrap: true },
+  { label: 'GST', nowrap: true },
+  { label: 'Stock', nowrap: true },
+  { label: 'Total', nowrap: true },
+  { label: 'Discount', nowrap: true },
+  { label: '', nowrap: true },
 ]
 
 interface Props {
@@ -74,15 +82,28 @@ export default function BillingTable({ rows, setRows }: Props) {
   return (
     <div className="bg-white rounded-lg border border-[#EBEBEB]">
       <div>
-        <table className="w-full">
+        <table className="w-full table-fixed">
+          <colgroup>
+            <col />
+            <col className="w-32" />
+            <col className="w-20" />
+            <col className="w-14" />
+            <col className="w-24" />
+            <col className="w-16" />
+            <col className="w-20" />
+            <col className="w-14" />
+            <col className="w-20" />
+            <col className="w-20" />
+            <col className="w-12" />
+          </colgroup>
           <thead>
             <tr className="border-b border-[#F2F2F2]">
               {HEADERS.map((h, i) => (
                 <th
                   key={i}
-                  className="text-left py-2.5 px-3 text-caption font-medium text-label whitespace-nowrap"
+                  className={`text-left py-2.5 px-3 text-caption font-medium text-label${h.nowrap ? ' whitespace-nowrap' : ''}`}
                 >
-                  {h}
+                  {h.label}
                 </th>
               ))}
             </tr>

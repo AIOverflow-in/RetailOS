@@ -135,7 +135,7 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
               <input type="number" step="0.01" min="0" className={fieldCls} value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} required />
             </div>
             <div className="space-y-1">
-              <p className="text-caption font-medium text-label">Selling Price</p>
+              <p className="text-caption font-medium text-label">Selling Price (incl. GST)</p>
               <input type="number" step="0.01" min="0" className={fieldCls} value={sellingPrice} onChange={e => setSellingPrice(e.target.value)} required />
             </div>
             <div className="space-y-1">
@@ -192,6 +192,20 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
               </div>
             )}
           </div>
+          {purchaseGSTRate !== '' && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <p className="text-caption font-medium text-label">Selling Price (excl. GST, ₹)</p>
+                <div className={fieldCls + ' bg-[#F7F7F7] text-[#666] flex items-center'}>
+                  {sellingPrice && typeof purchaseGSTRate === 'number' && purchaseGSTRate > 0
+                    ? (parseFloat(sellingPrice) / (1 + purchaseGSTRate / 100)).toFixed(2)
+                    : sellingPrice && purchaseGSTRate === 0
+                      ? parseFloat(sellingPrice).toFixed(2)
+                      : '—'}
+                </div>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <p className="text-caption font-medium text-label">Distributor</p>

@@ -17,6 +17,7 @@ import BillingTable, {
   isCompleteRow,
   type BillingRow,
 } from '@/components/billing/BillingTable'
+import { calcGST, calcLineTotal } from '@/lib/gst'
 
 export default function BillingPage() {
   const dispatch = useDispatch()
@@ -73,11 +74,7 @@ export default function BillingPage() {
       }
       const shopName = localStorage.getItem('shop_name') ?? ''
       const billItems = completeRows.map(r => {
-        const taxable = r.salePrice * r.qty
-        const totalTax = parseFloat((taxable * (r.gstRate / 100)).toFixed(2))
-        const cgst = cartIsInState ? parseFloat((totalTax / 2).toFixed(2)) : 0
-        const sgst = cartIsInState ? parseFloat((totalTax / 2).toFixed(2)) : 0
-        const igst = cartIsInState ? 0 : totalTax
+        const tax = calcGST(r.salePrice, r.qty, r.gstRate, cartIsInState)
         return {
           productName: r.productName as string,
           batchNo: r.batchNo as string,
@@ -86,10 +83,10 @@ export default function BillingPage() {
           qty: r.qty,
           salePrice: r.salePrice,
           gstRate: r.gstRate,
-          cgstAmount: cgst,
-          sgstAmount: sgst,
-          igstAmount: igst,
-          lineTotal: parseFloat((taxable + totalTax).toFixed(2)),
+          cgstAmount: tax.cgst,
+          sgstAmount: tax.sgst,
+          igstAmount: tax.igst,
+          lineTotal: calcLineTotal(r.salePrice, r.qty, r.gstRate),
         }
       })
       const billData: BillData = {
@@ -119,7 +116,7 @@ export default function BillingPage() {
 
   const completeRows = rows.filter(isCompleteRow)
   const grandTotal = completeRows.reduce(
-    (sum, r) => sum + r.salePrice * r.qty * (1 + r.gstRate / 100),
+    (sum, r) => sum + calcLineTotal(r.salePrice, r.qty, r.gstRate),
     0,
   )
 
