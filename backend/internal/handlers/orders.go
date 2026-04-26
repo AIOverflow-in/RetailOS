@@ -137,12 +137,17 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Step 4: Compute GST totals from items
+	// Step 4: Compute GST totals from items.
+	// SalePrice is GST-inclusive (matches the inventory selling_price convention),
+	// so tax is extracted from the line total rather than added on top.
 	var cgstTotal, sgstTotal, igstTotal, totalAmount float64
 	for _, item := range req.Items {
-		taxable := item.SalePrice * float64(item.Qty)
-		totalTax := round2(taxable * (item.GSTRate / 100))
-		lineTotal := round2(taxable + totalTax)
+		lineTotal := round2(item.SalePrice * float64(item.Qty))
+		taxable := lineTotal
+		if item.GSTRate > 0 {
+			taxable = lineTotal / (1 + item.GSTRate/100)
+		}
+		totalTax := round2(lineTotal - taxable)
 		totalAmount += lineTotal
 		if req.IsInState {
 			cgstTotal += round2(totalTax / 2)
@@ -177,9 +182,12 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		var batchID pgtype.UUID
 		batchID.Scan(item.BatchID)
 
-		taxable := item.SalePrice * float64(item.Qty)
-		totalTax := round2(taxable * (item.GSTRate / 100))
-		lineTotal := round2(taxable + totalTax)
+		lineTotal := round2(item.SalePrice * float64(item.Qty))
+		taxable := lineTotal
+		if item.GSTRate > 0 {
+			taxable = lineTotal / (1 + item.GSTRate/100)
+		}
+		totalTax := round2(lineTotal - taxable)
 		var cgst, sgst, igst float64
 		if req.IsInState {
 			cgst = round2(totalTax / 2)

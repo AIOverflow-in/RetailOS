@@ -8,12 +8,14 @@ interface TaxableLine {
 
 export const GST_RATES: GSTRate[] = [0, 5, 12, 18, 28]
 
+// salePrice is GST-inclusive (matches the price shown to the customer at checkout
+// and the value entered in inventory). Tax is extracted from the inclusive total.
 export function calcLineTotal(
   salePrice: number,
   qty: number,
-  gstRate: GSTRate
+  _gstRate: GSTRate
 ): number {
-  return parseFloat((salePrice * qty * (1 + gstRate / 100)).toFixed(2))
+  return parseFloat((salePrice * qty).toFixed(2))
 }
 
 export function calcGST(
@@ -22,8 +24,9 @@ export function calcGST(
   gstRate: GSTRate,
   isInState: boolean
 ) {
-  const taxable = salePrice * qty
-  const totalTax = parseFloat((taxable * (gstRate / 100)).toFixed(2))
+  const lineTotal = salePrice * qty
+  const taxable = gstRate > 0 ? lineTotal / (1 + gstRate / 100) : lineTotal
+  const totalTax = parseFloat((lineTotal - taxable).toFixed(2))
 
   if (isInState) {
     const half = parseFloat((totalTax / 2).toFixed(2))

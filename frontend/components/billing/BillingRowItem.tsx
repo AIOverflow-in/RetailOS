@@ -5,7 +5,7 @@ import { Trash2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { GSTRate } from '@/types'
 import { useProductSearch } from '@/lib/useProductSearch'
-import { GST_RATES, calcLineTotal, fmtCurrency, fmtDate } from '@/lib/gst'
+import { GST_RATES, calcLineTotal, fmtCurrency } from '@/lib/gst'
 import type { BillingRow } from './BillingTable'
 
 interface Batch {
@@ -144,6 +144,10 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
     ? calcLineTotal(row.salePrice, row.qty, row.gstRate)
     : 0
 
+  const discountPct = row.batchId && row.mrp != null && row.mrp > 0
+    ? ((row.mrp - row.salePrice) / row.mrp) * 100
+    : 0
+
   const dropdownOpen =
     focused && (suggestions.length > 0 || loading || (!allProducts && !catalogExceedsCap))
 
@@ -209,11 +213,6 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
         )}
       </td>
 
-      {/* Expiry */}
-      <td className="py-2 px-3 align-middle text-body-sm text-[#888] whitespace-nowrap">
-        {row.expiryDate ? fmtDate(row.expiryDate) : '—'}
-      </td>
-
       {/* MRP */}
       <td className="py-2 px-3 align-middle text-body-sm text-[#888] whitespace-nowrap">
         {row.mrp != null ? fmtCurrency(row.mrp) : '—'}
@@ -230,7 +229,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
           type="number"
           min={0}
           step={0.01}
-          className={`${cellInput} text-right w-24`}
+          className={`${cellInput} text-right`}
           value={salePriceText}
           disabled={!row.batchId}
           onChange={e => {
@@ -301,6 +300,11 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       {/* Total */}
       <td className="py-2 px-3 align-middle text-right text-body font-semibold text-[#111] whitespace-nowrap">
         {row.batchId ? fmtCurrency(lineTotal) : '—'}
+      </td>
+
+      {/* Discount */}
+      <td className="py-2 px-3 align-middle text-right text-body-sm text-[#555] whitespace-nowrap">
+        {row.batchId && row.mrp != null && row.mrp > 0 ? `${discountPct.toFixed(1)}%` : '—'}
       </td>
 
       {/* Remove */}
