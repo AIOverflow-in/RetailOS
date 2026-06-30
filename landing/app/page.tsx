@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import {
   ShoppingCart,
   Package,
@@ -11,7 +10,9 @@ import {
   Zap,
   Clock,
   IndianRupee,
+  MessageCircle,
 } from 'lucide-react'
+import { LeadProvider, LeadButton } from '@/components/lead'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -108,14 +109,23 @@ function Navbar() {
           <a href="#features" className="hover:text-white transition-colors">Features</a>
           <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
           <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+          <a href="#contact" className="hover:text-white transition-colors">Contact</a>
         </nav>
 
-        <a
-          href={`${APP_URL}/login`}
-          className="inline-flex items-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-100 transition-colors"
-        >
-          Sign in <ArrowRight className="h-3.5 w-3.5" />
-        </a>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <a
+            href={`${APP_URL}/login`}
+            className="hidden sm:inline-flex items-center text-sm font-medium text-zinc-300 hover:text-white transition-colors"
+          >
+            Sign in
+          </a>
+          <LeadButton
+            intent="Navbar — Get started"
+            className="inline-flex items-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-100 transition-colors"
+          >
+            Get started <ArrowRight className="h-3.5 w-3.5" />
+          </LeadButton>
+        </div>
       </div>
     </header>
   )
@@ -147,12 +157,12 @@ function Hero() {
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a
-            href={`${APP_URL}/login`}
+          <LeadButton
+            intent="Hero — Start billing today"
             className="inline-flex items-center gap-2 rounded-md bg-white px-6 py-3 text-sm font-semibold text-zinc-950 hover:bg-zinc-100 transition-colors"
           >
             Start billing today <ArrowRight className="h-4 w-4" />
-          </a>
+          </LeadButton>
           <a
             href="#how-it-works"
             className="inline-flex items-center gap-2 rounded-md border border-white/10 px-6 py-3 text-sm font-medium text-zinc-300 hover:bg-white/5 transition-colors"
@@ -162,7 +172,7 @@ function Hero() {
         </div>
 
         <p className="mt-5 text-xs text-zinc-500">
-          No setup fee &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; ₹799 / shop / month
+          First month free &nbsp;·&nbsp; No setup fee &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; then ₹799 / shop / month
         </p>
       </div>
     </section>
@@ -412,7 +422,11 @@ function Pricing() {
             <IndianRupee className="h-6 w-6 text-white" />
           </div>
           <div className="text-5xl font-bold text-white mb-1">₹799</div>
-          <div className="text-zinc-400 text-sm mb-8">per shop / per month</div>
+          <div className="text-zinc-400 text-sm mb-3">per shop / per month</div>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300 mb-8">
+            <CheckCircle2 className="h-3 w-3" />
+            First month free — no card required
+          </div>
 
           <ul className="space-y-3 text-left mb-8">
             {[
@@ -434,12 +448,12 @@ function Pricing() {
             ))}
           </ul>
 
-          <a
-            href={`${APP_URL}/login`}
+          <LeadButton
+            intent="Pricing — ₹799/month plan"
             className="block w-full rounded-md bg-white py-3 text-sm font-semibold text-zinc-950 hover:bg-zinc-100 transition-colors"
           >
             Get started — ₹799/month
-          </a>
+          </LeadButton>
           <p className="mt-3 text-xs text-zinc-500 flex items-center justify-center gap-1">
             <Clock className="h-3 w-3" />
             Setup in under 5 minutes
@@ -452,20 +466,32 @@ function Pricing() {
 
 function CTA() {
   return (
-    <section className="py-24 px-4 sm:px-6 border-t border-white/10">
+    <section id="contact" className="scroll-mt-20 py-24 px-4 sm:px-6 border-t border-white/10">
       <div className="mx-auto max-w-3xl text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-1.5 text-xs text-emerald-300 mb-8">
+          <MessageCircle className="h-3 w-3" />
+          We reply on WhatsApp, usually within minutes
+        </div>
         <h2 className="text-3xl sm:text-4xl font-bold text-white">Ready to modernize your shop?</h2>
         <p className="mt-4 text-zinc-400 max-w-lg mx-auto">
           Join medical and grocery shops already using SellOS to bill faster, manage stock
-          confidently, and file GST without stress.
+          confidently, and file GST without stress. Tell us about your shop and we&apos;ll take it
+          from there.
         </p>
-        <div className="mt-10">
-          <a
-            href={`${APP_URL}/login`}
-            className="inline-flex items-center gap-2 rounded-md bg-white px-8 py-3 text-sm font-semibold text-zinc-950 hover:bg-zinc-100 transition-colors"
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <LeadButton
+            intent="Bottom CTA — Ready to modernize"
+            className="inline-flex items-center gap-2 rounded-md bg-emerald-500 px-8 py-3 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 transition-colors"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Talk to us on WhatsApp
+          </LeadButton>
+          <LeadButton
+            intent="Bottom CTA — Start for ₹799/month"
+            className="inline-flex items-center gap-2 rounded-md border border-white/10 px-8 py-3 text-sm font-medium text-zinc-300 hover:bg-white/5 transition-colors"
           >
             Start for ₹799/month <ArrowRight className="h-4 w-4" />
-          </a>
+          </LeadButton>
         </div>
       </div>
     </section>
@@ -485,9 +511,14 @@ function Footer() {
         <p className="text-xs text-zinc-500 text-center">
           GST-compliant billing &amp; inventory for Indian medical and grocery shops.
         </p>
-        <a href={`${APP_URL}/login`} className="text-xs text-zinc-400 hover:text-white transition-colors">
-          Sign in →
-        </a>
+        <div className="flex items-center gap-5">
+          <a href="#contact" className="text-xs text-zinc-400 hover:text-white transition-colors">
+            Contact
+          </a>
+          <a href={`${APP_URL}/login`} className="text-xs text-zinc-400 hover:text-white transition-colors">
+            Sign in →
+          </a>
+        </div>
       </div>
     </footer>
   )
@@ -497,19 +528,21 @@ function Footer() {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      <Navbar />
-      <main>
-        <Hero />
-        <Stats />
-        <Features />
-        <GSTCallout />
-        <HowItWorks />
-        <InventoryShowcase />
-        <Pricing />
-        <CTA />
-      </main>
-      <Footer />
-    </div>
+    <LeadProvider>
+      <div className="min-h-screen bg-zinc-950 text-white">
+        <Navbar />
+        <main>
+          <Hero />
+          <Stats />
+          <Features />
+          <GSTCallout />
+          <HowItWorks />
+          <InventoryShowcase />
+          <Pricing />
+          <CTA />
+        </main>
+        <Footer />
+      </div>
+    </LeadProvider>
   )
 }
