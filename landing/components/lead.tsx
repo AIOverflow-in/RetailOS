@@ -111,6 +111,8 @@ function LeadModal({ intent, onClose }: { intent?: string; onClose: () => void }
       intent,
     })
     setSubmitting(true)
+    // Meta Pixel lead signal — no-op until the pixel is live (see app/layout.tsx).
+    ;(window as { fbq?: (...a: unknown[]) => void }).fbq?.('track', 'Lead')
     // Open WhatsApp (web or app) in a new tab with the prefilled message.
     window.open(url, '_blank', 'noopener,noreferrer')
     onClose()

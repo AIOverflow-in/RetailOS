@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SellOS — Field Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Brand tokens — locked. Mirror of docs/branding/branding.html */
+    --sky-100: #E0F2FE;
+    --sky-300: #7DD3FC;
+    --sky-500: #0EA5E9;   /* PRIMARY ACCENT */
+    --sky-600: #0284C7;
+    --sky-700: #0369A1;
+
+    --ink-950: #09090B;   /* PRIMARY INK */
+    --ink-900: #18181B;
+    --ink-800: #27272A;
+    --ink-700: #3F3F46;
+    --ink-600: #52525B;
+    --ink-500: #71717A;
+    --ink-400: #A1A1AA;
+    --ink-300: #D4D4D8;
+    --ink-200: #E4E4E7;
+    --ink-100: #F4F4F5;
+    --ink-50:  #FAFAF9;   /* PAPER */
+
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger:  #EF4444;
+
+    --line: var(--ink-200);
+    --muted: var(--ink-500);
+
+    --f-display: "Space Grotesk", "Inter", sans-serif;
+    --f-body: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --f-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  html { color-scheme: light; }
+
+  body {
+    font-family: var(--f-body);
+    background: var(--ink-100);
+    color: var(--ink-950);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet {
+    max-width: 860px;
+    margin: 0 auto;
+    background: var(--ink-50);
+    min-height: 100vh;
+    padding: 56px 40px 96px;
+  }
+
+  h1, h2, h3, .wm, .plan-price, .num {
+    font-family: var(--f-display);
+    letter-spacing: -0.02em;
+  }
+
+  h1 { font-size: 44px; line-height: 1.05; font-weight: 700; margin: 0; letter-spacing: -0.03em; text-wrap: balance; }
+  h2 { font-size: 24px; line-height: 1.2; font-weight: 700; margin: 0; text-wrap: balance; }
+  h3 { font-family: var(--f-body); font-size: 15px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  p  { margin: 0; }
+
+  .kicker {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--sky-600);
+  }
+  .kicker.dim { color: var(--ink-400); }
+
+  .lead { font-size: 17px; color: var(--ink-600); max-width: 46em; }
+  .small { font-size: 13.5px; color: var(--ink-600); }
+  .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+  /* ── Masthead ──────────────────────────────────── */
+
+  .masthead {
+    background: var(--ink-950);
+    color: #fff;
+    border-radius: 12px;
+    padding: 36px 36px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .masthead .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .brandrow { display: flex; align-items: center; gap: 8px; }
+  .wm { font-weight: 700; font-size: 17px; letter-spacing: -0.03em; }
+  .wm .os { color: var(--sky-500); }
+  .masthead .lead { color: var(--ink-300); }
+  .masthead .kicker { color: var(--sky-300); }
+  .masthead .kicker.dim { color: var(--ink-400); }
+
+  /* ── Sections ──────────────────────────────────── */
+
+  main { display: flex; flex-direction: column; gap: 56px; padding-top: 56px; }
+  section { display: flex; flex-direction: column; gap: 18px; }
+
+  .sec-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--ink-950);
+  }
+
+  .panel {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .panel-sky     { border-left: 3px solid var(--sky-500); }
+  .panel-warning { border-left: 3px solid var(--warning); }
+  .panel-danger  { border-left: 3px solid var(--danger); }
+
+  /* ── Chips ─────────────────────────────────────── */
+
+  .chip {
+    display: inline-block;
+    font-family: var(--f-body);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 4px 9px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .chip-go   { background: var(--sky-100);  color: var(--sky-700); }
+  .chip-stop { background: #FEE2E2;         color: #B91C1C; }
+
+  /* ── Numbered script steps ─────────────────────── */
+
+  ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+  ol.steps > li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 0 16px;
+    padding: 22px 0;
+    border-top: 1px solid var(--line);
+  }
+  ol.steps > li:first-child { border-top: none; padding-top: 4px; }
+  ol.steps > li::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sky-500);
+    padding-top: 2px;
+  }
+  .step-body { display: flex; flex-direction: column; gap: 10px; }
+  .step-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .timing { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-400); }
+
+  /* ── Say-this block ────────────────────────────── */
+
+  .say {
+    background: var(--ink-100);
+    border-left: 3px solid var(--sky-500);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .say-line { display: grid; grid-template-columns: 32px 1fr; gap: 10px; align-items: baseline; }
+  .say-lang {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-400);
+  }
+  .say-text { font-size: 15px; line-height: 1.5; color: var(--ink-900); }
+
+  /* ── Lists ─────────────────────────────────────── */
+
+  ul.plain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  ul.plain > li {
+    position: relative;
+    padding-left: 16px;
+    font-size: 14.5px;
+  }
+  ul.plain > li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--ink-300);
+  }
+  ul.plain.go   > li::before { background: var(--sky-500); }
+  ul.plain.stop > li::before { background: var(--danger); }
+
+  ul.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  ul.checks > li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 14.5px;
+  }
+  ul.checks > li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.35em;
+    width: 13px; height: 13px;
+    border: 1.5px solid var(--ink-300);
+    border-radius: 3px;
+  }
+
+  /* ── Tables ────────────────────────────────────── */
+
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 480px; }
+  th {
+    text-align: left;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    color: var(--ink-400);
+    padding: 0 16px 8px 0;
+    border-bottom: 1.5px solid var(--ink-300);
+    vertical-align: bottom;
+  }
+  td {
+    padding: 14px 16px 14px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    line-height: 1.55;
+  }
+  th:last-child, td:last-child { padding-right: 0; }
+  tr:last-child td { border-bottom: none; }
+  td.they { color: var(--ink-500); font-style: italic; width: 38%; }
+
+  /* ── Pricing ───────────────────────────────────── */
+
+  .plans {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .plan { background: #fff; padding: 20px; display: flex; flex-direction: column; gap: 5px; }
+  .plan-best { background: var(--sky-100); }
+  .plan-price {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .plan-best .plan-price { color: var(--sky-700); }
+  .plan-per { font-family: var(--f-mono); font-size: 12px; color: var(--ink-500); }
+  .plan-save { font-size: 12.5px; font-weight: 700; color: var(--sky-600); margin-top: 4px; }
+
+  /* ── Gate callout ──────────────────────────────── */
+
+  .gate {
+    background: var(--ink-950);
+    color: #fff;
+    border-radius: 10px;
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .gate .kicker { color: var(--sky-300); }
+  .gate .small { color: var(--ink-300); }
+
+  /* ── Timeline ──────────────────────────────────── */
+
+  .phase {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 16px;
+    padding: 18px 0;
+    border-top: 1px solid var(--line);
+    align-items: start;
+  }
+  .phase:first-of-type { border-top: none; }
+  .phase-when {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--sky-600);
+    padding-top: 2px;
+  }
+  .phase-body { display: flex; flex-direction: column; gap: 6px; }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 2px solid var(--ink-950);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  @media (max-width: 640px) {
+    .sheet { padding: 28px 18px 64px; }
+    .masthead { padding: 26px 22px; border-radius: 10px; }
+    h1 { font-size: 32px; }
+    ol.steps > li { grid-template-columns: 32px 1fr; gap: 0 10px; }
+    .phase { grid-template-columns: 1fr; gap: 4px; }
+    td.they { width: auto; }
+  }
+
+  @media print {
+    body { background: #fff; font-size: 10.5pt; }
+    .sheet { max-width: none; padding: 0; min-height: 0; background: #fff; }
+    main { gap: 30px; padding-top: 30px; }
+    section, .panel, .gate, .plans, ol.steps > li, .phase { break-inside: avoid; }
+    .masthead, .gate { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    footer { margin-top: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <div class="top">
+      <div class="brandrow"><span class="wm">sell<span class="os">OS</span></span></div>
+      <span class="kicker dim">Kolkata · Phase One · ₹0 spend</span>
+    </div>
+    <h1>Field Kit</h1>
+    <p class="lead">
+      Everything the person walking the shops needs to say, skip, and write down.
+      No ads, no channel partners, no software to build. Doors and a phone.
+    </p>
+    <span class="kicker">Goal — two paying shops</span>
+  </header>
+
+  <main>
+
+    <!-- ─── 01 PRICING ──────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 01</span>
+        <h2>What it costs</h2>
+      </div>
+
+      <div class="panel panel-warning">
+        <p class="small">
+          <strong>The ₹4,999 six-month price was broken.</strong> It works out to ₹833/month —
+          ₹34 <em>more</em> than paying monthly. Anyone who does the arithmetic stops trusting
+          the rest of the sheet. Corrected ladder below: every step down is a real saving.
+        </p>
+      </div>
+
+      <div class="plans">
+        <div class="plan">
+          <span class="kicker dim">Monthly</span>
+          <span class="plan-price">₹799</span>
+          <span class="plan-per">per month</span>
+          <span class="plan-save">First month free</span>
+        </div>
+        <div class="plan">
+          <span class="kicker dim">6 months</span>
+          <span class="plan-price">₹3,999</span>
+          <span class="plan-per">₹666 / month</span>
+          <span class="plan-save">Save ₹795 · 17% off</span>
+        </div>
+        <div class="plan plan-best">
+          <span class="kicker dim">1 year</span>
+          <span class="plan-price">₹6,999</span>
+          <span class="plan-per">₹583 / month</span>
+          <span class="plan-save">Save ₹2,589 · 27% off</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>How the free month works on each plan</h3>
+        <ul class="plain">
+          <li><strong>Monthly:</strong> month one free, first ₹799 charged at the start of month two.</li>
+          <li><strong>Prepaid:</strong> add the free month to the term instead of refunding it — <span class="mono">7</span> months for ₹3,999, <span class="mono">13</span> months for ₹6,999. Same promise, no refund to argue about later.</li>
+          <li><strong>Setup is done inside week one</strong> on every plan. That is the promise you are actually selling.</li>
+        </ul>
+      </div>
+
+      <div class="panel panel-warning">
+        <h3>On "testing which price works"</h3>
+        <p class="small">
+          With five shops there is no statistical signal — one chatty owner swings the whole
+          result. So don't split shops into price A and price B. Put all three on one sheet,
+          let the owner pick, and record <em>which they chose and the exact words they used
+          about money</em>. That is real learning at this sample size. Conversion rates are not.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── 02 WHO ──────────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 02</span>
+        <h2>Who to walk into, who to walk past</h2>
+      </div>
+
+      <div class="panel panel-sky">
+        <div><span class="chip chip-go">Pitch</span></div>
+        <p class="small">All of these true, judged from the doorway in ten seconds:</p>
+        <ul class="plain go">
+          <li>One billing counter, two at most.</li>
+          <li>Roughly 200–800 medicines. Count racks — one rack is about 150–250.</li>
+          <li>Bills written in a copy, or software they bought once and stopped using.</li>
+          <li>Owner or owner's family is standing there and decides.</li>
+          <li>A smartphone at the counter with 4G that actually works.</li>
+        </ul>
+      </div>
+
+      <div class="panel panel-danger">
+        <div><span class="chip chip-stop">Walk past</span></div>
+        <p class="small">Any one of these and you leave politely. Saying so out loud wins more trust than pitching:</p>
+        <ul class="plain stop">
+          <li>Running Marg or Vasy every day and content with it. Not your fight yet.</li>
+          <li>Three or more billing counters.</li>
+          <li>Wants distributor invoices imported automatically. You don't have it.</li>
+          <li>Bills by barcode scanner. You don't have it.</li>
+          <li>Internet drops most days. You have no offline mode — don't pretend otherwise.</li>
+          <li>Owner is out. Book a time and come back. Never pitch the staff.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ─── 03 WHERE ────────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 03</span>
+        <h2>Where to walk — the second ring</h2>
+      </div>
+
+      <p>
+        The three chemists at the hospital gate are the obvious targets and the wrong ones.
+        They do the highest volume, so they are the most likely to already run software, they
+        are the most guarded about their numbers, and they compete hardest with each other.
+      </p>
+      <p>
+        Start <strong>300 metres to 1 kilometre out</strong> — the para chemists serving
+        residents rather than discharge queues. Same walkable density, far higher hit rate.
+      </p>
+
+      <div class="panel">
+        <ul class="plain">
+          <li><strong>Work one road at a time.</strong> Neighbours talk. Six shops on one stretch beats six shops across the city.</li>
+          <li><strong>Go between 2 and 4 in the afternoon.</strong> Morning and evening are their rush; you will be waved off.</li>
+          <li><strong>Never on Saturday.</strong> Busiest day of the week. Good for watching how they work, useless for talking.</li>
+          <li><strong>Fifteen doors a day.</strong> Not thirty. A rushed conversation teaches you nothing.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ─── 04 SCRIPT ───────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 04 · in order, every time</span>
+        <h2>The three-minute doorstep</h2>
+      </div>
+
+      <p class="small">
+        Deliver it in Bengali or Hindi as comes naturally. The lines below are the ones worth
+        getting exactly right. Say them, then stop talking.
+      </p>
+
+      <ol class="steps">
+
+        <li>
+          <div class="step-body">
+            <div class="step-head"><h3>Open with the notebook, not the software</h3><span class="timing">15 sec</span></div>
+            <p class="small">The word "software" ends the conversation. The copy on the counter starts it.</p>
+            <div class="say">
+              <div class="say-line"><span class="say-lang">EN</span><span class="say-text">Do you still write your bills in a copy?</span></div>
+              <div class="say-line"><span class="say-lang">BN</span><span class="say-text">আপনার বিল কি এখনো খাতায় লেখেন?</span></div>
+              <div class="say-line"><span class="say-lang">HI</span><span class="say-text">क्या आप अभी भी बिल कॉपी में लिखते हैं?</span></div>
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <div class="step-body">
+            <div class="step-head"><h3>Ask three questions and listen</h3><span class="timing">30 sec</span></div>
+            <p class="small">Do not pitch here. You are finding out which of the three pains is <em>his</em> pain, because that is the one you demo.</p>
+            <ul class="plain">
+              <li>How do you know which medicines are expiring next month?</li>
+              <li>When your CA asks for the GST figures, how long does that take you?</li>
+              <li>When a customer returns a strip, how do you work out what to give back?</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <div class="step-body">
+            <div class="step-head"><h3>Show one bill on your phone</h3><span class="timing">60 sec</span></div>
+            <p class="small">
+              Phone out, demo shop already logged in. Make a real bill in front of him and say
+              the seconds out loud. Then show the thing he complained about in step two — the
+              expiry warning, the GST report, or the return. Then the PDF bill with the drug
+              licence on it. Nothing else.
+            </p>
+          </div>
+        </li>
+
+        <li>
+          <div class="step-body">
+            <div class="step-head"><h3>Remove the wall</h3><span class="timing">30 sec</span></div>
+            <p class="small">
+              Every shop that "will start next month" is stuck on typing in their stock. This
+              line is the whole offer — the software is what he keeps afterwards.
+            </p>
+            <div class="say">
+              <div class="say-line"><span class="say-lang">EN</span><span class="say-text">You don't have to type any of it. We come to the shop and enter your whole stock ourselves. Free.</span></div>
+              <div class="say-line"><span class="say-lang">BN</span><span class="say-text">আপনাকে কিছু টাইপ করতে হবে না — আমরা এসে আপনার পুরো স্টক ফ্রি-তে তুলে দেব।</span></div>
+              <div class="say-line"><span class="say-lang">HI</span><span class="say-text">आपको कुछ टाइप नहीं करना है — हम आकर आपका पूरा स्टॉक मुफ़्त में डाल देंगे।</span></div>
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <div class="step-body">
+            <div class="step-head"><h3>Ask for a time, not for the sale</h3><span class="timing">15 sec</span></div>
+            <p class="small">
+              Closing at the counter is not the job. A booked slot with a phone number is.
+              "Can I come Tuesday at two, and we'll set it up together?" Then take the
+              WhatsApp number and write the date down in front of him.
+            </p>
+            <p class="small">
+              <strong>Don't quote a price unless he asks.</strong> If he asks: first month free,
+              then ₹799 a month, or ₹6,999 for the year which is ₹583. Then move to the next shop.
+            </p>
+          </div>
+        </li>
+
+      </ol>
+    </section>
+
+    <!-- ─── 05 OBJECTIONS ───────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 05</span>
+        <h2>What they'll say back</h2>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>He says</th><th>You say</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="they">"Marg is one payment. Yours is every month, forever."</td>
+              <td>Marg is ten to twelve thousand up front, plus the yearly maintenance, plus a computer, plus paying someone to install it. We're nothing today and ₹583 a month if you take the year. And we come and enter your stock — nobody else does that part.</td>
+            </tr>
+            <tr>
+              <td class="they">"And if the internet goes?"</td>
+              <td>Use your phone's hotspot, it's the same app. <strong>Be straight:</strong> if your net goes down most days, don't take this yet — I'll come back when you've sorted the connection.</td>
+            </tr>
+            <tr>
+              <td class="they">"My boy can't work a computer."</td>
+              <td>It runs on the phone he's already holding. Search the medicine, put the quantity, done. <strong>Hand him your phone and let him make the bill.</strong> Don't describe it.</td>
+            </tr>
+            <tr>
+              <td class="they">"The shop next door will see my sales."</td>
+              <td>Every shop gets its own separate database. There's no shared list — we couldn't mix them if we wanted to.</td>
+            </tr>
+            <tr>
+              <td class="they">"Who are you? You'll shut down in six months."</td>
+              <td>We built this for a chemist in [area], they've been billing on it every day since [month]. Here's the owner's number — call him. <em>(Ask that owner's permission first, once.)</em></td>
+            </tr>
+            <tr>
+              <td class="they">"Does it pull my distributor's bill automatically?"</td>
+              <td>No. You enter the purchase once when the stock arrives. If auto-import is the thing you need, we're not the right fit yet — I'd rather tell you now.</td>
+            </tr>
+            <tr>
+              <td class="they">"Leave your card, I'll think about it."</td>
+              <td>Don't push. "Should I come back next week, or after the pujo?" Get a date, write it down, and actually turn up on it.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel panel-sky">
+        <p class="small">
+          The three honest "we're not right for you" answers above are not lost sales. They are
+          the reason the shop believes the rest of what you said — and half of them call back
+          when their situation changes.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── 06 SETUP WEEK ───────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 06 · the promise you sold</span>
+        <h2>Setup week</h2>
+      </div>
+
+      <div>
+        <div class="phase">
+          <span class="phase-when">Day 0</span>
+          <div class="phase-body">
+            <h3>Yes on the spot</h3>
+            <p class="small">Make a WhatsApp group: owner, you, field person. Everything about this shop lives there. No email.</p>
+          </div>
+        </div>
+        <div class="phase">
+          <span class="phase-when">Day 1</span>
+          <div class="phase-body">
+            <h3>Shop identity</h3>
+            <p class="small">GSTIN, drug licence numbers, food licence, address, logo. Configure settings so the very first bill already looks like his shop.</p>
+          </div>
+        </div>
+        <div class="phase">
+          <span class="phase-when">Day 2–4</span>
+          <div class="phase-body">
+            <h3>Stock entry — the real work</h3>
+            <p class="small">Field person types, his staff reads the rack out. Target 250 items a day. <strong>Fast-movers first.</strong> The slow rack at the back can wait a month; nobody notices.</p>
+          </div>
+        </div>
+        <div class="phase">
+          <span class="phase-when">Day 5</span>
+          <div class="phase-body">
+            <h3>His first live bill</h3>
+            <p class="small">A real customer, and <em>he</em> makes the bill while you stand back. If you make it for him he never learns and he churns in month two.</p>
+          </div>
+        </div>
+        <div class="phase">
+          <span class="phase-when">Day 6–14</span>
+          <div class="phase-body">
+            <h3>Shadow</h3>
+            <p class="small">Answer the WhatsApp group within minutes. <strong>Rule: no bills for three days running, go to the shop in person.</strong> A silent shop is a churning shop and WhatsApp will not save it.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── 07 TRACKING ─────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 07</span>
+        <h2>What gets written down</h2>
+      </div>
+
+      <p class="small">
+        One WhatsApp message from the field person at the end of each day, straight into a
+        Google Sheet. Do not build a CRM. Do not buy one.
+      </p>
+
+      <div class="panel">
+        <ul class="checks">
+          <li>Shops walked into · shop name and road</li>
+          <li>Owner present? yes / no</li>
+          <li>Copy, or software — and which one</li>
+          <li>Demo actually shown? yes / no</li>
+          <li>Callback booked, with the date</li>
+          <li>The objection he heard most today, in the owner's own words</li>
+          <li>WhatsApp numbers collected</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h3>Paying the field person</h3>
+        <p class="small">
+          Weight it towards outcomes, not doors: a small daily for showing up, roughly ₹300 for
+          every demo the owner actually watched, and ₹2,000 when a shop pays. Adjust the
+          numbers to what you've agreed — the shape is what matters, because paying per door
+          gets you thirty rushed doors and no demos.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── 08 PLAN ─────────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 08</span>
+        <h2>Six weeks, then the gate</h2>
+      </div>
+
+      <div>
+        <div class="phase">
+          <span class="phase-when">Week 1–2</span>
+          <div class="phase-body">
+            <h3>Learn the pitch on real doors</h3>
+            <p class="small">75 shops walked. Expect around 12 real demos and 5 booked callbacks. You are hunting objections, not sales. Rewrite Sheet 05 at the end of week one with what you actually heard.</p>
+          </div>
+        </div>
+        <div class="phase">
+          <span class="phase-when">Week 2</span>
+          <div class="phase-body">
+            <h3>Ask the Kolkata shop for names</h3>
+            <p class="small">Not "tell people about us" — five names and numbers. He won't refer the shop across the road, so ask specifically for chemists in other paras, or the ones he chats to at the distributor's counter.</p>
+          </div>
+        </div>
+        <div class="phase">
+          <span class="phase-when">Week 3–4</span>
+          <div class="phase-body">
+            <h3>Convert the callbacks</h3>
+            <p class="small">Work the booked slots and the referrals. Two shops signed and set up is the target. Founder does the closes; field person does the doors.</p>
+          </div>
+        </div>
+        <div class="phase">
+          <span class="phase-when">Week 5–6</span>
+          <div class="phase-body">
+            <h3>Make them stick</h3>
+            <p class="small">Both shops billing daily, unaided. Write the one-page case study: bills per day, seconds per bill, expiry losses caught, hours saved at GST time. Real numbers from their dashboard.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="gate">
+        <span class="kicker">The gate</span>
+        <p>
+          Do not approach distributor sales reps, the BCDA units, or CAs until two shops have
+          been paying <em>and billing every day for thirty days</em>.
+        </p>
+        <p class="small">
+          Those are leverage channels — they multiply a pitch across dozens of shops at once.
+          Hand them an untested pitch and you burn a channel you cannot buy back, and there is
+          no ad budget to fall back on. Past the gate, the rep channel is commission-only at
+          around ₹1,500 a close, and one rep covers more doors in a week than your field person
+          covers in a month.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── 09 BUILD ────────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 09</span>
+        <h2>What to build, and not before</h2>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Build</th><th>When</th><th>Why</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Demo shop with real data</strong></td>
+              <td>Before the first walk</td>
+              <td>Around 40 genuine fast-moving SKUs with batches and expiries seeded into the test tenant, so nobody ever demos on a live shop's numbers.</td>
+            </tr>
+            <tr>
+              <td><strong>CSV stock import</strong></td>
+              <td>Straight after migration #1</td>
+              <td>Do one migration by hand first so you feel the cost. Then it turns three days of typing into twenty minutes, on every shop after.</td>
+            </tr>
+            <tr>
+              <td><strong>Analytics on the landing page</strong></td>
+              <td>This week</td>
+              <td>The plan is already written in <code>docs/feature</code> and it costs nothing. Right now you cannot tell whether anyone reaches the pricing section.</td>
+            </tr>
+            <tr>
+              <td>Barcode · offline mode · distributor import · staff logins</td>
+              <td><span class="chip chip-stop">Not yet</span></td>
+              <td>Each one is a real gap, and each one is also a segment you have chosen not to sell to yet. Build the first one a paying shop refuses to renew without.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span class="brandrow"><span class="wm">sell<span class="os">OS</span></span></span>
+    <span class="kicker dim">Two paying shops. Then leverage.</span>
+  </footer>
+
+</div>
+
+</body>
+</html>

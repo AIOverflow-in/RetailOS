@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SellOS — Facebook Ads Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Brand tokens — locked. Mirror of docs/branding/branding.html */
+    --sky-100: #E0F2FE;
+    --sky-300: #7DD3FC;
+    --sky-400: #38BDF8;
+    --sky-500: #0EA5E9;   /* PRIMARY ACCENT */
+    --sky-600: #0284C7;
+    --sky-700: #0369A1;
+
+    --ink-950: #09090B;   /* PRIMARY INK */
+    --ink-900: #18181B;
+    --ink-800: #27272A;
+    --ink-700: #3F3F46;
+    --ink-600: #52525B;
+    --ink-500: #71717A;
+    --ink-400: #A1A1AA;
+    --ink-300: #D4D4D8;
+    --ink-200: #E4E4E7;
+    --ink-100: #F4F4F5;
+    --ink-50:  #FAFAF9;   /* PAPER */
+
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger:  #EF4444;
+
+    --line: var(--ink-200);
+    --muted: var(--ink-500);
+
+    --f-display: "Space Grotesk", "Inter", sans-serif;
+    --f-body: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --f-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+    --f-bn: "Noto Sans Bengali", "Inter", sans-serif;
+    --f-te: "Noto Sans Telugu", "Inter", sans-serif;
+
+    --ab-scale: 0.33;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { color-scheme: light; }
+
+  body {
+    font-family: var(--f-body);
+    background: var(--ink-100);
+    color: var(--ink-950);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet {
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--ink-50);
+    min-height: 100vh;
+    padding: 56px 40px 96px;
+  }
+
+  h1, h2, .wm, .stat-num { font-family: var(--f-display); letter-spacing: -0.02em; }
+  h1 { font-size: 44px; line-height: 1.05; font-weight: 700; margin: 0; letter-spacing: -0.03em; text-wrap: balance; }
+  h2 { font-size: 24px; line-height: 1.2; font-weight: 700; margin: 0; text-wrap: balance; }
+  h3 { font-family: var(--f-body); font-size: 15px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  p  { margin: 0; }
+
+  .kicker { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; color: var(--sky-600); }
+  .kicker.dim { color: var(--ink-400); }
+
+  .lead { font-size: 17px; color: var(--ink-600); max-width: 46em; }
+  .small { font-size: 13.5px; color: var(--ink-600); }
+  .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+  /* ── Masthead ─────────────────────────────────── */
+  .masthead {
+    background: var(--ink-950); color: #fff; border-radius: 12px;
+    padding: 36px 36px 32px; display: flex; flex-direction: column; gap: 16px;
+  }
+  .masthead .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .brandrow { display: flex; align-items: center; gap: 8px; }
+  .wm { font-weight: 700; font-size: 17px; letter-spacing: -0.03em; }
+  .wm .os { color: var(--sky-500); }
+  .masthead .lead { color: var(--ink-300); }
+  .masthead .kicker { color: var(--sky-300); }
+  .masthead .kicker.dim { color: var(--ink-400); }
+
+  /* ── Sections ─────────────────────────────────── */
+  main { display: flex; flex-direction: column; gap: 56px; padding-top: 56px; }
+  section { display: flex; flex-direction: column; gap: 18px; }
+  .sec-head { display: flex; flex-direction: column; gap: 6px; padding-bottom: 12px; border-bottom: 2px solid var(--ink-950); }
+
+  .panel {
+    background: #fff; border: 1px solid var(--line); border-radius: 10px;
+    padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .panel-sky     { border-left: 3px solid var(--sky-500); }
+  .panel-warning { border-left: 3px solid var(--warning); }
+  .panel-danger  { border-left: 3px solid var(--danger); }
+  .panel-success { border-left: 3px solid var(--success); }
+
+  .chip {
+    display: inline-block; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; padding: 4px 9px; border-radius: 99px; white-space: nowrap;
+  }
+  .chip-go   { background: var(--sky-100); color: var(--sky-700); }
+  .chip-stop { background: #FEE2E2; color: #B91C1C; }
+  .chip-warn { background: #FEF3C7; color: #92400E; }
+
+  /* ── Lists (bullets absolute — never grid, it breaks inline markup) ── */
+  ul.plain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  ul.plain > li { position: relative; padding-left: 16px; font-size: 14.5px; }
+  ul.plain > li::before {
+    content: ""; position: absolute; left: 0; top: 0.55em;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--ink-300);
+  }
+  ul.plain.go   > li::before { background: var(--sky-500); }
+  ul.plain.stop > li::before { background: var(--danger); }
+
+  ul.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  ul.checks > li { position: relative; padding-left: 22px; font-size: 14.5px; }
+  ul.checks > li::before {
+    content: ""; position: absolute; left: 0; top: 0.35em;
+    width: 13px; height: 13px; border: 1.5px solid var(--ink-300); border-radius: 3px;
+  }
+
+  /* ── Tables ───────────────────────────────────── */
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 460px; }
+  th {
+    text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.12em;
+    font-weight: 700; color: var(--ink-400); padding: 0 16px 8px 0;
+    border-bottom: 1.5px solid var(--ink-300); vertical-align: bottom;
+  }
+  td { padding: 13px 16px 13px 0; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.55; }
+  th:last-child, td:last-child { padding-right: 0; }
+  tr:last-child td { border-bottom: none; }
+  td.k { font-weight: 600; width: 34%; }
+  td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ── Setting rows ─────────────────────────────── */
+  .setting { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .setting:last-child { border-bottom: none; }
+  .setting .s-k { font-size: 14px; color: var(--ink-600); }
+  .setting .s-v { font-family: var(--f-mono); font-size: 13px; font-weight: 600; color: var(--ink-950); text-align: right; }
+  .setting .s-v.off { color: var(--danger); }
+
+  /* ── Copy block ───────────────────────────────── */
+  .copyblock {
+    background: var(--ink-950); color: var(--ink-100); border-radius: 10px;
+    padding: 20px 22px; font-size: 14px; line-height: 1.65; white-space: pre-wrap;
+  }
+  .copyblock.bn { font-family: var(--f-bn); font-size: 15px; line-height: 1.85; }
+  .copyblock.te { font-family: var(--f-te); font-size: 15px; line-height: 1.85; }
+  .copy-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* ── Stats ────────────────────────────────────── */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .stat { background: #fff; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
+  .stat-num { font-size: 28px; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .stat-lbl { font-size: 12.5px; color: var(--ink-500); }
+
+  /* ── Artboards ────────────────────────────────── */
+  .ab-toolbar {
+    position: sticky; top: 0; z-index: 20; background: var(--ink-50);
+    border-bottom: 1px solid var(--line); padding: 12px 0;
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  .ab-btn {
+    font-family: var(--f-body); font-size: 12.5px; font-weight: 600;
+    background: var(--ink-950); color: #fff; border: none; border-radius: 7px;
+    padding: 9px 15px; cursor: pointer;
+  }
+  .ab-btn:focus-visible { outline: 2px solid var(--sky-500); outline-offset: 2px; }
+
+  .ab-grid { display: flex; flex-wrap: wrap; gap: 26px; }
+  .ab-cell { display: flex; flex-direction: column; gap: 8px; }
+  .ab-frame {
+    width: calc(1080px * var(--ab-scale));
+    height: calc(1350px * var(--ab-scale));
+    overflow: hidden;
+  }
+  .ab {
+    width: 1080px; height: 1350px;
+    transform: scale(var(--ab-scale));
+    transform-origin: top left;
+    background: var(--ink-50); color: var(--ink-950);
+    padding: 72px 80px 0;
+    display: flex; flex-direction: column;
+    font-family: var(--f-body);
+  }
+  .ab-cap { font-family: var(--f-mono); font-size: 11px; color: var(--ink-500); }
+
+  .ab .ab-top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 24px; border-bottom: 4px solid var(--sky-600);
+  }
+  .ab .ab-wm { font-family: var(--f-display); font-weight: 700; font-size: 42px; letter-spacing: -0.04em; }
+  .ab .ab-wm .os { color: var(--sky-600); }
+  .ab .ab-tag { font-size: 21px; color: var(--ink-500); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
+
+  .ab .ab-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 30px; padding: 30px 0; }
+  .ab .ab-eyebrow { font-size: 24px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sky-600); line-height: 1.35; }
+  .ab .ab-h {
+    font-family: var(--f-display); font-size: 78px; line-height: 1.04;
+    letter-spacing: -0.035em; font-weight: 700; margin: 0; color: var(--ink-950);
+  }
+  .ab .ab-h .dim { color: var(--ink-400); }
+
+  /* ── Product visual — a phone-proportioned app surface ── */
+  .shot {
+    background: #fff; border-radius: 26px; border: 1px solid var(--ink-200);
+    box-shadow: 0 26px 60px rgba(9,9,11,.16), 0 4px 12px rgba(9,9,11,.06);
+    overflow: hidden; width: 860px; align-self: center;
+  }
+  .shot-bar {
+    height: 56px; background: #F0F0F0; border-bottom: 1px solid #E4E4E7;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 26px; font-size: 22px; font-weight: 600; color: #71717A;
+  }
+  .shot-wm {
+    font-family: var(--f-display); font-size: 26px; font-weight: 700;
+    letter-spacing: -0.03em; color: #111;
+  }
+  .shot-wm span { color: var(--sky-600); }
+  .shot-r { display: flex; align-items: center; gap: 12px; }
+  .shot-bat { width: 34px; height: 17px; border: 2px solid #A1A1AA; border-radius: 4px; position: relative; }
+  .shot-bat::after { content: ""; position: absolute; inset: 2px; right: 9px; background: #71717A; border-radius: 1px; }
+  .shot-body { padding: 26px 30px 30px; }
+  .shot-h {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 18px; border-bottom: 1px solid #F2F2F2; margin-bottom: 6px;
+  }
+  .shot-h .t { font-size: 27px; font-weight: 600; color: #AAA; text-transform: uppercase; letter-spacing: .07em; }
+  .shot-h .n { font-size: 27px; color: #AAA; }
+
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 22px 0; border-bottom: 1px solid #F7F7F7; }
+  .row:last-child { border-bottom: none; padding-bottom: 4px; }
+  .row .nm { font-size: 38px; font-weight: 600; color: #111; line-height: 1.2; }
+  .row .mt { font-size: 25px; color: #AAA; margin-top: 5px; }
+  /* Expiry urgency scale — the closer the date, the hotter the chip */
+  .d-chip { font-size: 28px; font-weight: 700; padding: 9px 18px; border-radius: 99px; white-space: nowrap; }
+  .d-chip.hot  { background: #FEE2E2; color: #B91C1C; }   /* under 21 days */
+  .d-chip.warm { background: #FFEDD5; color: #9A3412; }   /* 21 – 45 days  */
+  .d-chip.mild { background: #FEF9C3; color: #854D0E; }   /* 46 – 60 days  */
+  .red-chip   { background: #FEE2E2; color: #B91C1C; font-size: 28px; font-weight: 700; padding: 9px 18px; border-radius: 99px; white-space: nowrap; }
+
+  .row.urgent { background: #FEF2F2; margin: 0 -30px; padding-left: 24px; padding-right: 30px; border-left: 6px solid #DC2626; }
+  .sellfirst {
+    display: inline-flex; align-items: center; gap: 10px; margin-top: 12px;
+    background: #DC2626; color: #fff; font-size: 23px; font-weight: 700;
+    padding: 8px 16px 8px 13px; border-radius: 99px;
+  }
+  .sellfirst svg { width: 24px; height: 24px; flex: none; }
+  .bignum { font-size: 76px; font-weight: 700; color: #111; line-height: 1; letter-spacing: -.03em; }
+  .bignum small { display: block; font-size: 24px; font-weight: 500; color: #AAA; letter-spacing: 0; margin-top: 8px; }
+  .searchbar {
+    background: #F4F4F4; border: 1px solid #E4E4E7; border-radius: 14px;
+    padding: 20px 24px; font-size: 32px; color: #111; margin-bottom: 8px; display: flex; align-items: center; gap: 14px;
+  }
+  .searchbar .mag { width: 24px; height: 24px; border: 3px solid #A1A1AA; border-radius: 50%; flex: none; }
+
+  /* WhatsApp-style bubble for hook C */
+  .wa { background: #ECE5DD; padding: 34px 30px; display: flex; flex-direction: column; align-items: flex-end; gap: 14px; }
+  .wa-bub { background: #DCF8C6; border-radius: 20px 6px 20px 20px; padding: 22px 24px 16px; max-width: 660px; }
+  .wa-file { background: rgba(255,255,255,.72); border-radius: 12px; padding: 20px 22px; display: flex; align-items: center; gap: 18px; }
+  .wa-doc { width: 52px; height: 62px; background: #E24C4C; border-radius: 6px; color: #fff; font-size: 18px; font-weight: 700; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; flex: none; }
+  .wa-fn { font-size: 30px; font-weight: 600; color: #111; }
+  .wa-fs { font-size: 23px; color: #667781; margin-top: 4px; }
+  .wa-txt { font-size: 30px; color: #111; margin-top: 16px; line-height: 1.35; }
+  .wa-meta { font-size: 21px; color: #667781; text-align: right; margin-top: 8px; }
+  .wa-meta .tick { color: #34B7F1; font-weight: 700; }
+
+  /* ── Price band + accent footer ── */
+  .ab .ab-price {
+    background: var(--sky-100); border-top: 2px solid var(--sky-600);
+    margin: 0 -80px; padding: 26px 80px;
+    display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+  }
+  .ab .ab-price .p1 { font-family: var(--f-display); font-size: 36px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink-950); }
+  .ab .ab-price .p2 { font-size: 26px; color: var(--ink-700); }
+
+  .ab .ab-foot {
+    background: var(--sky-600); color: #fff; margin: 0 -80px;
+    padding: 34px 80px 40px;
+    display: flex; justify-content: space-between; align-items: center; gap: 20px;
+  }
+  .ab .ab-cta {
+    font-family: var(--f-display); font-size: 33px; font-weight: 700; letter-spacing: -0.01em;
+    color: #fff; display: inline-flex; align-items: center; gap: 16px;
+  }
+  .ab .wa-ico { width: 40px; height: 40px; flex: none; }
+  .ab .ab-site { font-size: 25px; color: rgba(255,255,255,.82); }
+
+  /* Indic-script artboards */
+  .ab.bn .ab-h, .ab.bn .ab-eyebrow, .ab.bn .ab-price .p1, .ab.bn .ab-price .p2, .ab.bn .ab-cta { font-family: var(--f-bn); }
+  .ab.te .ab-h, .ab.te .ab-eyebrow, .ab.te .ab-price .p1, .ab.te .ab-price .p2, .ab.te .ab-cta { font-family: var(--f-te); }
+  .ab.bn .wa-txt { font-family: var(--f-bn); }
+  .ab.te .wa-txt { font-family: var(--f-te); }
+
+  .ab.bn .ab-h,         .ab.te .ab-h         { font-size: 64px; line-height: 1.3; letter-spacing: -0.01em; }
+  .ab.bn .ab-cta,       .ab.te .ab-cta       { font-size: 28px; }
+  .ab.bn .ab-eyebrow,   .ab.te .ab-eyebrow   { font-size: 22px; letter-spacing: 0.05em; }
+  .ab.bn .ab-price .p1, .ab.te .ab-price .p1 { font-size: 32px; }
+  .ab.bn .ab-price .p2, .ab.te .ab-price .p2 { font-size: 24px; }
+
+  /* ── Tree ─────────────────────────────────────── */
+  .tree {
+    font-family: var(--f-mono); font-size: 13px; line-height: 2;
+    background: var(--ink-950); color: var(--ink-300);
+    border-radius: 10px; padding: 20px 22px; overflow-x: auto; white-space: pre;
+  }
+  .tree b { color: #fff; font-weight: 600; }
+  .tree i { color: var(--sky-400); font-style: normal; }
+  .tree u { color: var(--ink-500); text-decoration: none; }
+
+  /* ── Flow ─────────────────────────────────────── */
+  .flow { display: flex; flex-direction: column; }
+  .flow-row { display: flex; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); align-items: flex-start; }
+  .flow-row:first-child { border-top: none; }
+  .flow-q { font-family: var(--f-mono); font-size: 12px; font-weight: 700; color: var(--sky-600); min-width: 34px; padding-top: 2px; }
+  .flow-b { display: flex; flex-direction: column; gap: 6px; }
+
+  footer {
+    margin-top: 64px; padding-top: 20px; border-top: 2px solid var(--ink-950);
+    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: center;
+  }
+
+  @media (max-width: 640px) {
+    .sheet { padding: 28px 18px 64px; }
+    .masthead { padding: 26px 22px; border-radius: 10px; }
+    h1 { font-size: 32px; }
+    td.k { width: auto; }
+    .setting .s-v { text-align: left; }
+  }
+
+  @media print {
+    body { background: #fff; font-size: 10.5pt; }
+    .sheet { max-width: none; padding: 0; min-height: 0; background: #fff; }
+    main { gap: 30px; padding-top: 30px; }
+    section, .panel, .stats, .ab-cell, .flow-row { break-inside: avoid; }
+    .ab-toolbar { display: none; }
+    .masthead, .copyblock, .ab { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <div class="top">
+      <div class="brandrow"><span class="wm">sell<span class="os">OS</span></span></div>
+      <span class="kicker dim">Paid test · ₹5,000 · Kolkata + Tirupati</span>
+    </div>
+    <h1>Facebook Ads Test</h1>
+    <p class="lead">
+      Two cities, two sequential flights, four creatives each, straight into WhatsApp. Built to
+      answer a single question in two weeks: does paid social produce a chemist who will
+      actually pay — and is it cheaper in Tirupati or Kolkata?
+    </p>
+    <span class="kicker">Goal — 1–2 booked setup slots</span>
+  </header>
+
+  <main>
+
+    <!-- ─── 00 ACCOUNT SETUP ────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 00 · do this first</span>
+        <h2>How the Meta account should be structured</h2>
+      </div>
+
+      <div class="panel panel-danger">
+        <h3>Do not create a Facebook profile for AI Overflow</h3>
+        <p class="small">
+          Personal profiles on Facebook must be real individuals. A profile registered as a
+          company violates Meta's terms and gets disabled — often months later, with no warning
+          and no reliable appeal. <strong>When a profile is disabled, every asset it admins dies
+          with it:</strong> the Page, the ad account, the pixel and its history, the WhatsApp
+          connections. Two founders sharing one login also trips Meta's security checks —
+          two cities, two devices, one profile — and you get locked out mid-campaign.
+        </p>
+      </div>
+
+      <div class="panel panel-sky">
+        <h3>The structure that survives</h3>
+        <p class="small">
+          Personal profiles are only <em>keys</em>. The Business Manager is the door, and it owns
+          everything behind it.
+        </p>
+        <p class="small">
+          <strong>There is no Business Manager login.</strong> <span class="mono">business.facebook.com</span>
+          authenticates you through a personal Facebook profile — there is no separate username
+          and password for a business portfolio, and no way to create one. Every company running
+          Meta ads reaches it through individual people's profiles; the portfolio layer is what
+          makes that safe. The AI Overflow email sits <em>inside</em> the portfolio as its contact
+          and billing address, and is never a credential.
+        </p>
+        <div class="tree"><b>Meta Business Manager — "AI Overflow"</b>
+<u>│</u>   <i>company email is a settings field here, never a login</i>
+<u>│</u>
+<u>├──</u> <b>People</b>
+<u>│</u>    <u>├──</u> Founder A — <i>own personal profile</i> · Full control
+<u>│</u>    <u>└──</u> Founder B — <i>own personal profile</i> · Full control
+<u>│</u>
+<u>├──</u> <b>Page</b> — SellOS <i>(one Page, both cities)</i>
+<u>│</u>
+<u>├──</u> <b>Ad account</b> — SellOS Ads <i>(GSTIN added)</i>
+<u>│</u>
+<u>├──</u> <b>WhatsApp accounts</b>
+<u>│</u>    <u>├──</u> +91 90730 55125 — <i>Kolkata</i>
+<u>│</u>    <u>└──</u> TBD — <i>Tirupati</i>
+<u>│</u>
+<u>└──</u> <b>Pixel</b> — sellos.in</div>
+        <ul class="plain go">
+          <li><strong>Each founder logs in as themselves.</strong> Real name, real profile, no shared password. Both get Full control on the Business Manager.</li>
+          <li><strong>The AI Overflow email goes on the Business Manager</strong> as the business contact and billing address — never as a profile login.</li>
+          <li><strong>If a founder leaves or gets locked out, nothing is lost.</strong> Remove the person, the assets stay. That is the entire point of this structure.</li>
+          <li><strong>Turn on required two-factor for everyone</strong> in Business Settings → Security Centre. A locked-out admin at ₹400/day is an expensive afternoon.</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h3>Order of operations</h3>
+        <ul class="checks">
+          <li>Each founder confirms they have a normal personal Facebook profile in their own real name, with 2FA on. If one doesn't, they create one — as themselves</li>
+          <li>Founder A opens <span class="mono">business.facebook.com</span> <strong>logged in as themselves</strong> and creates a business portfolio named <strong>AI Overflow</strong></li>
+          <li>Inside it: Business Info → set the contact email to the AI Overflow address. This is a notification and billing field, not a credential</li>
+          <li>Add Founder B under People → Full control, using the email tied to their personal profile. They accept while logged in as themselves. Not "Employee access"</li>
+          <li>Create the <strong>SellOS Page</strong> inside the Business Manager — not from a personal profile, or it lands in the wrong place and migrating it later is painful</li>
+          <li>Create the ad account inside the Business Manager, and add AI Overflow's <strong>GSTIN</strong> to it</li>
+          <li>Connect both WhatsApp Business numbers under WhatsApp accounts</li>
+          <li>Add the company card, set the account spending limit to ₹5,000</li>
+          <li>Post 5–6 things on the Page before any ad runs</li>
+        </ul>
+      </div>
+
+      <div class="panel panel-warning">
+        <h3>Three things that cost money if you skip them</h3>
+        <ul class="plain">
+          <li><strong>GST is charged on top of ad spend, not inside it.</strong> ₹5,000 of delivery bills you roughly ₹5,900. Put AI Overflow's GSTIN on the ad account and that 18% becomes claimable input credit — about ₹900 back on this test alone. It cannot be added retrospectively to invoices already issued.</li>
+          <li><strong>An empty Page kills the ad.</strong> A chemist who taps your ad will check who you are. Zero posts and four followers reads as a scam. Post the flyer content, a real bill, a photo of the anchor shop with their permission — six posts is enough, and it costs nothing.</li>
+          <li><strong>Brand-new ad accounts get reviewed.</strong> Don't create the account and immediately push ₹400/day. Set the Page up, let it exist for a few days, then start. A restricted account on day one costs you the whole flight window.</li>
+        </ul>
+      </div>
+
+      <div class="panel panel-success">
+        <h3>One wrinkle the sequential flights already solve</h3>
+        <p class="small">
+          Click-to-WhatsApp ads pick their destination number from the WhatsApp accounts in your
+          Business Manager, but depending on how your Page is connected you may find the ad set
+          only offers the number currently linked to the Page. Check the dropdown when you build
+          the Tirupati ad set. If only one number appears, it costs you nothing:
+          <strong>link the Tirupati number for days 1–7, swap to the Kolkata number for days
+          8–14.</strong> The flights never overlap, so a single Page-linked number is enough.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── 01 BILLING ──────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 01</span>
+        <h2>What Meta actually charges you for</h2>
+      </div>
+
+      <div class="panel panel-warning">
+        <p class="small">
+          <strong>You are not billed per click.</strong> On every objective that matters here,
+          Meta bills per <em>impression</em>. The unqualified chemist who scrolled past your ad
+          already cost you money. The one who tapped it cost you nothing extra.
+        </p>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Objective</th><th>Billed on</th><th>Note</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="k">Leads → WhatsApp</td>
+              <td class="num">Impressions</td>
+              <td>What we're running. Optimised for conversations started.</td>
+            </tr>
+            <tr>
+              <td class="k">Leads → Instant Form</td>
+              <td class="num">Impressions</td>
+              <td>Same billing. Higher volume, lower quality.</td>
+            </tr>
+            <tr>
+              <td class="k">Traffic</td>
+              <td class="num">Impressions</td>
+              <td>Link-click billing still exists in theory, but Meta has been withdrawing it and it's usually unavailable on newer accounts.</td>
+            </tr>
+            <tr>
+              <td class="k">Video views</td>
+              <td class="num">ThruPlay</td>
+              <td>Or 2-second continuous views. Not relevant to this test.</td>
+            </tr>
+            <tr>
+              <td class="k">Engagement</td>
+              <td class="num">Impressions</td>
+              <td>Post-engagement billing on some placements only.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel panel-sky">
+        <h3>Why this changes the plan you described</h3>
+        <ul class="plain go">
+          <li><strong>You can't save money by repelling clicks.</strong> A deliberately off-putting creative just lowers CTR — and Meta charges a <em>higher</em> CPM for low-engagement ads. Over-filter and you pay more per qualified lead, not less.</li>
+          <li><strong>The only free pre-click filter is the copy itself.</strong> Naming the audience and the price on the creative costs nothing and removes the wrong people before they tap.</li>
+          <li><strong>Real qualification happens after the click, in WhatsApp</strong>, where every question you ask is free. That’s Sheet 08.</li>
+          <li><strong>Your bottleneck is your own time, not impressions.</strong> Optimise for a clean inbox, not a low click count.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ─── 02 BUDGET ───────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 02</span>
+        <h2>Two cities on ₹5,000 — sequentially, not together</h2>
+      </div>
+
+      <div class="panel panel-warning">
+        <p class="small">
+          Meta needs roughly <strong>50 optimisation events per ad set per week</strong> to leave
+          the learning phase. At ₹167/day you never get there — you buy a month of erratic
+          delivery and inflated costs, then a result that can't tell you whether the channel
+          failed or the execution did. The same money at ₹350/day for 14 days exits learning,
+          reads clean, and leaves you two weeks of the month to act on it.
+        </p>
+      </div>
+
+      <div class="panel panel-danger">
+        <h3>Do not run both cities at once</h3>
+        <p class="small">
+          ₹5,000 split across two simultaneous ad sets is ₹175/day each — straight back into the
+          starvation problem above, twice. And you can't solve it by putting both cities in one
+          ad set either: Meta pours budget wherever conversations are cheapest, and Tirupati CPMs
+          run a fraction of Kolkata's. You'd wake up on day four having spent 90% in Tirupati,
+          learned nothing about Kolkata, and with no way to plan a field visit.
+        </p>
+      </div>
+
+      <div class="panel panel-sky">
+        <h3>Run them as two flights — Tirupati first</h3>
+        <p class="small">
+          Tirupati is the cheaper market by some distance, so it's where creative mistakes cost
+          least. Burn your testing money at a ₹90 CPM, not a ₹280 one, then take the winning
+          concept into Kolkata already knowing which hook works.
+        </p>
+        <ul class="plain go">
+          <li><strong>Flight 1 · Tirupati · days 1–7 · ₹300/day = ₹2,100.</strong> Creatives: Telugu ×2, English ×2.</li>
+          <li><strong>Flight 2 · Kolkata · days 8–14 · ₹400/day = ₹2,800.</strong> Creatives: Bengali ×2, English ×2 — but drop whichever concept lost in Tirupati and run the winner in both languages.</li>
+          <li><strong>Total ₹4,900</strong>, one ad set live at any moment, each exiting learning on its own budget.</li>
+        </ul>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span class="stat-num">2</span><span class="stat-lbl">Cities, sequential</span></div>
+        <div class="stat"><span class="stat-num">₹2,100</span><span class="stat-lbl">Tirupati · 7d @ ₹300</span></div>
+        <div class="stat"><span class="stat-num">₹2,800</span><span class="stat-lbl">Kolkata · 7d @ ₹400</span></div>
+        <div class="stat"><span class="stat-num">4</span><span class="stat-lbl">Creatives per flight</span></div>
+      </div>
+
+      <div class="panel panel-warning">
+        <p class="small">
+          <strong>If both founders want leads in the same week</strong>, the honest answer is
+          that ₹5,000 does not stretch to two cities simultaneously. Either raise it to ₹10,000
+          — ₹350/day per city for 14 days each — or accept one city for this test. Splitting a
+          starvation budget in half is the one option that guarantees you learn nothing.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>What ₹5,000 should buy — order of magnitude, not a forecast</h3>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Stage</th><th>Rate</th><th>Result</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="k">Impressions</td><td class="num">CPM ₹180–350</td><td class="num">~20,000</td></tr>
+              <tr><td class="k">Link clicks</td><td class="num">CTR 1.0–2.5%</td><td class="num">~300</td></tr>
+              <tr><td class="k">WhatsApp conversations</td><td class="num">25–40% of clicks</td><td class="num">75–120</td></tr>
+              <tr><td class="k">Pass the 3 questions</td><td class="num">15–25%</td><td class="num">15–25</td></tr>
+              <tr><td class="k">Book a setup slot</td><td class="num">~30%</td><td class="num">5–8</td></tr>
+              <tr><td class="k">Pay</td><td class="num">20–30%</td><td class="num">1–2 shops</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small">
+          Those are blended figures. Expect Tirupati to land at the cheap end of the CPM range
+          and Kolkata at the expensive end — the same ₹2,100 will buy meaningfully more reach in
+          Tirupati than ₹2,800 buys in Kolkata. Track the two flights separately or the average
+          will hide which city actually works.
+        </p>
+        <p class="small">
+          Blended, that puts acquisition cost somewhere around <strong>₹2,500–5,000 per shop</strong>
+          against ₹6,999 of year-one revenue. Positive, but thin — which is exactly why this is
+          a ₹5,000 test and not a budget line.
+        </p>
+      </div>
+
+      <div class="panel panel-danger">
+        <h3>Kill criteria — decide these now, not while it's running</h3>
+        <ul class="plain stop">
+          <li><strong>₹900 into a flight and CTR under 0.8%</strong> → the creative is wrong. Swap the losing concept. Don't touch targeting.</li>
+          <li><strong>₹1,400 into a flight and fewer than 10 conversations</strong> → targeting is too tight. Widen the radius and drop detailed targeting. In Tirupati, check the "living in this location" setting <em>before</em> you blame anything else.</li>
+          <li><strong>Tirupati flight ends with zero qualified leads</strong> → do not launch Kolkata on the same creative. Rewrite the hook first, or you'll spend ₹2,800 repeating a known failure at triple the CPM.</li>
+          <li><strong>Full ₹4,900 and zero booked setup slots</strong> → Facebook is not your channel at this stage. Go back to doors and don't retry until you have a case study.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ─── 03 CAMPAIGN SETUP ───────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 03</span>
+        <h2>Exact settings to click</h2>
+      </div>
+
+      <div class="panel">
+        <h3>Campaign</h3>
+        <div class="setting"><span class="s-k">Objective</span><span class="s-v">Leads</span></div>
+        <div class="setting"><span class="s-k">Buying type</span><span class="s-v">Auction</span></div>
+        <div class="setting"><span class="s-k">Advantage campaign budget</span><span class="s-v off">OFF — set budget at ad set</span></div>
+        <div class="setting"><span class="s-k">Special ad category</span><span class="s-v">None</span></div>
+      </div>
+
+      <div class="panel">
+        <h3>Ad set</h3>
+        <div class="setting"><span class="s-k">Conversion location</span><span class="s-v">WhatsApp</span></div>
+        <div class="setting"><span class="s-k">Performance goal</span><span class="s-v">Maximise conversations</span></div>
+        <div class="setting"><span class="s-k">Daily budget</span><span class="s-v">₹350</span></div>
+        <div class="setting"><span class="s-k">Schedule</span><span class="s-v">14 days, run all day</span></div>
+        <div class="setting"><span class="s-k">Bid strategy</span><span class="s-v">Highest volume</span></div>
+        <div class="setting"><span class="s-k">Cost per result goal</span><span class="s-v off">Leave blank</span></div>
+        <div class="setting"><span class="s-k">Placements</span><span class="s-v">Manual</span></div>
+        <div class="setting"><span class="s-k">— Facebook</span><span class="s-v">Feed, Marketplace</span></div>
+        <div class="setting"><span class="s-k">— Instagram</span><span class="s-v">Feed, Stories</span></div>
+        <div class="setting"><span class="s-k">— Audience Network</span><span class="s-v off">OFF</span></div>
+      </div>
+
+      <div class="panel panel-sky">
+        <ul class="plain go">
+          <li><strong>No dayparting.</strong> At this budget, restricting hours starves delivery. Run all day and let Meta find them.</li>
+          <li><strong>No cost cap.</strong> A cost-per-result goal on a small budget suppresses delivery until you spend nothing at all.</li>
+          <li><strong>Audience Network off.</strong> With impression billing it burns budget on junk in-app placements you'd never choose.</li>
+          <li><strong>One ad set.</strong> Splitting ₹350 across two ad sets starves both and teaches you nothing about either.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ─── 04 TARGETING ────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 04</span>
+        <h2>Who Meta shows it to</h2>
+      </div>
+
+      <div class="panel">
+        <h3>Location — your biggest efficiency lever</h3>
+        <p class="small">
+          Never target a whole city. Drop <strong>2–3 km radius pins on the same second-ring
+          roads a founder can actually drive to</strong> — the residential stretches 300 m to
+          1 km out from the hospital clusters, per Sheet 03 of the field kit. Same shops, two
+          channels, and the ad warms up the door knock.
+        </p>
+        <div class="setting"><span class="s-k">Location type</span><span class="s-v">People living in this location</span></div>
+        <div class="setting"><span class="s-k">Radius</span><span class="s-v">2–3 km pins</span></div>
+        <div class="setting"><span class="s-k">Age</span><span class="s-v">28 – 58</span></div>
+        <div class="setting"><span class="s-k">Gender</span><span class="s-v">All</span></div>
+        <div class="setting"><span class="s-k">Language · Tirupati</span><span class="s-v">Telugu, English</span></div>
+        <div class="setting"><span class="s-k">Language · Kolkata</span><span class="s-v">Bengali, Hindi, English</span></div>
+      </div>
+
+      <div class="panel panel-danger">
+        <h3>Tirupati has a trap the other city doesn't</h3>
+        <p class="small">
+          Tirupati carries an enormous floating pilgrim population, and a chunk of it is on
+          Facebook inside your radius on any given day. Meta's default location setting is
+          "People living in <em>or recently in</em> this location" — leave it there and you will
+          pay to show a shop-software ad to devotees from three states who are here for two days.
+        </p>
+        <ul class="plain stop">
+          <li>Set location to <strong>"People living in this location"</strong>. This is not optional in Tirupati.</li>
+          <li>Pin the shop clusters, not the temple. The chemists are around <strong>Ruia hospital, SVIMS, BIRRD</strong> and the <strong>bus stand / Gandhi Road</strong> stretch — not up the hill.</li>
+          <li>Expect noticeably lower CPMs than Kolkata. If Tirupati CPM comes back <em>above</em> Kolkata's, your location setting is wrong — check it before blaming the creative.</li>
+        </ul>
+      </div>
+
+      <div class="panel panel-warning">
+        <h3>Detailed targeting — the honest position</h3>
+        <p class="small">
+          Meta has no reliable "pharmacy owner" segment in India. What's available is weak:
+          the <span class="mono">Small business owners</span> behaviour, and interests like
+          <span class="mono">Pharmacy</span> or <span class="mono">Pharmacist</span> that mostly
+          catch pharmacy students, not proprietors.
+        </p>
+        <ul class="plain">
+          <li>Layer <strong>Small business owners</strong> only, nothing else, and check the audience size.</li>
+          <li><strong>If the estimate falls under ~50,000, remove it entirely.</strong> A tight radius plus an interest filter shrinks the pool below what ₹350/day can deliver against, and delivery costs spike.</li>
+          <li>Let the geography and the creative do the filtering. That is what the price on the artboard is for.</li>
+        </ul>
+        <div class="setting"><span class="s-k">Advantage detailed targeting</span><span class="s-v off">OFF — it expands past your filter</span></div>
+        <div class="setting"><span class="s-k">Advantage+ audience</span><span class="s-v off">OFF for this test</span></div>
+      </div>
+
+      <div class="panel panel-success">
+        <h3>Do this now even though it does nothing this month</h3>
+        <p class="small">
+          Install the <strong>Meta Pixel on sellos.in</strong> alongside the GA4 work already
+          planned in <code>docs/feature</code>. It costs nothing, and it spends these two weeks
+          quietly building a retargeting pool. Without it, every visitor this test sends to the
+          site is gone the moment they close the tab.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── 05 PAIN POINTS ──────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 05 · reference</span>
+        <h2>Every pain we can actually claim</h2>
+      </div>
+
+      <p class="small">
+        Only pains the shipped product genuinely addresses — no roadmap, no wishful thinking.
+        A pain that makes a good <em>doorstep question</em> is not automatically a good
+        <em>ad hook</em>, and the difference costs real money, so each one carries a verdict.
+      </p>
+
+      <div class="panel panel-sky">
+        <h3>What makes a pain ad-worthy</h3>
+        <ul class="plain go">
+          <li><strong>He already knows he has it.</strong> A feed gives you three seconds. Anything needing education loses.</li>
+          <li><strong>It has a number attached</strong> — rupees or hours. Vague discomfort doesn't stop a thumb.</li>
+          <li><strong>Nobody is to blame.</strong> Pains he can blame on the notebook convert. Pains that imply he's careless don't.</li>
+          <li><strong>He's not ashamed to be seen engaging with it.</strong> Facebook engagement is semi-public — his staff and neighbours can see it. This one rules out more good pains than people expect.</li>
+        </ul>
+      </div>
+
+      <div class="panel panel-sky">
+        <h3>How to phrase the question</h3>
+        <p class="small">
+          <em>"Which of your medicines expire next month?"</em> works because he cannot answer
+          it, and the failing to answer <strong>is</strong> the pitch. Nothing is claimed, nothing
+          is sold, and he arrives at the problem himself. Every question below is built to that
+          shape:
+        </p>
+        <ul class="plain go">
+          <li><strong>Ten words or fewer.</strong> A long question gets answered with a shrug.</li>
+          <li><strong>Name a real thing</strong> — a medicine, a month, yesterday, a box. Abstractions let him say "yes yes, it's fine."</li>
+          <li><strong>Answerable in principle, unanswerable in his shop.</strong> That gap is the entire argument.</li>
+          <li><strong>Never ask about a process.</strong> "How do you handle X" invites a defence. "How much X yesterday" invites a silence.</li>
+        </ul>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Pain</th><th>The question that exposes it</th><th>What SellOS does</th><th>Verdict</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="k">Stock expires unnoticed and gets written off</td>
+              <td>"Which of your medicines expire next month?"</td>
+              <td>60-day expiring-soon list on the dashboard; expired batches blocked from sale</td>
+              <td><span class="chip chip-go">Best hook</span></td>
+            </tr>
+            <tr>
+              <td class="k">Real margin per item is unknown after distributor schemes</td>
+              <td>"How much do you make on one strip of Amoxicillin?"</td>
+              <td>Buying price, landing price and selling price stored per batch</td>
+              <td><span class="chip chip-go">Strong hook</span></td>
+            </tr>
+            <tr>
+              <td class="k">Bills look nothing like the chain pharmacy's</td>
+              <td>"Can you send a customer their bill on WhatsApp?"</td>
+              <td>Real PDF bill on shop letterhead, sent from the app or printed</td>
+              <td><span class="chip chip-go">Strong hook</span></td>
+            </tr>
+            <tr>
+              <td class="k">Input credit lost because purchase records are messy</td>
+              <td>"How much GST did you pay your distributor last month?"</td>
+              <td>Purchase-side GST summary and slabs, same report</td>
+              <td><span class="chip chip-go">Strong hook</span></td>
+            </tr>
+            <tr>
+              <td class="k">GST month-end scramble for the CA</td>
+              <td>"How many hours did last month's GST take you?"</td>
+              <td>Slab-wise sales report, any date range, CSV export</td>
+              <td><span class="chip chip-go">Strong hook · has a calendar</span></td>
+            </tr>
+            <tr>
+              <td class="k">Old bills are a pile, not a record</td>
+              <td>"Where are last month's bills right now?"</td>
+              <td>Every order stored and searchable; PDF carries GSTIN, drug and food licences, batch and expiry</td>
+              <td><span class="chip chip-go">Untested — worth testing</span></td>
+            </tr>
+            <tr>
+              <td class="k">Selling something that isn't on the shelf</td>
+              <td>"How many strips of Pan-40 are on the shelf right now?"</td>
+              <td>Live stock per batch; out-of-stock flagged in billing search, overselling blocked</td>
+              <td><span class="chip chip-warn">Support, not hook</span></td>
+            </tr>
+            <tr>
+              <td class="k">Hunting for a strip while the customer waits</td>
+              <td>"Which box is the Azithromycin in?"</td>
+              <td>Box number stored per batch and shown at billing</td>
+              <td><span class="chip chip-warn">Support, not hook</span></td>
+            </tr>
+            <tr>
+              <td class="k">Returns arithmetic done by guesswork</td>
+              <td>"What do you refund on half a returned strip?"</td>
+              <td>Full and partial returns, stock restored automatically</td>
+              <td><span class="chip chip-warn">Support, not hook</span></td>
+            </tr>
+            <tr>
+              <td class="k">Cash and UPI don't tally at closing</td>
+              <td>"How much came in on UPI yesterday?"</td>
+              <td>Payment split on the dashboard</td>
+              <td><span class="chip chip-warn">Support, not hook</span></td>
+            </tr>
+            <tr>
+              <td class="k">Bill writing is slow at the counter</td>
+              <td>"How many customers waited while you wrote a bill today?"</td>
+              <td>30-second bill, search by product or company name</td>
+              <td><span class="chip chip-warn">Needs education</span></td>
+            </tr>
+            <tr>
+              <td class="k">Stock walks out — staff pilferage</td>
+              <td>"When did you last count the whole shelf?"</td>
+              <td>Stock adjustments logged with a reason, theft included</td>
+              <td><span class="chip chip-stop">Never in a feed</span></td>
+            </tr>
+            <tr>
+              <td class="k">Can't see the shop when away from it</td>
+              <td>"How much did the shop take yesterday?"</td>
+              <td>Cloud, any device, isolated per-shop database</td>
+              <td><span class="chip chip-stop">Never in a feed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel panel-danger">
+        <h3>The two you must keep out of the ads</h3>
+        <p class="small">
+          <strong>Staff theft</strong> is a top-three pain for every shop owner and a poison ad
+          hook. Liking or commenting is visible, and no owner will publicly engage with an ad
+          that accuses the boy behind his counter. Ask it at the doorstep, never in a feed.
+        </p>
+        <p class="small">
+          <strong>"You can't see your shop when you're away"</strong> fails for the same reason
+          in reverse — it advertises to his own staff that he's watching. It sells beautifully
+          face to face and badly in public.
+        </p>
+      </div>
+
+      <div class="panel panel-success">
+        <h3>A timing trick the GST hook gives you for free</h3>
+        <p class="small">
+          GSTR-1 is due on the <strong>11th of each month</strong>. The GST pain is not felt
+          evenly — it spikes hard in the five days before that date, when the CA is chasing and
+          the owner is sitting with a calculator. If you run the GST hook, weight it to the
+          <strong>6th–11th</strong>. Same creative, same budget, a materially more receptive
+          reader. No other pain on this list has a calendar attached to it.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── 05 CREATIVES ────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 06 · 1080 × 1350 · 4:5</span>
+        <h2>The four creatives</h2>
+      </div>
+
+      <p class="small">
+        Three hooks × three languages, nine artboards. <strong>Only four run per flight</strong>:
+        all three hooks in the local language, plus one English control. The hook is the variable
+        you're testing — hold language constant so you can actually read the result. 4:5 is
+        deliberate: it takes more vertical screen in feed than 1:1.
+      </p>
+
+      <div class="panel panel-sky">
+        <h3>Why these are light, not dark</h3>
+        <p class="small">
+          Your buyer is in his forties or fifties. Contrast sensitivity drops with age and the
+          lens yellows, so light text on a dark ground blurs and haloes for exactly this reader —
+          dark-on-light is measurably easier. He is also looking at his phone under shop tube
+          lights or in daylight, where a dark creative loses contrast and a light one holds. And
+          in Indian local-business advertising, dark high-design reads as "not for me"; clarity
+          is the trust signal, not sophistication.
+        </p>
+        <p class="small">
+          The trade-off is that a white creative can vanish into Facebook's white feed. That's
+          what the <strong>solid accent footer</strong> is for — it bleeds edge to edge and gives
+          the pattern interrupt without costing legibility. Type is also larger and heavier than
+          a default creative for the same reason.
+        </p>
+        <p class="small">
+          Each artboard carries <strong>a real screen from the app, cropped to the one thing the
+          headline asks about</strong> — the expiring-soon rows, the live stock count, the bill in
+          a chat. It replaces the explanatory sub-line, because showing the answer beats
+          describing it. The surface is phone-proportioned on purpose: you sell "runs on the phone
+          you already have", and a laptop would say the opposite. Nothing in it is smaller than
+          21px on the artboard, so it survives the shrink to feed size.
+        </p>
+      </div>
+
+      <div class="ab-toolbar">
+        <button class="ab-btn" id="abToggle" type="button">Switch to 1:1 export size</button>
+        <span class="ab-cap">Screenshot each artboard at 1:1 to export a 1080 × 1350 PNG</span>
+      </div>
+
+      <div class="ab-grid">
+
+        <!-- A · EN -->
+        <div class="ab-cell">
+          <div class="ab-frame">
+            <div class="ab">
+              <div class="ab-top">
+                <span class="ab-wm">sell<span class="os">OS</span></span>
+                <span class="ab-tag">For medical shops</span>
+              </div>
+              <div class="ab-mid">
+                <span class="ab-eyebrow">All-in-one · Stock · Distributors · Customers · Billing</span>
+                <p class="ab-h">Which of your medicines <span class="dim">expire next month?</span></p>
+                <div class="shot"><div class="shot-bar"><span class="shot-wm">sell<span>OS</span></span><span class="shot-r">9:41<span class="shot-bat"></span></span></div><div class="shot-body">
+                  <div class="shot-h"><span class="t">Expiring Soon</span><span class="n">12 batches</span></div>
+                  <div class="row urgent"><div><div class="nm">Montelukast 10mg</div><div class="mt">Batch MK1120 · Box C-11</div><div class="sellfirst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> Sell this first</div></div><span class="d-chip hot">18 days</span></div><div class="row"><div><div class="nm">Metformin 500mg</div><div class="mt">Batch MF5502 · Box C-02</div></div><span class="d-chip warm">30 days</span></div><div class="row"><div><div class="nm">Azithromycin 250mg</div><div class="mt">Batch AZ8817 · Box A-09</div></div><span class="d-chip mild">52 days</span></div></div></div>
+              </div>
+              <div class="ab-price">
+                <span class="p1">First month free</span>
+                <span class="p2">then ₹799 / month · we load your stock for you</span>
+              </div>
+              <div class="ab-foot">
+                <span class="ab-cta"><svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.8842.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>Message us for a Free Demo</span>
+                <span class="ab-site">sellos.in</span>
+              </div>
+            </div>
+          </div>
+          <span class="ab-cap">A · EN — expiry · both cities</span>
+        </div>
+
+        <!-- A · BN -->
+        <div class="ab-cell">
+          <div class="ab-frame">
+            <div class="ab bn">
+              <div class="ab-top">
+                <span class="ab-wm">sell<span class="os">OS</span></span>
+                <span class="ab-tag">ওষুধের দোকানের জন্য</span>
+              </div>
+              <div class="ab-mid">
+                <span class="ab-eyebrow">স্টক · ডিস্ট্রিবিউটর · কাস্টমার · বিলিং — সব এক জায়গায়</span>
+                <p class="ab-h">পরের মাসে কোন ওষুধগুলোর <span class="dim">মেয়াদ শেষ হচ্ছে?</span></p>
+                <div class="shot"><div class="shot-bar"><span class="shot-wm">sell<span>OS</span></span><span class="shot-r">9:41<span class="shot-bat"></span></span></div><div class="shot-body">
+                  <div class="shot-h"><span class="t">Expiring Soon</span><span class="n">12 batches</span></div>
+                  <div class="row urgent"><div><div class="nm">Montelukast 10mg</div><div class="mt">Batch MK1120 · Box C-11</div><div class="sellfirst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> Sell this first</div></div><span class="d-chip hot">18 days</span></div><div class="row"><div><div class="nm">Metformin 500mg</div><div class="mt">Batch MF5502 · Box C-02</div></div><span class="d-chip warm">30 days</span></div><div class="row"><div><div class="nm">Azithromycin 250mg</div><div class="mt">Batch AZ8817 · Box A-09</div></div><span class="d-chip mild">52 days</span></div></div></div>
+              </div>
+              <div class="ab-price">
+                <span class="p1">প্রথম মাস ফ্রি</span>
+                <span class="p2">তারপর ₹799 / মাস · স্টক আমরাই তুলে দেব</span>
+              </div>
+              <div class="ab-foot">
+                <span class="ab-cta"><svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.8842.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>ফ্রি ডেমোর জন্য মেসেজ করুন</span>
+                <span class="ab-site">sellos.in</span>
+              </div>
+            </div>
+          </div>
+          <span class="ab-cap">A · BN — expiry · Kolkata</span>
+        </div>
+
+        <!-- A · TE -->
+        <div class="ab-cell">
+          <div class="ab-frame">
+            <div class="ab te">
+              <div class="ab-top">
+                <span class="ab-wm">sell<span class="os">OS</span></span>
+                <span class="ab-tag">మెడికల్ షాపుల కోసం</span>
+              </div>
+              <div class="ab-mid">
+                <span class="ab-eyebrow">స్టాక్ · డిస్ట్రిబ్యూటర్ · కస్టమర్ · బిల్లింగ్ — అన్నీ ఒకే చోట</span>
+                <p class="ab-h">వచ్చే నెల ఏ మందుల <span class="dim">గడువు ముగుస్తుంది?</span></p>
+                <div class="shot"><div class="shot-bar"><span class="shot-wm">sell<span>OS</span></span><span class="shot-r">9:41<span class="shot-bat"></span></span></div><div class="shot-body">
+                  <div class="shot-h"><span class="t">Expiring Soon</span><span class="n">12 batches</span></div>
+                  <div class="row urgent"><div><div class="nm">Montelukast 10mg</div><div class="mt">Batch MK1120 · Box C-11</div><div class="sellfirst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> Sell this first</div></div><span class="d-chip hot">18 days</span></div><div class="row"><div><div class="nm">Metformin 500mg</div><div class="mt">Batch MF5502 · Box C-02</div></div><span class="d-chip warm">30 days</span></div><div class="row"><div><div class="nm">Azithromycin 250mg</div><div class="mt">Batch AZ8817 · Box A-09</div></div><span class="d-chip mild">52 days</span></div></div></div>
+              </div>
+              <div class="ab-price">
+                <span class="p1">మొదటి నెల ఉచితం</span>
+                <span class="p2">తర్వాత ₹799 / నెల · స్టాక్ మేమే ఎక్కిస్తాం</span>
+              </div>
+              <div class="ab-foot">
+                <span class="ab-cta"><svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.8842.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>ఫ్రీ డెమో కోసం మెసేజ్ చేయండి</span>
+                <span class="ab-site">sellos.in</span>
+              </div>
+            </div>
+          </div>
+          <span class="ab-cap">A · TE — expiry · Tirupati</span>
+        </div>
+
+        <!-- B · EN -->
+        <div class="ab-cell">
+          <div class="ab-frame">
+            <div class="ab">
+              <div class="ab-top">
+                <span class="ab-wm">sell<span class="os">OS</span></span>
+                <span class="ab-tag">For medical shops</span>
+              </div>
+              <div class="ab-mid">
+                <span class="ab-eyebrow">All-in-one · Stock · Distributors · Customers · Billing</span>
+                <p class="ab-h">How many strips of Pan-40 are <span class="dim">on the shelf right now?</span></p>
+                <div class="shot"><div class="shot-bar"><span class="shot-wm">sell<span>OS</span></span><span class="shot-r">9:41<span class="shot-bat"></span></span></div><div class="shot-body">
+                  <div class="searchbar"><span class="mag"></span>Pan-40</div>
+                  <div class="row"><div><div class="nm">Pantoprazole 40mg</div><div class="mt">Sun Pharma · PN4471 · Box B-12</div></div><div class="bignum">148<small>in stock</small></div></div>
+                  <div class="row"><div><div class="nm">Pantoprazole 40mg</div><div class="mt">Cipla · PN2290 · Box B-13</div></div><span class="red-chip">Out of stock</span></div>
+                </div></div>
+              </div>
+              <div class="ab-price">
+                <span class="p1">First month free</span>
+                <span class="p2">then ₹799 / month · we load your stock for you</span>
+              </div>
+              <div class="ab-foot">
+                <span class="ab-cta"><svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.8842.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>Message us for a Free Demo</span>
+                <span class="ab-site">sellos.in</span>
+              </div>
+            </div>
+          </div>
+          <span class="ab-cap">B · EN — live stock · both cities</span>
+        </div>
+
+        <!-- B · BN -->
+        <div class="ab-cell">
+          <div class="ab-frame">
+            <div class="ab bn">
+              <div class="ab-top">
+                <span class="ab-wm">sell<span class="os">OS</span></span>
+                <span class="ab-tag">ওষুধের দোকানের জন্য</span>
+              </div>
+              <div class="ab-mid">
+                <span class="ab-eyebrow">স্টক · ডিস্ট্রিবিউটর · কাস্টমার · বিলিং — সব এক জায়গায়</span>
+                <p class="ab-h">এই মুহূর্তে Pan-40 <span class="dim">কটা স্ট্রিপ আছে?</span></p>
+                <div class="shot"><div class="shot-bar"><span class="shot-wm">sell<span>OS</span></span><span class="shot-r">9:41<span class="shot-bat"></span></span></div><div class="shot-body">
+                  <div class="searchbar"><span class="mag"></span>Pan-40</div>
+                  <div class="row"><div><div class="nm">Pantoprazole 40mg</div><div class="mt">Sun Pharma · PN4471 · Box B-12</div></div><div class="bignum">148<small>in stock</small></div></div>
+                  <div class="row"><div><div class="nm">Pantoprazole 40mg</div><div class="mt">Cipla · PN2290 · Box B-13</div></div><span class="red-chip">Out of stock</span></div>
+                </div></div>
+              </div>
+              <div class="ab-price">
+                <span class="p1">প্রথম মাস ফ্রি</span>
+                <span class="p2">তারপর ₹799 / মাস · স্টক আমরাই তুলে দেব</span>
+              </div>
+              <div class="ab-foot">
+                <span class="ab-cta"><svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.8842.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>ফ্রি ডেমোর জন্য মেসেজ করুন</span>
+                <span class="ab-site">sellos.in</span>
+              </div>
+            </div>
+          </div>
+          <span class="ab-cap">B · BN — live stock · Kolkata</span>
+        </div>
+
+        <!-- B · TE -->
+        <div class="ab-cell">
+          <div class="ab-frame">
+            <div class="ab te">
+              <div class="ab-top">
+                <span class="ab-wm">sell<span class="os">OS</span></span>
+                <span class="ab-tag">మెడికల్ షాపుల కోసం</span>
+              </div>
+              <div class="ab-mid">
+                <span class="ab-eyebrow">స్టాక్ · డిస్ట్రిబ్యూటర్ · కస్టమర్ · బిల్లింగ్ — అన్నీ ఒకే చోట</span>
+                <p class="ab-h">ఇప్పుడు షెల్ఫ్‌లో Pan-40 <span class="dim">ఎన్ని స్ట్రిప్స్ ఉన్నాయి?</span></p>
+                <div class="shot"><div class="shot-bar"><span class="shot-wm">sell<span>OS</span></span><span class="shot-r">9:41<span class="shot-bat"></span></span></div><div class="shot-body">
+                  <div class="searchbar"><span class="mag"></span>Pan-40</div>
+                  <div class="row"><div><div class="nm">Pantoprazole 40mg</div><div class="mt">Sun Pharma · PN4471 · Box B-12</div></div><div class="bignum">148<small>in stock</small></div></div>
+                  <div class="row"><div><div class="nm">Pantoprazole 40mg</div><div class="mt">Cipla · PN2290 · Box B-13</div></div><span class="red-chip">Out of stock</span></div>
+                </div></div>
+              </div>
+              <div class="ab-price">
+                <span class="p1">మొదటి నెల ఉచితం</span>
+                <span class="p2">తర్వాత ₹799 / నెల · స్టాక్ మేమే ఎక్కిస్తాం</span>
+              </div>
+              <div class="ab-foot">
+                <span class="ab-cta"><svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.8842.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>ఫ్రీ డెమో కోసం మెసేజ్ చేయండి</span>
+                <span class="ab-site">sellos.in</span>
+              </div>
+            </div>
+          </div>
+          <span class="ab-cap">B · TE — live stock · Tirupati</span>
+        </div>
+
+        <!-- C · EN -->
+        <div class="ab-cell">
+          <div class="ab-frame">
+            <div class="ab">
+              <div class="ab-top">
+                <span class="ab-wm">sell<span class="os">OS</span></span>
+                <span class="ab-tag">For medical shops</span>
+              </div>
+              <div class="ab-mid">
+                <span class="ab-eyebrow">All-in-one · Stock · Distributors · Customers · Billing</span>
+                <p class="ab-h">Can you send a customer <span class="dim">their bill on WhatsApp?</span></p>
+                <div class="shot"><div class="shot-bar"><span class="shot-wm">sell<span>OS</span></span><span class="shot-r">9:41<span class="shot-bat"></span></span></div><div class="wa">
+                  <div class="wa-bub">
+                    <div class="wa-file"><div class="wa-doc">PDF</div><div><div class="wa-fn">INV-0412.pdf</div><div class="wa-fs">1 page · 84 KB</div></div></div>
+                    <div class="wa-txt">Your bill from Generic Medical Store. Please review and visit us again 🙏</div>
+                    <div class="wa-meta">1:42 pm <span class="tick">✓✓</span></div>
+                  </div></div></div>
+              </div>
+              <div class="ab-price">
+                <span class="p1">First month free</span>
+                <span class="p2">then ₹799 / month · we load your stock for you</span>
+              </div>
+              <div class="ab-foot">
+                <span class="ab-cta"><svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.8842.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>Message us for a Free Demo</span>
+                <span class="ab-site">sellos.in</span>
+              </div>
+            </div>
+          </div>
+          <span class="ab-cap">C · EN — WhatsApp bill · both cities</span>
+        </div>
+
+        <!-- C · BN -->
+        <div class="ab-cell">
+          <div class="ab-frame">
+            <div class="ab bn">
+              <div class="ab-top">
+                <span class="ab-wm">sell<span class="os">OS</span></span>
+                <span class="ab-tag">ওষুধের দোকানের জন্য</span>
+              </div>
+              <div class="ab-mid">
+                <span class="ab-eyebrow">স্টক · ডিস্ট্রিবিউটর · কাস্টমার · বিলিং — সব এক জায়গায়</span>
+                <p class="ab-h">কাস্টমারকে বিল <span class="dim">WhatsApp-এ পাঠাতে পারেন?</span></p>
+                <div class="shot"><div class="shot-bar"><span class="shot-wm">sell<span>OS</span></span><span class="shot-r">9:41<span class="shot-bat"></span></span></div><div class="wa">
+                  <div class="wa-bub">
+                    <div class="wa-file"><div class="wa-doc">PDF</div><div><div class="wa-fn">INV-0412.pdf</div><div class="wa-fs">1 page · 84 KB</div></div></div>
+                    <div class="wa-txt">জেনেরিক মেডিকেল স্টোর থেকে আপনার বিল। একবার দেখে নিন, আবার আসবেন 🙏</div>
+                    <div class="wa-meta">1:42 pm <span class="tick">✓✓</span></div>
+                  </div></div></div>
+              </div>
+              <div class="ab-price">
+                <span class="p1">প্রথম মাস ফ্রি</span>
+                <span class="p2">তারপর ₹799 / মাস · স্টক আমরাই তুলে দেব</span>
+              </div>
+              <div class="ab-foot">
+                <span class="ab-cta"><svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.8842.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>ফ্রি ডেমোর জন্য মেসেজ করুন</span>
+                <span class="ab-site">sellos.in</span>
+              </div>
+            </div>
+          </div>
+          <span class="ab-cap">C · BN — WhatsApp bill · Kolkata</span>
+        </div>
+
+        <!-- C · TE -->
+        <div class="ab-cell">
+          <div class="ab-frame">
+            <div class="ab te">
+              <div class="ab-top">
+                <span class="ab-wm">sell<span class="os">OS</span></span>
+                <span class="ab-tag">మెడికల్ షాపుల కోసం</span>
+              </div>
+              <div class="ab-mid">
+                <span class="ab-eyebrow">స్టాక్ · డిస్ట్రిబ్యూటర్ · కస్టమర్ · బిల్లింగ్ — అన్నీ ఒకే చోట</span>
+                <p class="ab-h">కస్టమర్‌కి బిల్లు <span class="dim">WhatsApp లో పంపగలరా?</span></p>
+                <div class="shot"><div class="shot-bar"><span class="shot-wm">sell<span>OS</span></span><span class="shot-r">9:41<span class="shot-bat"></span></span></div><div class="wa">
+                  <div class="wa-bub">
+                    <div class="wa-file"><div class="wa-doc">PDF</div><div><div class="wa-fn">INV-0412.pdf</div><div class="wa-fs">1 page · 84 KB</div></div></div>
+                    <div class="wa-txt">జెనరిక్ మెడికల్ స్టోర్ నుంచి మీ బిల్లు. ఒకసారి చూసుకోండి, మళ్ళీ రండి 🙏</div>
+                    <div class="wa-meta">1:42 pm <span class="tick">✓✓</span></div>
+                  </div></div></div>
+              </div>
+              <div class="ab-price">
+                <span class="p1">మొదటి నెల ఉచితం</span>
+                <span class="p2">తర్వాత ₹799 / నెల · స్టాక్ మేమే ఎక్కిస్తాం</span>
+              </div>
+              <div class="ab-foot">
+                <span class="ab-cta"><svg class="wa-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.8842.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>ఫ్రీ డెమో కోసం మెసేజ్ చేయండి</span>
+                <span class="ab-site">sellos.in</span>
+              </div>
+            </div>
+          </div>
+          <span class="ab-cap">C · TE — WhatsApp bill · Tirupati</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ─── 06 AD COPY ──────────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 07</span>
+        <h2>Ad copy</h2>
+      </div>
+
+      <p class="small">
+        <strong>The price is now your only pre-click filter.</strong> Dropping the "one or two
+        counters" line widens the top of the funnel deliberately — so keep ₹799 on every creative,
+        and expect a busier, less qualified inbox. The screening didn't disappear, it moved into
+        the conversation, where the three questions and the demo video do it for free.
+      </p>
+
+      <div class="panel">
+        <div class="copy-meta"><span class="chip chip-go">Primary text · EN</span><span class="chip chip-warn">Both cities</span></div>
+        <div class="copyblock">For medical shops still writing bills in a copy.
+
+SellOS makes a bill in 30 seconds with CGST and SGST worked out for you, warns you before a batch expires, and hands your CA a ready GST file at month end.
+
+We come to your shop and enter your entire stock — free. You start billing the same day.
+
+Stock, distributors, customers and billing in one place. Runs on the phone you already have — nothing to install.
+
+First month free, then ₹799/month. Message us on WhatsApp.</div>
+        <div class="setting"><span class="s-k">Headline</span><span class="s-v">Bill in 30 seconds. Stock entered free.</span></div>
+        <div class="setting"><span class="s-k">Description</span><span class="s-v">First month free · then ₹799/month</span></div>
+        <div class="setting"><span class="s-k">Call to action</span><span class="s-v">Send message</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="copy-meta"><span class="chip chip-go">Primary text · BN</span><span class="chip chip-warn">Kolkata</span></div>
+        <div class="copyblock bn">এখনও খাতায় বিল লিখছেন?
+
+SellOS-এ ৩০ সেকেন্ডে বিল হয়ে যায়, CGST-SGST নিজে থেকেই হিসেব হয়, আর কোন ব্যাচের মেয়াদ শেষ হতে চলেছে তা আগেই জানিয়ে দেয়। মাসের শেষে CA-র জন্য GST ফাইল তৈরি থাকে।
+
+আপনার পুরো স্টক আমরা দোকানে এসে তুলে দেব — একদম ফ্রি। সেদিন থেকেই বিল করা শুরু।
+
+স্টক, ডিস্ট্রিবিউটর, কাস্টমার, বিলিং — সব এক জায়গায়। আপনার ফোনেই চলে, আলাদা কিছু বসাতে হবে না।
+
+প্রথম মাস ফ্রি, তারপর ₹799 / মাস। WhatsApp-এ মেসেজ করুন।</div>
+        <div class="setting"><span class="s-k">Headline</span><span class="s-v">৩০ সেকেন্ডে বিল · স্টক আমরাই তুলে দেব</span></div>
+        <div class="setting"><span class="s-k">Description</span><span class="s-v">প্রথম মাস ফ্রি · তারপর ₹799 / মাস</span></div>
+        <div class="setting"><span class="s-k">Call to action</span><span class="s-v">Send message</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="copy-meta"><span class="chip chip-go">Primary text · TE</span><span class="chip chip-warn">Tirupati</span></div>
+        <div class="copyblock te">ఇంకా పుస్తకంలో బిల్లు రాస్తున్నారా?
+
+SellOS లో 30 సెకన్లలో బిల్లు అవుతుంది, CGST-SGST దానంతట అదే లెక్కిస్తుంది, ఏ బ్యాచ్ గడువు ముగుస్తుందో ముందే చెబుతుంది. నెలాఖరుకి మీ CA కోసం GST ఫైల్ సిద్ధంగా ఉంటుంది.
+
+మీ స్టాక్ మొత్తం మేము షాపుకి వచ్చి ఎక్కిస్తాం — పూర్తిగా ఉచితం. అదే రోజు నుంచి బిల్లింగ్ మొదలు.
+
+స్టాక్, డిస్ట్రిబ్యూటర్, కస్టమర్, బిల్లింగ్ — అన్నీ ఒకే చోట. మీ ఫోన్‌లోనే పని చేస్తుంది, కొత్తగా ఏమీ పెట్టాల్సిన అవసరం లేదు.
+
+మొదటి నెల ఉచితం, తర్వాత ₹799 / నెల. WhatsApp లో మెసేజ్ చేయండి.</div>
+        <div class="setting"><span class="s-k">Headline</span><span class="s-v">30 సెకన్లలో బిల్లు · స్టాక్ మేమే ఎక్కిస్తాం</span></div>
+        <div class="setting"><span class="s-k">Description</span><span class="s-v">మొదటి నెల ఉచితం · తర్వాత ₹799 / నెల</span></div>
+        <div class="setting"><span class="s-k">Call to action</span><span class="s-v">Send message</span></div>
+      </div>
+
+      <div class="panel panel-danger">
+        <h3>One claim you can't make yet</h3>
+        <p class="small">
+          "All-in-one" now covers <strong>stock, distributors, customers and billing</strong> —
+          all four shipped and demonstrable. It deliberately leaves out
+          <strong>employee management</strong>: there are no staff logins, no roles and no
+          per-user audit trail in the product today, single login per shop. Advertising it would
+          break trust at the first demo, which is the one place you cannot afford to lose it, and
+          it draws leads whose first question you'd have to answer with "not yet".
+        </p>
+      </div>
+
+      <div class="panel panel-warning">
+        <h3>Policy note</h3>
+        <p class="small">
+          Keep every claim about <em>billing and business</em>, never about medicines or health.
+          Meta's reviewers apply health-related restrictions aggressively to anything that reads
+          as pharmaceutical. You're selling shop software — the copy above stays on the right
+          side of that line, so don't add anything about medicine efficacy, patients, or
+          treatment.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── 07 QUALIFICATION ────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 08 · free, after the click</span>
+        <h2>Qualifying in WhatsApp</h2>
+      </div>
+
+      <div class="panel panel-danger">
+        <h3>You need two WhatsApp numbers, one per city</h3>
+        <p class="small">
+          The WhatsApp Business app allows exactly <strong>one greeting message per number</strong>.
+          You cannot serve a Telugu auto-reply to Tirupati and a Bengali one to Kolkata from a
+          single line. Since a founder already sits in each city, run the obvious split: each
+          founder's number goes on their own city's ad set, with the greeting in their language,
+          and they answer and drive to their own leads.
+        </p>
+        <div class="setting"><span class="s-k">Kolkata ad set → number</span><span class="s-v">+91 90730 55125</span></div>
+        <div class="setting"><span class="s-k">Tirupati ad set → number</span><span class="s-v off">TBD — Tirupati founder</span></div>
+      </div>
+
+      <p class="small">
+        Set these as the <strong>Greeting message</strong> in the WhatsApp Business app
+        (Settings → Business tools → Greeting message). It fires automatically on first contact,
+        so every ad tap is qualified before you've read a word. If they answer in English,
+        switch to English — the greeting is only the opener.
+      </p>
+
+      <div class="panel">
+        <div class="copy-meta"><span class="chip chip-go">Greeting · TE</span><span class="chip chip-warn">Tirupati number</span></div>
+        <div class="copyblock te">నమస్కారం 🙏 ఇది SellOS — మెడికల్ షాపుల బిల్లింగ్, స్టాక్, GST.
+
+మీకు సరిగ్గా సాయం చేయడానికి మూడు సమాధానాలు పంపండి:
+
+1. ఇది మెడికల్ షాప్ కోసమేనా? (అవును / కాదు)
+
+2. ఇప్పుడు బిల్లు ఎలా చేస్తున్నారు?
+   A) పుస్తకంలో
+   B) Marg లేదా వేరే సాఫ్ట్‌వేర్
+   C) ఇంకా ఏమీ లేదు
+
+3. ఎన్ని బిల్లింగ్ కౌంటర్లు? (1 / 2 / 3 లేదా ఎక్కువ)
+
+ఇలా పంపండి: 1-అవును 2-A 3-1</div>
+      </div>
+
+      <div class="panel">
+        <div class="copy-meta"><span class="chip chip-go">Greeting · BN</span><span class="chip chip-warn">Kolkata number</span></div>
+        <div class="copyblock bn">নমস্কার 🙏 এটা SellOS — ওষুধের দোকানের বিলিং, স্টক আর GST।
+
+ঠিকভাবে সাহায্য করার জন্য তিনটে উত্তর দিন:
+
+১. এটা কি ওষুধের দোকানের জন্য? (হ্যাঁ / না)
+
+২. এখন কীভাবে বিল করেন?
+   A) খাতায়
+   B) Marg বা অন্য সফটওয়্যার
+   C) এখনও কিছু নয়
+
+৩. কটা বিলিং কাউন্টার? (১ / ২ / ৩ বা বেশি)
+
+এভাবে উত্তর দিন: 1-হ্যাঁ 2-A 3-1</div>
+      </div>
+
+      <div class="panel">
+        <div class="copy-meta"><span class="chip chip-go">Greeting · EN</span><span class="chip chip-warn">Reference</span></div>
+        <div class="copyblock">Namaskar 🙏 This is SellOS — billing, stock and GST for medical shops.
+
+So we can help you properly, reply with three quick answers:
+
+1. Is this for a medical shop / chemist? (Yes / No)
+
+2. How do you bill right now?
+   A) In a copy
+   B) Marg or other software
+   C) Nothing yet
+
+3. How many billing counters? (1 / 2 / 3 or more)
+
+Reply like: 1-Yes 2-A 3-1</div>
+      </div>
+
+      <div class="panel">
+        <h3>What each answer means</h3>
+        <div class="flow">
+          <div class="flow-row">
+            <span class="flow-q">GO</span>
+            <div class="flow-b">
+              <h3>Chemist · copy or nothing · 1–2 counters</h3>
+              <p class="small">Your buyer. Book a setup slot immediately and hand them to Sheet 06 of the field kit. Don't sell further — you've already won, now deliver.</p>
+            </div>
+          </div>
+          <div class="flow-row">
+            <span class="flow-q">ASK</span>
+            <div class="flow-b">
+              <h3>Chemist · Marg or other software · 1–2 counters</h3>
+              <p class="small">One question only: "Is it working well for you?" If yes, thank them and stop. If they're paying an AMC for something they've abandoned, that's a live lead.</p>
+            </div>
+          </div>
+          <div class="flow-row">
+            <span class="flow-q">STOP</span>
+            <div class="flow-b">
+              <h3>Three or more counters</h3>
+              <p class="small">Out of scope — no staff logins, no roles, no audit trail. Say so plainly and ask if they know a smaller shop. A clean no earns you a referral more often than a stretch earns you a sale.</p>
+            </div>
+          </div>
+          <div class="flow-row">
+            <span class="flow-q">HOLD</span>
+            <div class="flow-b">
+              <h3>Not a chemist — grocery or general store</h3>
+              <p class="small">The product covers them and the landing page says so, but they're not who this test is measuring. Answer warmly, log them separately, and don't let them distort your read on the campaign.</p>
+            </div>
+          </div>
+          <div class="flow-row">
+            <span class="flow-q">DROP</span>
+            <div class="flow-b">
+              <h3>No reply within 24 hours</h3>
+              <p class="small">One follow-up, then stop. Chasing silent ad leads is how a ₹5,000 test quietly eats a month of your attention.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel panel-success">
+        <h3>Where the demo video goes</h3>
+        <p class="small">
+          Send it <strong>after</strong> they answer the three questions, never before. Two
+          reasons: an unanswered "here's a video" ends the conversation, whereas the video handed
+          over as a reward for answering keeps it alive and gives you a natural second message.
+          And with the counter filter gone from the creative, those three answers are now doing
+          all of your screening.
+        </p>
+        <ul class="plain go">
+          <li><strong>Under 90 seconds.</strong> A shop owner will not watch five minutes standing at his counter. One bill made start to finish, the expiry list, the GST export. Nothing else.</li>
+          <li><strong>Shot on a phone, in a real shop.</strong> A screen recording of the app on a laptop undoes the "runs on your phone" promise the ad just made.</li>
+          <li><strong>Three versions</strong> — English, Bengali, Telugu. Same footage, three voiceovers. It costs one afternoon and it's reusable forever.</li>
+          <li><strong>Always follow it with a question</strong>, never let it sit: "Shall I come Tuesday and set it up?" A video with no ask is a dead end.</li>
+        </ul>
+      </div>
+
+      <div class="panel panel-sky">
+        <p class="small">
+          <strong>Reply speed is the whole game.</strong> A chemist who messaged from an ad is
+          at their counter with their phone in hand. Answer inside ten minutes and they're still
+          there; answer in three hours and you're a stranger texting them at dinner. If nobody
+          can watch the inbox during shop hours, don't start the campaign yet.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── 08 PRE-FLIGHT ───────────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 09</span>
+        <h2>Before you press publish</h2>
+      </div>
+
+      <div class="panel panel-success">
+        <h3>Price is now reconciled — one number everywhere</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Asset</th><th>Says</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="k">landing/app/page.tsx</td><td class="num">₹799 / month</td><td>Unchanged</td></tr>
+              <tr><td class="k">landing/app/layout.tsx</td><td class="num">₹799 / month</td><td>Fixed — was ₹10</td></tr>
+              <tr><td class="k">sellos-a5-flyer.html</td><td class="num">₹799 · ₹3,999 / 6mo · ₹6,999 / yr</td><td>Already correct</td></tr>
+              <tr><td class="k">sellos-field-kit.html</td><td class="num">₹799 · ₹3,999 / 6mo · ₹6,999 / yr</td><td>Already correct</td></tr>
+              <tr><td class="k">These artboards</td><td class="num">₹799 / month</td><td>Matches</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small">
+          The live blocker was not the flyer — it was <span class="mono">landing/app/layout.tsx</span>,
+          which carried <strong>₹10/month</strong> in the meta description, the Open Graph card, the
+          Twitter card and the <span class="mono">schema.org</span> offer price. That is the text
+          Google indexes and the text that unfurls when anyone shares sellos.in in WhatsApp — so a
+          chemist could tap a ₹799 ad, forward the link to their brother, and have the preview quote
+          ₹10. All four now read ₹799.
+        </p>
+      </div>
+
+      <div class="panel panel-warning">
+        <h3>One gap left, and it is a decision not a bug</h3>
+        <p class="small">
+          The flyer and field kit sell three terms — ₹799/month, ₹3,999 for six, ₹6,999 for the year.
+          <strong>sellos.in sells one</strong>: ₹799/month. Nothing contradicts, but a chemist who
+          takes a flyer and then checks the site cannot find the annual price the founder just quoted
+          them. Either add the two prepaid tiers to the landing pricing section, or drop them from
+          the print assets and keep prepaid as a closing lever used in person only. The ad itself is
+          unaffected either way — it quotes ₹799/month, which is true everywhere.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>Checklist</h3>
+        <ul class="checks">
+          <li>Meta Business Manager set up, Facebook Page published and verified</li>
+          <li>WhatsApp Business app on <span class="mono">+91 90730 55125</span> (Kolkata) linked to the Page</li>
+          <li>Second WhatsApp Business number confirmed for Tirupati and linked to the same Page</li>
+          <li>Both greeting messages from Sheet 08 saved and tested from another phone</li>
+          <li>Payment method added, and a spending limit set at ₹5,000 so it cannot overrun</li>
+          <li>Nine artboards exported at 1080 × 1350 PNG — <strong>done</strong>, in <span class="mono">docs/marketing/ads/</span>. Regenerate with <span class="mono">python3 docs/marketing/export-ads.py</span> after any design change</li>
+          <li>Tirupati ad set location set to <strong>"People living in this location"</strong>, verified</li>
+          <li>Price reconciled across landing page, flyer, field kit and ad — <strong>done</strong>, see the panel above. Redeploy the landing site so the ₹10 metadata is gone from the live share preview</li>
+          <li>Someone named as responsible for answering WhatsApp during shop hours</li>
+          <li>Meta Pixel on sellos.in — <strong>code is wired</strong> in <span class="mono">landing/app/layout.tsx</span>, dormant until <span class="mono">NEXT_PUBLIC_META_PIXEL_ID</span> is set in Vercel Production. Create the pixel in Business Manager, paste the ID, redeploy</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h3>What to check, and when</h3>
+        <ul class="plain">
+          <li><strong>Day 1–2 · Tirupati live:</strong> nothing. Learning phase looks bad by design, and touching it resets the learning.</li>
+          <li><strong>Day 3:</strong> first real read. CTR and cost per conversation. Apply the kill criteria above.</li>
+          <li><strong>Day 5:</strong> turn off any creative under half the winner's CTR. Leave the rest alone.</li>
+          <li><strong>Day 7:</strong> stop Tirupati. Write down the winning concept and the winning language before you touch anything else.</li>
+          <li><strong>Day 8 · Kolkata live:</strong> launch the winning concept in Bengali and English. Fresh ad set, ₹400/day — do not edit the Tirupati one, its learning doesn't transfer across a location change.</li>
+          <li><strong>Day 10:</strong> read it. Same kill criteria, and expect worse numbers than Tirupati at the same spend. That's the market, not the ad.</li>
+          <li><strong>Day 14:</strong> stop. Count booked setup slots per city, not clicks, not leads. That's the only number that decides whether this channel gets another rupee — and which city gets it.</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span class="brandrow"><span class="wm">sell<span class="os">OS</span></span></span>
+    <span class="kicker dim">₹5,000 · 14 days · one question answered</span>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('abToggle');
+    var full = false;
+    btn.addEventListener('click', function () {
+      full = !full;
+      document.documentElement.style.setProperty('--ab-scale', full ? '1' : '0.33');
+      btn.textContent = full ? 'Back to preview size' : 'Switch to 1:1 export size';
+    });
+  })();
+</script>
+
+</body>
+</html>

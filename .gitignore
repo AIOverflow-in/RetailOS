@@ -20,3 +20,5 @@ backend/retailos
 
 # Local Claude Code guide (machine-specific, not for version control)
 CLAUDE.md
+
+*.tsbuildinfo
