@@ -10,6 +10,9 @@ Evidence in [`mobile-audit/shots/`](mobile-audit/shots/), rerunnable via [`mobil
 
 **Not mobile responsive — unusable below ~900px. Desktop ≥1280px is clean today and must stay that way.**
 
+> **Superseded by the Status section below — Phases 1–4 are shipped and this is now 0/14 at every
+> width from 320px to 1920px. The audit below is preserved as the before-state.**
+
 At a 390px viewport the sidebar consumes 280px and the app renders into a **110px column**.
 At 320px (iPhone SE, budget Androids) it renders into a **40px column**. Every dashboard screen
 then requires sideways scrolling, and on list screens that means *two nested levels* of it.
@@ -290,6 +293,81 @@ node audit.mjs 390 http://localhost:3000    # against local dev
 
 **Run 390 and 1280 after every phase.** The first tracks progress; the second is what proves
 desktop didn't regress. Screenshots land in `shots/` on every run.
+
+---
+
+## Status — Phases 1–4 shipped (2026-09-01)
+
+Implemented and verified. **0/14 screens fail at every width from 320px to 1920px.**
+
+| Width | Before | After |
+|---|---|---|
+| 320px | 5/14 fail (main = **40px**) | **0/14** (main = 320px) |
+| 390px | 11/14 fail (main = **110px**) | **0/14** (main = 390px) |
+| 768px | 0/14 (tables scrolling) | **0/14** |
+| 1024px | **billing failed** (157px h-scroll) | **0/14** — desktop bug fixed |
+| 1280 / 1440 / 1920px | 0/14 | **0/14 — unchanged** |
+
+Mobile touch targets under 40px, per screen: dashboard 19→**0**, reports 22→**0**,
+settings 19→**0**, inventory 36→**3**, billing 28→**5**, inventory-add 41→**11**, orders 45→**20**.
+Desktop counts are **byte-identical to the pre-change baseline** (19/28/36/41/20/25/45/21/22/19/25/1),
+which is the proof that every change is gated above the breakpoint.
+
+Before/after screenshots: [`shots/`](mobile-audit/shots/) and [`shots-after/`](mobile-audit/shots-after/).
+
+### What shipped
+
+**Phase 1 — shell** (`components/shared/Sidebar.tsx`, `app/(dashboard)/layout.tsx`)
+- Sidebar splits at `lg`: desktop markup untouched; below it a 48px top bar (hamburger + active
+  page + sign-out) opens a 264px off-canvas drawer with backdrop, Escape-to-close, scroll lock,
+  and auto-close on navigate or on growing past `lg`.
+- Nav list extracted to a shared `NavList` — one source of truth for drawer and desktop panel,
+  with row height and icon size stepping down at `lg` so the desktop panel keeps its exact dimensions.
+- Layout is `flex-col lg:flex-row`; `main` gained `min-h-0` so it still scrolls as a column child.
+- `p-8` → `p-4 lg:p-8`. Version badge is `hidden lg:block` (it floated over content on a phone).
+- **The top bar carries `print:hidden`** — verified under `emulateMedia({media:'print'})`.
+- Desktop collapse state now persists via `localStorage`.
+
+**Phase 2 — toolbars** (billing, inventory, orders, order detail, distributors)
+- Page headers stack below `sm`/`md`; action rows and filter rows got `flex-wrap`.
+- `w-72` search inputs → `w-full sm:w-72` (with `relative w-full sm:w-auto` on their wrappers).
+- **`BillingTable` had no scroll wrapper at all** — its 864px `table-fixed` grid overflowed the
+  page. Now `overflow-x-auto` + `min-w-215`, which is below the desktop column width so desktop
+  is unaffected. This is what fixed `/billing` at 1024px.
+
+**Phase 3 — tables → cards** (orders, inventory)
+- Both pages render the same array twice: `hidden md:block` table, `md:hidden` card list.
+- Order card: bill no, customer, total, date/phone/payment, status, View + Delete.
+- Inventory card: product, company, selling price, MRP, stock, expiry, batch/box/HSN, actions.
+- Shared `OrderActions` / `BatchActions` components — the delete-confirm dialog and the three
+  batch actions exist once, not once per view.
+
+**Phase 4 — touch targets and labels**
+- 60 padded controls across 20 files: `h-8 px-` → `h-10 md:h-8 px-`, `h-9 px-` → `h-10 md:h-9 px-`.
+  Square icon buttons were deliberately excluded so they keep their shape.
+- **Icon-only Edit/Delete now carry `aria-label` everywhere and a visible text label on mobile**
+  (`md:hidden`), with the desktop Tooltip unchanged. The unlabelled-bin-icon problem is gone.
+- Form grids: `inventory/add` → `grid-cols-1 md:grid-cols-2`; `EditBatchModal` price row →
+  `grid-cols-2 sm:grid-cols-3`; reports skeleton matched to its content grid.
+
+### Verified by interaction, not just measurement
+
+PASS — drawer opens / navigates / auto-closes / close button; inventory table hidden on mobile;
+labelled actions present; modal opens from a mobile card and fits (354px); order cards render
+actions; **top bar hidden when printing**; desktop has no top bar; no `md:hidden` element visible
+on desktop; desktop tables render at 1086px with correct row counts.
+
+### Notes for whoever picks this up
+
+- The dual-render pattern duplicates buttons in the DOM. Hidden copies use `display:none`, so they
+  are out of the accessibility tree — but **automated tests must select `:visible`**, or they will
+  grab the hidden desktop copy.
+- Still open: **Phase 5 (billing on mobile)**, which is gated on the Phase 0 question. `/billing`
+  no longer overflows at any width, but its grid is still a sideways-scrolling data-entry table
+  on a phone.
+- Still unverified (unchanged from the audit): `cmdk` product search, the date-picker calendar and
+  `select` dropdowns as *overlays*; `/super-admin/dashboard`; Safari/iOS.
+
 
 ---
 

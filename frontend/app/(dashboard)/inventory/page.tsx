@@ -48,6 +48,50 @@ function isExpired(date: string) {
   return new Date(date) <= new Date()
 }
 
+/* Shared by the desktop table row and the mobile card.
+   The text labels show on mobile (where hover tooltips never fire) and are
+   hidden on desktop, where the Tooltip supplies the same wording. */
+function BatchActions({ row, onEditProduct, onEditBatch, onAdjust }: {
+  row: InventoryRow
+  onEditProduct: (r: InventoryRow) => void
+  onEditBatch: (r: InventoryRow) => void
+  onAdjust: (r: InventoryRow) => void
+}) {
+  const actions = [
+    { label: 'Edit product', Icon: Pencil, run: () => onEditProduct(row) },
+    { label: 'Edit batch', Icon: SlidersHorizontal, run: () => onEditBatch(row) },
+    { label: 'Adjust stock', Icon: PackageMinus, run: () => onAdjust(row) },
+  ]
+  return (
+    <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+      {actions.map(({ label, Icon, run }) => (
+        <Tooltip key={label} content={label}>
+          <button
+            onClick={run}
+            aria-label={label}
+            className="flex items-center gap-1.5 p-2 md:p-1.5 rounded-md text-[#888] md:text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
+          >
+            <Icon className="w-3.5 h-3.5 shrink-0" />
+            <span className="md:hidden text-body-sm whitespace-nowrap">{label}</span>
+          </button>
+        </Tooltip>
+      ))}
+    </div>
+  )
+}
+
+function expiryColor(expired: boolean, expiring: boolean) {
+  if (expired) return 'text-red-500'
+  if (expiring) return 'text-amber-500'
+  return 'text-[#999]'
+}
+
+function stockColor(stock: number) {
+  if (stock === 0) return 'text-red-500'
+  if (stock <= 5) return 'text-amber-500'
+  return 'text-[#555]'
+}
+
 function isExpiringSoon(date: string) {
   const diff = new Date(date).getTime() - Date.now()
   return diff > 0 && diff < 60 * 24 * 60 * 60 * 1000
@@ -83,7 +127,7 @@ function MultiSelectFilter<T extends string>({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
-        className={`flex items-center gap-1 h-8 px-3 text-body-sm border rounded-lg transition-colors bg-white ${
+        className={`flex items-center gap-1 h-10 md:h-8 px-3 text-body-sm border rounded-lg transition-colors bg-white ${
           count > 0
             ? 'border-[#111] text-[#111]'
             : 'border-[#E5E5E5] text-[#555] hover:border-[#CCC]'
@@ -151,6 +195,48 @@ export default function InventoryPage() {
     purchase_qty: number; sold_qty: number; available_stock: number
   } | null>(null)
   const [adjustOpen, setAdjustOpen] = useState(false)
+
+  function openEditProduct(r: InventoryRow) {
+    setEditProduct({
+      product_id: r.product_id,
+      name: r.name,
+      company_name: r.company_name,
+      sku: r.sku,
+      hsn_code: r.hsn_code,
+    })
+    setEditProductOpen(true)
+  }
+
+  function openEditBatch(r: InventoryRow) {
+    setEditBatch({
+      batch_id: r.batch_id,
+      batch_no: r.batch_no,
+      buying_price: r.buying_price,
+      selling_price: r.selling_price,
+      mrp: r.mrp,
+      expiry_date: r.expiry_date,
+      purchase_qty: r.purchase_qty,
+      sold_qty: r.sold_qty,
+      box_no: r.box_no,
+      purchase_gst_rate: r.purchase_gst_rate ?? null,
+      landing_price: r.landing_price ?? null,
+      distributor_id: r.distributor_id ?? null,
+      purchase_invoice_no: r.purchase_invoice_no ?? null,
+    })
+    setEditBatchOpen(true)
+  }
+
+  function openAdjust(r: InventoryRow) {
+    setAdjustBatch({
+      batch_id: r.batch_id,
+      batch_no: r.batch_no,
+      name: r.name,
+      purchase_qty: r.purchase_qty,
+      sold_qty: r.sold_qty,
+      available_stock: r.available_stock,
+    })
+    setAdjustOpen(true)
+  }
 
   const fetchInventory = useCallback(() => {
     setLoading(true)
@@ -274,23 +360,23 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">Inventory</h1>
           <p className="text-body text-[#999] mt-0.5">
             {loading ? 'Loading…' : `Showing ${displayed.length} of ${rows.length} batches`}
           </p>
         </div>
-        <div className="mt-2 flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:mt-2">
           <Link
             href="/inventory/adjustments"
-            className="flex items-center gap-1.5 h-8 px-3 text-body-sm font-medium border border-[#E5E5E5] text-[#888] rounded-lg hover:border-[#CCC] hover:text-[#111] transition-colors shrink-0"
+            className="flex items-center gap-1.5 h-10 md:h-8 px-3 text-body-sm font-medium border border-[#E5E5E5] text-[#888] rounded-lg hover:border-[#CCC] hover:text-[#111] transition-colors shrink-0"
           >
             Adjustment History
           </Link>
           <Link
             href="/inventory/add"
-            className="flex items-center gap-1.5 h-8 px-3 text-body-sm font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors shrink-0"
+            className="flex items-center gap-1.5 h-10 md:h-8 px-3 text-body-sm font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors shrink-0"
           >
             <Plus className="w-3.5 h-3.5" /> Add Stock
           </Link>
@@ -299,10 +385,10 @@ export default function InventoryPage() {
 
       {/* Filter / sort bar */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCCCCC]" />
           <input
-            className="w-72 h-8 pl-9 pr-3 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+            className="w-full sm:w-72 h-8 pl-9 pr-3 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
             placeholder="Search product, company, batch…"
             value={q}
             onChange={e => setQ(e.target.value)}
@@ -338,12 +424,12 @@ export default function InventoryPage() {
           type="button"
           onClick={clearFilters}
           disabled={!filtersActive}
-          className="h-8 px-3 text-body-sm text-[#888] hover:text-[#111] disabled:text-[#CCC] disabled:cursor-not-allowed transition-colors"
+          className="h-10 md:h-8 px-3 text-body-sm text-[#888] hover:text-[#111] disabled:text-[#CCC] disabled:cursor-not-allowed transition-colors"
         >
           Clear filters
         </button>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
           <label className="flex items-center gap-1.5 text-body-sm text-[#555] select-none cursor-pointer">
             <input
               type="checkbox"
@@ -359,7 +445,7 @@ export default function InventoryPage() {
             <select
               value={sortField}
               onChange={e => setSortField(e.target.value as SortField)}
-              className="h-8 px-2 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCC] transition-colors"
+              className="h-10 md:h-8 px-2 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCC] transition-colors"
             >
               {SORT_OPTIONS.map(o => (
                 <option key={o.value} value={o.value}>
@@ -396,7 +482,8 @@ export default function InventoryPage() {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-[#EBEBEB] overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-lg border border-[#EBEBEB] overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
@@ -424,9 +511,7 @@ export default function InventoryPage() {
                       <td className="py-3 px-4 text-body-sm text-[#999] font-mono">{r.batch_no}</td>
                       <td className="py-3 px-4 text-body-sm text-[#999] font-mono">{r.box_no ?? '—'}</td>
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span
-                          className={`text-body-sm ${expired ? 'text-red-500' : expiring ? 'text-amber-500' : 'text-[#999]'}`}
-                        >
+                        <span className={`text-body-sm ${expiryColor(expired, expiring)}`}>
                           {(expired || expiring) && <span className="mr-1">{'●'}</span>}
                           {fmtDate(r.expiry_date)}
                         </span>
@@ -434,88 +519,74 @@ export default function InventoryPage() {
                       <td className="py-3 px-4 text-body text-[#888]">{fmtCurrency(r.mrp)}</td>
                       <td className="py-3 px-4 text-body font-medium text-[#111]">{fmtCurrency(r.selling_price)}</td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`text-body-sm font-medium ${
-                            r.available_stock === 0
-                              ? 'text-red-500'
-                              : r.available_stock <= 5
-                                ? 'text-amber-500'
-                                : 'text-[#555]'
-                          }`}
-                        >
+                        <span className={`text-body-sm font-medium ${stockColor(r.available_stock)}`}>
                           {r.available_stock}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-body-sm text-[#CCCCCC] font-mono">{r.hsn_code ?? '—'}</td>
                       <td className="py-3 px-2">
-                        <div className="flex items-center gap-0.5">
-                          <Tooltip content="Edit product">
-                            <button
-                              onClick={() => {
-                                setEditProduct({
-                                  product_id: r.product_id,
-                                  name: r.name,
-                                  company_name: r.company_name,
-                                  sku: r.sku,
-                                  hsn_code: r.hsn_code,
-                                })
-                                setEditProductOpen(true)
-                              }}
-                              className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                          </Tooltip>
-                          <Tooltip content="Edit batch">
-                            <button
-                              onClick={() => {
-                                setEditBatch({
-                                  batch_id: r.batch_id,
-                                  batch_no: r.batch_no,
-                                  buying_price: r.buying_price,
-                                  selling_price: r.selling_price,
-                                  mrp: r.mrp,
-                                  expiry_date: r.expiry_date,
-                                  purchase_qty: r.purchase_qty,
-                                  sold_qty: r.sold_qty,
-                                  box_no: r.box_no,
-                                  purchase_gst_rate: r.purchase_gst_rate ?? null,
-                                  landing_price: r.landing_price ?? null,
-                                  distributor_id: r.distributor_id ?? null,
-                                  purchase_invoice_no: r.purchase_invoice_no ?? null,
-                                })
-                                setEditBatchOpen(true)
-                              }}
-                              className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
-                            >
-                              <SlidersHorizontal className="w-3.5 h-3.5" />
-                            </button>
-                          </Tooltip>
-                          <Tooltip content="Adjust stock">
-                            <button
-                              onClick={() => {
-                                setAdjustBatch({
-                                  batch_id: r.batch_id,
-                                  batch_no: r.batch_no,
-                                  name: r.name,
-                                  purchase_qty: r.purchase_qty,
-                                  sold_qty: r.sold_qty,
-                                  available_stock: r.available_stock,
-                                })
-                                setAdjustOpen(true)
-                              }}
-                              className="p-1.5 rounded-md text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
-                            >
-                              <PackageMinus className="w-3.5 h-3.5" />
-                            </button>
-                          </Tooltip>
-                        </div>
+                        <BatchActions
+                          row={r}
+                          onEditProduct={openEditProduct}
+                          onEditBatch={openEditBatch}
+                          onAdjust={openAdjust}
+                        />
                       </td>
                     </tr>
                   )
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile cards — same data, one batch per card */}
+          <div className="md:hidden space-y-2">
+            {paginated.map(r => {
+              const expired = isExpired(r.expiry_date)
+              const expiring = !expired && isExpiringSoon(r.expiry_date)
+              return (
+                <div
+                  key={r.batch_id}
+                  className={`bg-white rounded-lg border border-[#EBEBEB] p-3 space-y-2 ${expired ? 'opacity-50' : ''}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-body font-medium text-[#111] truncate">{r.name}</p>
+                      <p className="text-body-sm text-[#888] truncate">{r.company_name}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-body font-semibold text-[#111]">{fmtCurrency(r.selling_price)}</p>
+                      <p className="text-caption text-[#AAAAAA]">MRP {fmtCurrency(r.mrp)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-body-sm">
+                    <span className={`font-medium ${stockColor(r.available_stock)}`}>
+                      {r.available_stock} in stock
+                    </span>
+                    <span className={expiryColor(expired, expiring)}>
+                      {(expired || expiring) && <span className="mr-1">{'●'}</span>}
+                      Exp {fmtDate(r.expiry_date)}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-caption text-[#AAAAAA] font-mono">
+                    <span>Batch {r.batch_no}</span>
+                    {r.box_no && <span>Box {r.box_no}</span>}
+                    {r.hsn_code && <span>HSN {r.hsn_code}</span>}
+                  </div>
+
+                  <div className="pt-1 border-t border-[#F7F7F7]">
+                    <BatchActions
+                      row={r}
+                      onEditProduct={openEditProduct}
+                      onEditBatch={openEditBatch}
+                      onAdjust={openAdjust}
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           <Pagination

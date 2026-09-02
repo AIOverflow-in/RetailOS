@@ -29,7 +29,7 @@ export default function LoginPage() {
     }
   }
 
-  const inputClass = "w-full h-9 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white text-foreground focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCC]"
+  const inputClass = "w-full h-10 md:h-9 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white text-foreground focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCC]"
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5] px-4">

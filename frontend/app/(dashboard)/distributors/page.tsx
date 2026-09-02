@@ -87,7 +87,7 @@ export default function DistributorsPage() {
         </div>
         <button
           onClick={() => setAddOpen(true)}
-          className="flex items-center gap-1.5 h-8 px-3 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors"
+          className="flex items-center gap-1.5 h-10 md:h-8 px-3 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           Add Distributor
@@ -171,12 +171,12 @@ export default function DistributorsPage() {
 
       {/* Stock view by distributor */}
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-subtitle font-semibold text-[#111]">Stock by Distributor</h2>
           <select
             value={selectedId}
             onChange={e => setSelectedId(e.target.value)}
-            className="h-8 px-3 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors text-[#555]"
+            className="h-10 md:h-8 px-3 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors text-[#555]"
           >
             <option value="">Select a distributor…</option>
             {distributors.filter(d => d.is_active).map(d => (

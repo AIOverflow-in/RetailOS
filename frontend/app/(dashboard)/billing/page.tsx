@@ -153,13 +153,13 @@ export default function BillingPage() {
         </div>
       )}
 
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">New Bill</h1>
           <p className="text-body text-[#999] mt-0.5">Create a new billing entry</p>
         </div>
-        <div className="mt-2 flex items-center gap-4">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3 md:mt-2 md:gap-4">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-caption text-label">GST</span>
             <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-body-sm bg-white">
               <button
@@ -172,7 +172,7 @@ export default function BillingPage() {
               >Out-of-state</button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-caption text-label">Payment</span>
             <div className="flex rounded-lg overflow-hidden border border-[#E5E5E5] text-body-sm bg-white">
               {(['cash', 'upi', 'card', 'mixed'] as const).map(mode => (
@@ -200,7 +200,7 @@ export default function BillingPage() {
           {completeRows.length > 0 && (
             <button
               onClick={() => { setRows([emptyRow()]); dispatch(clearCart()) }}
-              className="h-9 px-4 text-body border border-[#E5E5E5] rounded-lg text-[#888] hover:border-[#CCCCCC] hover:text-[#111] transition-colors"
+              className="h-10 md:h-9 px-4 text-body border border-[#E5E5E5] rounded-lg text-[#888] hover:border-[#CCCCCC] hover:text-[#111] transition-colors"
             >
               Clear
             </button>
@@ -212,7 +212,7 @@ export default function BillingPage() {
             <button
               onClick={placeOrder}
               disabled={placeOrderDisabled}
-              className="h-9 px-5 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 disabled:pointer-events-none transition-colors min-w-[160px]"
+              className="h-10 md:h-9 px-5 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 disabled:pointer-events-none transition-colors min-w-[160px]"
             >
               {loading ? 'Processing…' : `Place Order — ₹${grandTotal.toFixed(2)}`}
             </button>

@@ -33,7 +33,7 @@ interface Props {
 }
 
 const fieldCls =
-  'w-full h-8 px-3 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors'
+  'w-full h-10 md:h-8 px-3 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors'
 
 export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: Props) {
   const [buyingPrice, setBuyingPrice] = useState('')
@@ -129,7 +129,7 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
               <p className="text-caption font-medium text-label">Buying Price (incl. GST)</p>
               <input type="number" step="0.01" min="0" className={fieldCls} value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} required />
@@ -224,7 +224,7 @@ export default function EditBatchModal({ batch, open, onOpenChange, onSaved }: P
           <button
             type="submit"
             disabled={saving}
-            className="w-full h-8 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
+            className="w-full h-10 md:h-8 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>

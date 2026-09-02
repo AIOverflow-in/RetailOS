@@ -143,6 +143,7 @@
   th:last-child, td:last-child { padding-right: 0; }
   tr:last-child td { border-bottom: none; }
   td.k { font-weight: 600; width: 34%; }
+  .mut { color: var(--ink-400); font-weight: 400; }
   td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
   /* ── Setting rows ─────────────────────────────── */
@@ -544,44 +545,51 @@
       </div>
 
       <div class="panel panel-danger">
-        <h3>Do not run both cities at once</h3>
+        <h3>One city, and only the days you can actually answer</h3>
         <p class="small">
-          ₹5,000 split across two simultaneous ad sets is ₹175/day each — straight back into the
-          starvation problem above, twice. And you can't solve it by putting both cities in one
-          ad set either: Meta pours budget wherever conversations are cheapest, and Tirupati CPMs
-          run a fraction of Kolkata's. You'd wake up on day four having spent 90% in Tirupati,
-          learned nothing about Kolkata, and with no way to plan a field visit.
+          Kolkata only. Two simultaneous ad sets on ₹5,000 is ₹175/day each — the starvation
+          problem above, twice — and both cities in one ad set means Meta pours the budget into
+          whichever is cheaper and you learn nothing about the other. Tirupati waits for flight three.
         </p>
       </div>
 
       <div class="panel panel-sky">
-        <h3>Run them as two flights — Tirupati first</h3>
+        <h3>Compress into your attention, don't stretch across it</h3>
         <p class="small">
-          Tirupati is the cheaper market by some distance, so it's where creative mistakes cost
-          least. Burn your testing money at a ₹90 CPM, not a ₹280 one, then take the winning
-          concept into Kolkata already knowing which hook works.
+          Running 3–6 Sept, pausing, then restarting 18–20 Sept is <em>almost</em> right. The
+          instinct is correct — an ad running on a day nobody can reply to WhatsApp is money set
+          on fire. But switching one campaign on and off is the wrong mechanism, because the first
+          day or two of any flight is Meta's exploration phase and the most expensive per result.
+          Stop and restart and <strong>you pay that twice, losing roughly 20–30% of the budget to
+          re-learning.</strong>
+        </p>
+        <p class="small">
+          Same idea, better shape: make each window <strong>its own short flight at a higher daily
+          rate</strong>, with a real decision gate between them. You get full founder attention,
+          one exploration phase per flight, and the second flight benefits from what the first taught you.
         </p>
         <ul class="plain go">
-          <li><strong>Flight 1 · Tirupati · days 1–7 · ₹300/day = ₹2,100.</strong> Creatives: Telugu ×2, English ×2.</li>
-          <li><strong>Flight 2 · Kolkata · days 8–14 · ₹400/day = ₹2,800.</strong> Creatives: Bengali ×2, English ×2 — but drop whichever concept lost in Tirupati and run the winner in both languages.</li>
-          <li><strong>Total ₹4,900</strong>, one ad set live at any moment, each exiting learning on its own budget.</li>
+          <li><strong>Flight 1 · 3–6 Sept · ₹600/day × 4 days = ₹2,400.</strong> Kolkata. Three hooks in Bengali plus one English control.</li>
+          <li><strong>Gate.</strong> Did it produce qualified leads, and did you actually set a shop up? Both, or the money stays in the bank.</li>
+          <li><strong>Flight 2 · 18–20 Sept · ₹800/day × 3 days = ₹2,400.</strong> Winning hook only, in Bengali and English.</li>
+          <li><strong>Total ₹4,800</strong> plus 18% GST — about ₹5,660 out the door.</li>
         </ul>
       </div>
 
       <div class="stats">
-        <div class="stat"><span class="stat-num">2</span><span class="stat-lbl">Cities, sequential</span></div>
-        <div class="stat"><span class="stat-num">₹2,100</span><span class="stat-lbl">Tirupati · 7d @ ₹300</span></div>
-        <div class="stat"><span class="stat-num">₹2,800</span><span class="stat-lbl">Kolkata · 7d @ ₹400</span></div>
+        <div class="stat"><span class="stat-num">1</span><span class="stat-lbl">City — Kolkata</span></div>
+        <div class="stat"><span class="stat-num">₹2,400</span><span class="stat-lbl">Flight 1 · 3–6 Sept</span></div>
+        <div class="stat"><span class="stat-num">₹2,400</span><span class="stat-lbl">Flight 2 · 18–20 Sept</span></div>
         <div class="stat"><span class="stat-num">4</span><span class="stat-lbl">Creatives per flight</span></div>
       </div>
 
       <div class="panel panel-warning">
-        <p class="small">
-          <strong>If both founders want leads in the same week</strong>, the honest answer is
-          that ₹5,000 does not stretch to two cities simultaneously. Either raise it to ₹10,000
-          — ₹350/day per city for 14 days each — or accept one city for this test. Splitting a
-          starvation budget in half is the one option that guarantees you learn nothing.
-        </p>
+        <h3>Two settings that make the split work</h3>
+        <ul class="plain">
+          <li><strong>Use a lifetime budget, not daily, if you want hour scheduling.</strong> Meta only unlocks ad scheduling on lifetime budgets. Set ₹2,400 lifetime for the flight and restrict delivery to the hours a founder is actually near their phone — that concentrates spend into answerable time without any pausing.</li>
+          <li><strong>Set a WhatsApp away message regardless.</strong> "Namaskar 🙏 We've got your message and will reply by 8pm today." It costs nothing and it holds a lead you can't answer for six hours. A lead that gets silence is gone.</li>
+          <li><strong>Build flight 2 as a new ad set, not a restart of flight 1.</strong> Editing and reactivating the old one carries its poor early learning forward. A fresh ad set starts clean with the creative you now know works.</li>
+        </ul>
       </div>
 
       <div class="panel">
@@ -917,9 +925,10 @@
           Each artboard carries <strong>a real screen from the app, cropped to the one thing the
           headline asks about</strong> — the expiring-soon rows, the live stock count, the bill in
           a chat. It replaces the explanatory sub-line, because showing the answer beats
-          describing it. The surface is phone-proportioned on purpose: you sell "runs on the phone
-          you already have", and a laptop would say the opposite. Nothing in it is smaller than
-          21px on the artboard, so it survives the shrink to feed size.
+          describing it. It is cropped tight for one reason only — <strong>legibility</strong>.
+          Nothing in it is smaller than 21px on the artboard, so it still reads after the shrink
+          to feed size. A full desktop screen dropped in here would land at about 3px and be
+          worthless, which is why the showcase mockups can't be reused as-is.
         </p>
       </div>
 
@@ -1222,7 +1231,7 @@ SellOS makes a bill in 30 seconds with CGST and SGST worked out for you, warns y
 
 We come to your shop and enter your entire stock — free. You start billing the same day.
 
-Stock, distributors, customers and billing in one place. Runs on the phone you already have — nothing to install.
+Stock, distributors, customers and billing in one place. Nothing to install — your data sits in the cloud, so the shop computer, your phone and any other laptop all show the same thing. Marg lives on one machine; when that machine dies, so does your data.
 
 First month free, then ₹799/month. Message us on WhatsApp.</div>
         <div class="setting"><span class="s-k">Headline</span><span class="s-v">Bill in 30 seconds. Stock entered free.</span></div>
@@ -1238,7 +1247,7 @@ SellOS-এ ৩০ সেকেন্ডে বিল হয়ে যায়, 
 
 আপনার পুরো স্টক আমরা দোকানে এসে তুলে দেব — একদম ফ্রি। সেদিন থেকেই বিল করা শুরু।
 
-স্টক, ডিস্ট্রিবিউটর, কাস্টমার, বিলিং — সব এক জায়গায়। আপনার ফোনেই চলে, আলাদা কিছু বসাতে হবে না।
+স্টক, ডিস্ট্রিবিউটর, কাস্টমার, বিলিং — সব এক জায়গায়। আলাদা কিছু বসাতে হবে না — সব থাকে ক্লাউডে, তাই দোকানের কম্পিউটার, আপনার ফোন, বাড়ির ল্যাপটপ — সব জায়গায় একই হিসেব।
 
 প্রথম মাস ফ্রি, তারপর ₹799 / মাস। WhatsApp-এ মেসেজ করুন।</div>
         <div class="setting"><span class="s-k">Headline</span><span class="s-v">৩০ সেকেন্ডে বিল · স্টক আমরাই তুলে দেব</span></div>
@@ -1254,7 +1263,7 @@ SellOS లో 30 సెకన్లలో బిల్లు అవుతుం�
 
 మీ స్టాక్ మొత్తం మేము షాపుకి వచ్చి ఎక్కిస్తాం — పూర్తిగా ఉచితం. అదే రోజు నుంచి బిల్లింగ్ మొదలు.
 
-స్టాక్, డిస్ట్రిబ్యూటర్, కస్టమర్, బిల్లింగ్ — అన్నీ ఒకే చోట. మీ ఫోన్‌లోనే పని చేస్తుంది, కొత్తగా ఏమీ పెట్టాల్సిన అవసరం లేదు.
+స్టాక్, డిస్ట్రిబ్యూటర్, కస్టమర్, బిల్లింగ్ — అన్నీ ఒకే చోట. కొత్తగా ఏమీ పెట్టాల్సిన అవసరం లేదు — డేటా అంతా క్లౌడ్‌లో, షాప్ కంప్యూటర్, మీ ఫోన్, ఇంట్లో ల్యాప్‌టాప్ — అన్నిట్లో ఒకటే లెక్క.
 
 మొదటి నెల ఉచితం, తర్వాత ₹799 / నెల. WhatsApp లో మెసేజ్ చేయండి.</div>
         <div class="setting"><span class="s-k">Headline</span><span class="s-v">30 సెకన్లలో బిల్లు · స్టాక్ మేమే ఎక్కిస్తాం</span></div>
@@ -1504,6 +1513,129 @@ Reply like: 1-Yes 2-A 3-1</div>
           <li><strong>Day 8 · Kolkata live:</strong> launch the winning concept in Bengali and English. Fresh ad set, ₹400/day — do not edit the Tirupati one, its learning doesn't transfer across a location change.</li>
           <li><strong>Day 10:</strong> read it. Same kill criteria, and expect worse numbers than Tirupati at the same spend. That's the market, not the ad.</li>
           <li><strong>Day 14:</strong> stop. Count booked setup slots per city, not clicks, not leads. That's the only number that decides whether this channel gets another rupee — and which city gets it.</li>
+        </ul>
+      </div>
+    </section>
+
+
+    <!-- ─── 10 UNIT ECONOMICS ───────────────────────── -->
+    <section>
+      <div class="sec-head">
+        <span class="kicker">Sheet 10 · the money</span>
+        <h2>Does ₹5,000 buy five customers?</h2>
+      </div>
+
+      <div class="panel panel-danger">
+        <h3>No — and two of the three reasons have nothing to do with the ads</h3>
+        <ul class="plain stop">
+          <li><strong>The offer forbids it.</strong> First month is free. A shop that signs on day 3 pays ₹0 inside the test window. You cannot collect from a monthly customer in fourteen days — it is structurally impossible, not a performance question.</li>
+          <li><strong>You can't set up five shops.</strong> Opening stock is 2–4 days of a person standing in the shop. Five shops is 15–20 person-days. You have two founders in two cities for fourteen days. <strong>Onboarding throughput is your real ceiling, not lead volume</strong> — and a signup you can't set up churns in week two.</li>
+          <li><strong>The ad math lands at 2–3, not 5.</strong> Detailed below. It's the least binding of the three constraints, which is the point: more ad budget doesn't fix this.</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h3>What the benchmarks actually say</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Input</th><th>Benchmark</th><th>Our case</th></tr></thead>
+            <tbody>
+              <tr><td class="k">Feed CPM, India</td><td class="num">₹50–200 typical</td><td>B2B runs 2–3× higher on CPC; assume <span class="mono">₹180–250</span> for a narrow geo</td></tr>
+              <tr><td class="k">B2B cost per lead</td><td class="num">₹300–1,000+</td><td>Software and other high-value B2B categories</td></tr>
+              <tr><td class="k">Click-to-WhatsApp effect</td><td class="num">−30% to −40% CPL</td><td>So roughly <span class="mono">₹200–650</span> per qualified lead</td></tr>
+              <tr><td class="k">WhatsApp vs email follow-up</td><td class="num">2–3× conversion</td><td>The reason CTWA beats an Instant Form here</td></tr>
+              <tr><td class="k">Q4 loading</td><td class="num">+30–60% CPM</td><td>Oct–Dec is the wrong quarter to test cheaply</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small">
+          At ₹400 per qualified lead, ₹5,000 buys about <strong>12 qualified conversations</strong>.
+          Close a quarter of those and you land <strong>3 shops</strong> — and delivery caps you
+          near 4 anyway. Five is not on the table; two to three is a good outcome.
+        </p>
+      </div>
+
+      <div class="panel panel-warning">
+        <h3>Add 18% — the budget is ₹5,900, not ₹5,000</h3>
+        <p class="small">
+          Meta bills GST on top of ad spend in India. Put AI Overflow's GSTIN on the ad account
+          and the ₹900 comes back as input credit, but the cash still leaves first.
+        </p>
+      </div>
+
+      <div class="panel panel-success">
+        <h3>How you actually get the money back</h3>
+        <p class="small">
+          Only one thing recovers ad spend inside a useful horizon, and it isn't more customers —
+          it's <strong>annual prepaid</strong>.
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Plan the customer picks</th><th>Cash in month 1</th><th>Ad spend recovered</th></tr></thead>
+            <tbody>
+              <tr><td class="k">₹799 / month</td><td class="num">₹0 <span class="mut">(free month)</span></td><td>Month 5–6, at a ₹2,950 CAC</td></tr>
+              <tr><td class="k">₹3,999 / 6 months</td><td class="num">₹3,999</td><td>68% on day one</td></tr>
+              <tr><td class="k">₹6,999 / year</td><td class="num">₹6,999</td><td><strong>All of it, on day one, from one customer</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small">
+          <strong>Rewrite the goal.</strong> Not "five paying customers" — <strong>"two shops set
+          up, at least one on annual prepaid."</strong> That returns the ₹5,900, it's inside your
+          delivery capacity, and it produces the case study that makes the next flight cheaper.
+          Chasing five gets you five disappointed shops and no case study.
+        </p>
+      </div>
+
+      <div class="sec-head" style="margin-top:20px;">
+        <span class="kicker">Sheet 10b</span>
+        <h2>Is ₹799 the right price?</h2>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Product</th><th>Price (pre-GST)</th><th>What you get</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Marg ERP Basic</td><td class="num">₹8,100 one-time<br>+ ₹2,500/yr AMC</td><td>Desktop, single user. The pharmacy default in India.</td></tr>
+            <tr><td class="k">Marg ERP Silver</td><td class="num">₹12,600 one-time<br>+ ₹3,500/yr AMC</td><td>3–5 users, most distributor features</td></tr>
+            <tr><td class="k">Marg Cloud</td><td class="num">~₹3,000/mo <span class="mut">(₹36,000/yr)</span></td><td>3 users, cloud</td></tr>
+            <tr><td class="k">GoFrugal Pharmacy</td><td class="num">~₹15,000 one-time</td><td>Chains report ~₹6,000/mo per store</td></tr>
+            <tr><td class="k">Vyapar Silver</td><td class="num">₹4,399/yr</td><td>General GST billing, desktop + mobile</td></tr>
+            <tr><td class="k">myBillBook Diamond</td><td class="num">₹3,490/yr</td><td>General GST billing, 1 user + CA login</td></tr>
+            <tr><td class="k">Cloud pharmacy software, general</td><td class="num">₹999–8,000/mo</td><td>Wide range, pharmacy-specific</td></tr>
+            <tr><td class="k"><strong>SellOS</strong></td><td class="num"><strong>₹799/mo<br>₹6,999/yr</strong></td><td>Cloud, batch + expiry, distributor-linked purchases, GST both sides</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel panel-sky">
+        <h3>Verdict: the price is right. The comparison is the problem.</h3>
+        <ul class="plain go">
+          <li><strong>Against pharmacy-specific cloud software you are the cheapest on the board.</strong> ₹799/mo against a ₹999–8,000/mo field, and against Marg Cloud at ₹3,000/mo you are a quarter of the price. Win this comparison every time.</li>
+          <li><strong>Against general billing apps you look expensive and you will lose.</strong> Vyapar ₹4,399/yr and myBillBook ₹3,490/yr are half your annual, heavily advertised, and he has probably seen them. They do not do batch-level expiry, distributor-linked purchase invoices, or input-credit slabs — but the price gap is visible and the feature gap isn't. <strong>Never let the conversation become "which billing app".</strong></li>
+          <li><strong>Against Marg, refuse the software-only comparison.</strong> Three years of Marg Basic is roughly ₹13,000–15,600. Three years of SellOS annual is ₹20,997 — you are genuinely more expensive, and he may do that arithmetic. The honest answer is the total: Marg also needs a ₹25,000–35,000 computer, someone to install it, and it lives on one machine at one counter, so when the machine dies the shop's data dies with it.</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h3>What I would change — and what I wouldn't</h3>
+        <ul class="plain">
+          <li><strong>Keep ₹799/month.</strong> It is defensible, it is under the psychological ₹1,000 line, and it is the cheapest pharmacy-specific cloud price in the market. Don't discount it.</li>
+          <li><strong>Make ₹6,999/year the hero on every asset</strong>, quoted as <em>"₹583 a month if you take the year."</em> It's the only number that recovers ad spend on day one, it kills the recurring-payment objection, and it removes month-two churn. The monthly plan should feel like the fallback, not the default.</li>
+          <li><strong>Fix the flyer's "from ₹700, decided together".</strong> Negotiable pricing is a fine posture in a shop and a liability everywhere else — it invites a haggle you will lose, and it contradicts an ad carrying a fixed number.</li>
+        </ul>
+      </div>
+
+      <div class="panel panel-danger">
+        <h3>So spend less — but not by lowering the daily budget</h3>
+        <p class="small">
+          Cutting ₹350/day to ₹175 doesn't save money, it wastes it: you stay in the learning
+          phase and buy expensive, erratic delivery. Cut <strong>days and cities</strong> instead.
+        </p>
+        <ul class="plain stop">
+          <li><strong>Flight 1 only: one city, 7 days, ₹350/day = ₹2,450.</strong> Tirupati first — cheapest CPM, so mistakes cost least.</li>
+          <li><strong>Hold ₹2,550 back.</strong> Release it only when both gates pass: the funnel produced qualified leads <em>and</em> you actually set a shop up inside a week.</li>
+          <li><strong>The second gate is the one people skip.</strong> If flight 1 gives you four good leads and you can only onboard two, the answer is not to spend the rest — it's to build the CSV stock import first, then spend.</li>
         </ul>
       </div>
     </section>

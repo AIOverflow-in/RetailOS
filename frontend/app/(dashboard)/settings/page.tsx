@@ -7,7 +7,7 @@ import { getCachedSettings, setCachedSettings } from '@/lib/settingsCache'
 import type { ShopSettings } from '@/types'
 
 const fieldCls =
-  'w-full h-9 px-3 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors'
+  'w-full h-10 md:h-9 px-3 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors'
 
 const textareaCls =
   'w-full px-3 py-2 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors resize-none'
@@ -184,7 +184,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="h-9 px-6 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors"
+            className="h-10 md:h-9 px-6 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors"
           >
             {saving ? 'Saving…' : 'Save Changes'}
           </button>

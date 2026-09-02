@@ -67,7 +67,7 @@ export default function SuperAdminDashboard() {
     router.replace('/super-admin/login')
   }
 
-  const fieldCls = "w-full h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors"
+  const fieldCls = "w-full h-10 md:h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors"
 
   return (
     <div className="max-w-4xl mx-auto p-8">
@@ -106,7 +106,7 @@ export default function SuperAdminDashboard() {
                   <button
                     type="submit"
                     disabled={creating}
-                    className="w-full h-8 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
+                    className="w-full h-10 md:h-8 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
                   >
                     {creating ? 'Creating...' : 'Create Shop'}
                   </button>
@@ -115,7 +115,7 @@ export default function SuperAdminDashboard() {
             </Dialog>
             <button
               onClick={logout}
-              className="h-8 px-3 flex items-center gap-1.5 text-body-sm text-[#999] hover:text-[#111] border border-[#E5E5E5] rounded-lg hover:border-[#CCC] transition-colors"
+              className="h-10 md:h-8 px-3 flex items-center gap-1.5 text-body-sm text-[#999] hover:text-[#111] border border-[#E5E5E5] rounded-lg hover:border-[#CCC] transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" /> Sign out
             </button>

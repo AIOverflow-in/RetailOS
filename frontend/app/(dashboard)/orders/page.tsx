@@ -67,7 +67,7 @@ function MultiSelectFilter<T extends string>({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
-        className={`flex items-center gap-1 h-8 px-3 text-body-sm border rounded-lg transition-colors bg-white ${
+        className={`flex items-center gap-1 h-10 md:h-8 px-3 text-body-sm border rounded-lg transition-colors bg-white ${
           count > 0
             ? 'border-[#111] text-[#111]'
             : 'border-[#E5E5E5] text-[#555] hover:border-[#CCC]'
@@ -102,6 +102,58 @@ function MultiSelectFilter<T extends string>({
 function statusLabel(s: string) {
   if (s === 'partially_returned') return 'Partial return'
   return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+function statusColor(s: string) {
+  if (s === 'active') return 'text-emerald-600'
+  if (s === 'returned' || s === 'partially_returned') return 'text-amber-500'
+  return 'text-[#CCCCCC]'
+}
+
+/* Shared by the desktop table row and the mobile card. */
+function OrderActions({ order, deleting, onDelete }: {
+  order: Order
+  deleting: string | null
+  onDelete: (id: string) => void
+}) {
+  return (
+    <div className="flex items-center gap-2 md:gap-4">
+      <Link
+        href={`/orders/${order.order_id}`}
+        className="text-body-sm font-medium border border-[#E0E0E0] rounded-md px-2 py-1 md:py-0.5 text-[#555555] hover:bg-[#F5F5F5] hover:border-[#C8C8C8] transition-colors"
+      >
+        View
+      </Link>
+      {order.status === 'active' && (
+        <AlertDialog>
+          <AlertDialogTrigger
+            render={
+              <button className="text-body-sm font-medium border border-red-200 rounded-md px-2 py-1 md:py-0.5 text-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors">
+                Delete
+              </button>
+            }
+          />
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {order.order_number}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will delete the order and restore stock to the respective batches.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-500 text-white hover:bg-red-600"
+                onClick={() => onDelete(order.order_id)}
+              >
+                {deleting === order.order_id ? 'Deleting…' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </div>
+  )
 }
 
 export default function OrdersPage() {
@@ -194,10 +246,10 @@ export default function OrdersPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCCCCC]" />
           <input
-            className="w-72 h-8 pl-9 pr-3 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+            className="w-full sm:w-72 h-8 pl-9 pr-3 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
             placeholder="Search bill no, name, phone…"
             value={q}
             onChange={e => setQ(e.target.value)}
@@ -217,13 +269,13 @@ export default function OrdersPage() {
           onChange={setStatusFilter}
         />
 
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <input
             type="date"
             value={dateFrom}
             onChange={e => setDateFrom(e.target.value)}
             aria-label="Date from"
-            className="h-8 px-2 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCC] text-[#555]"
+            className="h-10 md:h-8 px-2 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCC] text-[#555]"
           />
           <span className="text-body-sm text-[#AAA]">→</span>
           <input
@@ -231,7 +283,7 @@ export default function OrdersPage() {
             value={dateTo}
             onChange={e => setDateTo(e.target.value)}
             aria-label="Date to"
-            className="h-8 px-2 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCC] text-[#555]"
+            className="h-10 md:h-8 px-2 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCC] text-[#555]"
           />
         </div>
 
@@ -239,17 +291,17 @@ export default function OrdersPage() {
           type="button"
           onClick={clearFilters}
           disabled={!filtersActive}
-          className="h-8 px-3 text-body-sm text-[#888] hover:text-[#111] disabled:text-[#CCC] disabled:cursor-not-allowed transition-colors"
+          className="h-10 md:h-8 px-3 text-body-sm text-[#888] hover:text-[#111] disabled:text-[#CCC] disabled:cursor-not-allowed transition-colors"
         >
           Clear filters
         </button>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1 sm:ml-auto">
           <span className="text-body-sm text-[#888]">Sort</span>
           <select
             value={sortField}
             onChange={e => setSortField(e.target.value as SortField)}
-            className="h-8 px-2 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCC] transition-colors"
+            className="h-10 md:h-8 px-2 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCC] transition-colors"
           >
             <option value="date">Date</option>
             <option value="total">Total</option>
@@ -293,7 +345,8 @@ export default function OrdersPage() {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-[#EBEBEB] overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-lg border border-[#EBEBEB] overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
@@ -318,62 +371,47 @@ export default function OrdersPage() {
                       <span className="text-body-sm text-[#888] capitalize">{o.payment_mode ?? 'cash'}</span>
                     </td>
                     <td className="py-3 px-4">
-                      <span
-                        className={`text-body-sm font-medium ${
-                          o.status === 'active'
-                            ? 'text-emerald-600'
-                            : o.status === 'returned'
-                              ? 'text-amber-500'
-                              : o.status === 'partially_returned'
-                                ? 'text-amber-500'
-                                : 'text-[#CCCCCC]'
-                        }`}
-                      >
+                      <span className={`text-body-sm font-medium ${statusColor(o.status)}`}>
                         {'●'} {statusLabel(o.status)}
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-4">
-                        <Link
-                          href={`/orders/${o.order_id}`}
-                          className="text-body-sm font-medium border border-[#E0E0E0] rounded-md px-2 py-0.5 text-[#555555] hover:bg-[#F5F5F5] hover:border-[#C8C8C8] transition-colors"
-                        >
-                          View
-                        </Link>
-                        {o.status === 'active' && (
-                          <AlertDialog>
-                            <AlertDialogTrigger
-                              render={
-                                <button className="text-body-sm font-medium border border-red-200 rounded-md px-2 py-0.5 text-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors">
-                                  Delete
-                                </button>
-                              }
-                            />
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete {o.order_number}?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will delete the order and restore stock to the respective batches.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="bg-red-500 text-white hover:bg-red-600"
-                                  onClick={() => deleteOrder(o.order_id)}
-                                >
-                                  {deleting === o.order_id ? 'Deleting…' : 'Delete'}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
+                      <OrderActions order={o} deleting={deleting} onDelete={deleteOrder} />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile cards — same data, one order per card */}
+          <div className="md:hidden space-y-2">
+            {orders.map(o => (
+              <div key={o.order_id} className="bg-white rounded-lg border border-[#EBEBEB] p-3 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-caption text-[#999] truncate">{o.order_number}</p>
+                    <p className="text-body font-medium text-[#111] truncate">
+                      {o.customer_name ?? <span className="text-[#CCCCCC]">No name</span>}
+                    </p>
+                  </div>
+                  <p className="text-body font-semibold text-[#111] shrink-0">{fmtCurrency(o.total_amount)}</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-body-sm text-[#888]">
+                  <span className="whitespace-nowrap">{fmtDate(o.created_at)}</span>
+                  {o.customer_phone && <span>{o.customer_phone}</span>}
+                  <span className="capitalize">{o.payment_mode ?? 'cash'}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 pt-1 border-t border-[#F7F7F7]">
+                  <span className={`text-body-sm font-medium ${statusColor(o.status)}`}>
+                    {'●'} {statusLabel(o.status)}
+                  </span>
+                  <OrderActions order={o} deleting={deleting} onDelete={deleteOrder} />
+                </div>
+              </div>
+            ))}
           </div>
 
           <Pagination

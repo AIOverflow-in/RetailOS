@@ -126,7 +126,7 @@ export default function AddStockPage() {
   }
 
   const productReady = selectedProduct || (isNewProduct && newProductName && newCompanyName)
-  const inp = "w-full h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+  const inp = "w-full h-10 md:h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
   const errInp = `${inp} !border-red-300 focus:!border-red-400`
 
   return (
@@ -141,7 +141,7 @@ export default function AddStockPage() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
 
           {/* Left column: Product + Batch Details */}
           <div className="space-y-4">
@@ -247,7 +247,7 @@ export default function AddStockPage() {
                 {purchaseGSTRate !== '' && (
                   <div className="space-y-1">
                     <LabelWithInfo text="Landing Price (excl. GST, ₹)" tip="Buying price net of GST. Auto-calculated, not editable." />
-                    <div className="w-full h-8 px-3 py-1.5 text-body bg-[#F7F7F7] border border-[#E5E5E5] rounded-lg text-[#666] flex items-center">
+                    <div className="w-full h-10 md:h-8 px-3 py-1.5 text-body bg-[#F7F7F7] border border-[#E5E5E5] rounded-lg text-[#666] flex items-center">
                       {buyingPrice && typeof purchaseGSTRate === 'number' && purchaseGSTRate > 0
                         ? (parseFloat(buyingPrice) / (1 + purchaseGSTRate / 100)).toFixed(2)
                         : buyingPrice && purchaseGSTRate === 0
@@ -265,7 +265,7 @@ export default function AddStockPage() {
                 {purchaseGSTRate !== '' && (
                   <div className="space-y-1">
                     <LabelWithInfo text="Selling price (excl. GST, ₹)" tip="Selling price net of GST. Auto-calculated, not editable." />
-                    <div className="w-full h-8 px-3 py-1.5 text-body bg-[#F7F7F7] border border-[#E5E5E5] rounded-lg text-[#666] flex items-center">
+                    <div className="w-full h-10 md:h-8 px-3 py-1.5 text-body bg-[#F7F7F7] border border-[#E5E5E5] rounded-lg text-[#666] flex items-center">
                       {sellingPrice && typeof purchaseGSTRate === 'number' && purchaseGSTRate > 0
                         ? (parseFloat(sellingPrice) / (1 + purchaseGSTRate / 100)).toFixed(2)
                         : sellingPrice && purchaseGSTRate === 0
