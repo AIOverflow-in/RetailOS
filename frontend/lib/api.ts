@@ -1,4 +1,4 @@
-import type { Distributor, DistributorBatchRow, ShopSettings } from '@/types'
+import type { Distributor, DistributorBatchRow, Product, ShopSettings } from '@/types'
 import { toast } from 'sonner'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
@@ -7,6 +7,13 @@ const SERVICE_DOWN_MSG = 'Service temporarily unavailable. Please try again in 5
 
 function notifyServiceUnavailable() {
   toast.error(SERVICE_DOWN_MSG, { id: 'service-unavailable', duration: 6000 })
+}
+
+/** Thrown for non-2xx responses; `data` is the parsed error body (e.g. `code`). */
+export class ApiError extends Error {
+  constructor(message: string, public data: Record<string, unknown> | null) {
+    super(message)
+  }
 }
 
 function getToken(): string | null {
@@ -50,7 +57,7 @@ async function request<T>(
   const data = text ? JSON.parse(text) : null
 
   if (!res.ok) {
-    throw new Error(data?.error || `Request failed: ${res.status}`)
+    throw new ApiError(data?.error || `Request failed: ${res.status}`, data)
   }
 
   return data as T
@@ -77,6 +84,8 @@ export const api = {
     request<{ products: any[]; total: number; page: number; limit: number }>(
       '/products?q=&limit=200'
     ).then(r => ({ products: r.products ?? [], total: r.total ?? 0 })),
+  getProduct: (id: string) => request<Product>(`/products/${id}`),
+  listCompanyNames: () => request<string[]>('/products/companies'),
   createProduct: (data: { name: string; company_name: string; sku?: string; hsn_code?: string }) =>
     request('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id: string, data: { name: string; company_name: string; sku?: string | null; hsn_code?: string | null }) =>

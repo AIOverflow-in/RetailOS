@@ -113,6 +113,62 @@ func (q *Queries) GetBatch(ctx context.Context, batchID pgtype.UUID) (Batch, err
 	return i, err
 }
 
+const getBatchByProductAndNo = `-- name: GetBatchByProductAndNo :one
+SELECT b.batch_id, b.product_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price, b.purchase_qty, b.sold_qty, b.box_no, b.created_at, b.purchase_gst_rate, b.landing_price, b.distributor_details, b.distributor_id, b.purchase_invoice_no, (b.purchase_qty - b.sold_qty) AS available_stock
+FROM batches b
+WHERE b.product_id = $1 AND b.batch_no = $2
+`
+
+type GetBatchByProductAndNoParams struct {
+	ProductID pgtype.UUID `json:"product_id"`
+	BatchNo   string      `json:"batch_no"`
+}
+
+type GetBatchByProductAndNoRow struct {
+	BatchID            pgtype.UUID        `json:"batch_id"`
+	ProductID          pgtype.UUID        `json:"product_id"`
+	BatchNo            string             `json:"batch_no"`
+	ExpiryDate         pgtype.Date        `json:"expiry_date"`
+	Mrp                pgtype.Numeric     `json:"mrp"`
+	BuyingPrice        pgtype.Numeric     `json:"buying_price"`
+	SellingPrice       pgtype.Numeric     `json:"selling_price"`
+	PurchaseQty        int32              `json:"purchase_qty"`
+	SoldQty            int32              `json:"sold_qty"`
+	BoxNo              *string            `json:"box_no"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	PurchaseGstRate    pgtype.Numeric     `json:"purchase_gst_rate"`
+	LandingPrice       pgtype.Numeric     `json:"landing_price"`
+	DistributorDetails []byte             `json:"distributor_details"`
+	DistributorID      pgtype.UUID        `json:"distributor_id"`
+	PurchaseInvoiceNo  *string            `json:"purchase_invoice_no"`
+	AvailableStock     int32              `json:"available_stock"`
+}
+
+func (q *Queries) GetBatchByProductAndNo(ctx context.Context, arg GetBatchByProductAndNoParams) (GetBatchByProductAndNoRow, error) {
+	row := q.db.QueryRow(ctx, getBatchByProductAndNo, arg.ProductID, arg.BatchNo)
+	var i GetBatchByProductAndNoRow
+	err := row.Scan(
+		&i.BatchID,
+		&i.ProductID,
+		&i.BatchNo,
+		&i.ExpiryDate,
+		&i.Mrp,
+		&i.BuyingPrice,
+		&i.SellingPrice,
+		&i.PurchaseQty,
+		&i.SoldQty,
+		&i.BoxNo,
+		&i.CreatedAt,
+		&i.PurchaseGstRate,
+		&i.LandingPrice,
+		&i.DistributorDetails,
+		&i.DistributorID,
+		&i.PurchaseInvoiceNo,
+		&i.AvailableStock,
+	)
+	return i, err
+}
+
 const listActiveBatchesForProduct = `-- name: ListActiveBatchesForProduct :many
 SELECT b.batch_id, b.product_id, b.batch_no, b.expiry_date, b.mrp, b.buying_price, b.selling_price, b.purchase_qty, b.sold_qty, b.box_no, b.created_at, b.purchase_gst_rate, b.landing_price, b.distributor_details, b.distributor_id, b.purchase_invoice_no,
        (b.purchase_qty - b.sold_qty) AS available_stock

@@ -17,6 +17,7 @@ const reasonLabels: Record<string, string> = {
   miscount: 'Miscount',
   physical_count: 'Physical Count',
   other: 'Other',
+  restock: 'Restock',
 }
 
 export default function AdjustmentsPage() {

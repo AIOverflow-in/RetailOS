@@ -22,3 +22,6 @@ backend/retailos
 CLAUDE.md
 
 *.tsbuildinfo
+
+# Local database backups (contain customer data) — never commit
+backups/

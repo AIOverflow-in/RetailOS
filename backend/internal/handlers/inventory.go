@@ -2,14 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -73,6 +76,7 @@ func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request)
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+	body.Name, body.CompanyName = strings.TrimSpace(body.Name), strings.TrimSpace(body.CompanyName)
 	if body.Name == "" || body.CompanyName == "" {
 		writeError(w, http.StatusBadRequest, "name and company_name are required")
 		return
@@ -80,6 +84,21 @@ func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request)
 
 	conn := middleware.ConnFromCtx(r.Context())
 	queries := generated.New(conn)
+
+	// Same name + company already exists → return it instead of creating a duplicate.
+	// Also makes a retried Add Stock submit (product created, batch failed) safe.
+	existing, err := queries.FindProductByNameCompany(r.Context(), generated.FindProductByNameCompanyParams{
+		Name:        body.Name,
+		CompanyName: body.CompanyName,
+	})
+	if err == nil {
+		writeJSON(w, http.StatusOK, existing)
+		return
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		writeError(w, http.StatusInternalServerError, "could not check existing products")
+		return
+	}
 
 	product, err := queries.CreateProduct(r.Context(), generated.CreateProductParams{
 		Name:        body.Name,
@@ -258,6 +277,25 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 		DistributorID:     distributorID,
 		PurchaseInvoiceNo: body.PurchaseInvoiceNo,
 	})
+	if isUniqueViolation(err) {
+		// Same batch no. on this product: hand back the existing batch so the
+		// client can offer to add the quantity to it as a restock.
+		existing, getErr := queries.GetBatchByProductAndNo(r.Context(), generated.GetBatchByProductAndNoParams{
+			ProductID: pid,
+			BatchNo:   body.BatchNo,
+		})
+		msg := fmt.Sprintf("Batch %s already exists for this product", body.BatchNo)
+		if getErr != nil {
+			writeError(w, http.StatusConflict, msg)
+			return
+		}
+		writeJSON(w, http.StatusConflict, map[string]any{
+			"error": msg,
+			"code":  "batch_exists",
+			"batch": existing,
+		})
+		return
+	}
 	if err != nil {
 		writeError(w, http.StatusConflict, "batch creation failed: "+err.Error())
 		return
@@ -278,6 +316,35 @@ func (h *InventoryHandler) ListInventory(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	writeJSON(w, http.StatusOK, rows)
+}
+
+func (h *InventoryHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
+	var pid pgtype.UUID
+	if err := pid.Scan(chi.URLParam(r, "id")); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid product id")
+		return
+	}
+	product, err := generated.New(middleware.ConnFromCtx(r.Context())).GetProduct(r.Context(), pid)
+	if errors.Is(err, pgx.ErrNoRows) {
+		writeError(w, http.StatusNotFound, "product not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not fetch product")
+		return
+	}
+	writeJSON(w, http.StatusOK, product)
+}
+
+// ListCompanyNames returns the distinct company names already in use, so the
+// new-product form can suggest an existing spelling.
+func (h *InventoryHandler) ListCompanyNames(w http.ResponseWriter, r *http.Request) {
+	names, err := generated.New(middleware.ConnFromCtx(r.Context())).ListCompanyNames(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not fetch companies")
+		return
+	}
+	writeJSON(w, http.StatusOK, names)
 }
 
 func (h *InventoryHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
@@ -313,6 +380,10 @@ func (h *InventoryHandler) UpdateProduct(w http.ResponseWriter, r *http.Request)
 		Sku:         body.SKU,
 		HsnCode:     body.HSNCode,
 	})
+	if isUniqueViolation(err) {
+		writeError(w, http.StatusConflict, "A product with this name and company already exists")
+		return
+	}
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "could not update product: "+err.Error())
 		return

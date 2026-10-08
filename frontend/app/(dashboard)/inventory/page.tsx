@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Plus,
   Search,
   Pencil,
   SlidersHorizontal,
   PackageMinus,
+  PackagePlus,
   ArrowUp,
   ArrowDown,
   Check,
@@ -57,7 +59,9 @@ function BatchActions({ row, onEditProduct, onEditBatch, onAdjust }: {
   onEditBatch: (r: InventoryRow) => void
   onAdjust: (r: InventoryRow) => void
 }) {
+  const router = useRouter()
   const actions = [
+    { label: 'Add batch', Icon: PackagePlus, run: () => router.push(`/inventory/add?product_id=${row.product_id}`) },
     { label: 'Edit product', Icon: Pencil, run: () => onEditProduct(row) },
     { label: 'Edit batch', Icon: SlidersHorizontal, run: () => onEditBatch(row) },
     { label: 'Adjust stock', Icon: PackageMinus, run: () => onAdjust(row) },

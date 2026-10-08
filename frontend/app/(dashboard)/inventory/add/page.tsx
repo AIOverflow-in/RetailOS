@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { api } from '@/lib/api'
+import { api, ApiError } from '@/lib/api'
+import { fmtCurrency, fmtDate } from '@/lib/gst'
 import type { Distributor, Product } from '@/types'
 import { useProductSearch } from '@/lib/useProductSearch'
 import { getCachedDistributors, setCachedDistributors } from '@/lib/distributorCache'
@@ -28,10 +29,36 @@ function LabelWithInfo({ text, tip }: { text: string; tip: string }) {
   )
 }
 
-export default function AddStockPage() {
-  const router = useRouter()
+interface ExistingBatch {
+  batch_id: string
+  batch_no: string
+  expiry_date: string
+  mrp: number
+  selling_price: number
+  available_stock: number
+}
 
-  const { query, suggestions, handleQuery, triggerPreload, setQuery, setSuggestions } = useProductSearch()
+// useSearchParams needs a Suspense boundary (Next 16).
+export default function AddStockPage() {
+  return (
+    <Suspense fallback={null}>
+      <AddStockForm />
+    </Suspense>
+  )
+}
+
+function AddStockForm() {
+  const router = useRouter()
+  const presetProductId = useSearchParams().get('product_id')
+
+  const {
+    query, suggestions, loading: searching, handleQuery, triggerPreload, setQuery, setSuggestions,
+    allProducts, catalogExceedsCap,
+  } = useProductSearch()
+  // Offer "add new" only once a search has actually run, so an existing product
+  // can't be missed and re-created while results are still loading.
+  const serverSearch = allProducts === null || catalogExceedsCap
+  const searchSettled = !searching && !(serverSearch && query.trim().length < 3)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isNewProduct, setIsNewProduct] = useState(false)
   const [newProductName, setNewProductName] = useState('')
@@ -52,6 +79,9 @@ export default function AddStockPage() {
   const [purchaseInvoiceNo, setPurchaseInvoiceNo] = useState('')
   const [distributors, setDistributors] = useState<Distributor[]>([])
   const [loading, setLoading] = useState(false)
+  const [prefilledFrom, setPrefilledFrom] = useState<string | null>(null)
+  const [companies, setCompanies] = useState<string[]>([])
+  const [existingBatch, setExistingBatch] = useState<ExistingBatch | null>(null)
 
   useEffect(() => {
     const cached = getCachedDistributors()
@@ -62,12 +92,42 @@ export default function AddStockPage() {
     }).catch(() => {})
   }, [])
 
+  // Opened from Inventory → "Add batch": start with that product selected.
+  useEffect(() => {
+    if (!presetProductId) return
+    api.getProduct(presetProductId)
+      .then(selectProduct)
+      .catch(() => toast.error('Could not load product'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presetProductId])
+
+  // Carry over what usually stays the same between purchases. Batch no., expiry,
+  // qty, buying price and invoice are always new, so they are never pre-filled.
+  async function prefillFromLastBatch(productId: string) {
+    const [last] = (await api.listBatches(productId).catch(() => null)) ?? []
+    if (!last) {
+      if (prefilledFrom) {
+        setMrp(''); setSellingPrice(''); setPurchaseGSTRate(''); setDistributorId(''); setBoxNo('')
+      }
+      setPrefilledFrom(null)
+      return
+    }
+    setMrp(String(last.mrp))
+    setSellingPrice(String(last.selling_price))
+    setPurchaseGSTRate(last.purchase_gst_rate != null ? Number(last.purchase_gst_rate) : '')
+    setDistributorId(last.distributor_id ?? '')
+    setBoxNo(last.box_no ?? '')
+    setPrefilledFrom(last.batch_no)
+  }
+
   function selectProduct(p: Product) {
     setSelectedProduct(p)
     setQuery(p.name)
     setSuggestions([])
     setIsNewProduct(false)
     setFocused(false)
+    setExistingBatch(null)
+    prefillFromLastBatch(p.product_id)
   }
 
   function startNewProduct() {
@@ -76,11 +136,14 @@ export default function AddStockPage() {
     setNewProductName(query)
     setSuggestions([])
     setFocused(false)
+    setExistingBatch(null)
+    if (companies.length === 0) api.listCompanyNames().then(c => setCompanies(c ?? [])).catch(() => {})
   }
 
   function handleInputChange(val: string) {
     setSelectedProduct(null)
     setIsNewProduct(false)
+    setExistingBatch(null)
     handleQuery(val)
   }
 
@@ -119,11 +182,48 @@ export default function AddStockPage() {
       toast.success('Stock added')
       router.push('/inventory')
     } catch (err: unknown) {
+      if (err instanceof ApiError && err.data?.code === 'batch_exists' && err.data.batch) {
+        setExistingBatch(err.data.batch as ExistingBatch)
+      } else {
+        toast.error(err instanceof Error ? err.message : 'Failed to add stock')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Same batch no. already on this product: record the new units as a restock
+  // adjustment, keeping this purchase's invoice / distributor / price in the notes.
+  async function addToExistingBatch() {
+    if (!existingBatch) return
+    const qty = parseInt(purchaseQty)
+    const distributor = distributors.find(d => d.distributor_id === distributorId)?.name
+    const notes = [
+      purchaseInvoiceNo.trim() && `Invoice ${purchaseInvoiceNo.trim()}`,
+      distributor,
+      buyingPrice && `Buying ₹${buyingPrice}`,
+      purchaseGSTRate !== '' && `GST ${purchaseGSTRate}%`,
+    ].filter(Boolean).join(' · ')
+    setLoading(true)
+    try {
+      await api.createStockAdjustment({
+        batch_id: existingBatch.batch_id, qty_change: qty, reason: 'restock', notes: notes || null,
+      })
+      toast.success(`Added ${qty} units to batch ${existingBatch.batch_no}`)
+      router.push('/inventory')
+    } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to add stock')
     } finally {
       setLoading(false)
     }
   }
+
+  const existingExpired = existingBatch ? new Date(existingBatch.expiry_date) <= new Date() : false
+  const keptFields = existingBatch ? [
+    expiryDate && expiryDate !== existingBatch.expiry_date && 'expiry',
+    mrp && parseFloat(mrp) !== Number(existingBatch.mrp) && 'MRP',
+    sellingPrice && parseFloat(sellingPrice) !== Number(existingBatch.selling_price) && 'selling price',
+  ].filter(Boolean) : []
 
   const productReady = selectedProduct || (isNewProduct && newProductName && newCompanyName)
   const inp = "w-full h-10 md:h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
@@ -170,7 +270,12 @@ export default function AddStockPage() {
                         <p className="text-caption text-[#999]">{p.company_name}</p>
                       </button>
                     ))}
-                    {query.trim().length > 0 && (
+                    {query.trim().length > 0 && !searchSettled && (
+                      <p className="px-3 py-2.5 text-body text-[#AAAAAA]">
+                        {searching ? 'Searching…' : 'Type at least 3 letters to search'}
+                      </p>
+                    )}
+                    {query.trim().length > 0 && searchSettled && (
                       <button type="button"
                         className="w-full text-left px-3 py-2.5 text-body text-[#111] hover:bg-[#F5F5F5] transition-colors"
                         style={suggestions.length > 0 ? { borderTopWidth: '1px', borderTopColor: '#F0F0F0' } : {}}
@@ -200,15 +305,19 @@ export default function AddStockPage() {
                 <div className="grid grid-cols-2 gap-2.5 pt-1">
                   {[
                     { label: 'Product name *', val: newProductName, set: setNewProductName },
-                    { label: 'Company *', val: newCompanyName, set: setNewCompanyName },
+                    { label: 'Company *', val: newCompanyName, set: setNewCompanyName, list: 'company-names' },
                     { label: 'SKU', val: newSku, set: setNewSku },
                     { label: 'HSN Code', val: newHsn, set: setNewHsn },
-                  ].map(({ label, val, set }) => (
+                  ].map(({ label, val, set, list }) => (
                     <div key={label} className="space-y-1">
                       <p className="text-caption text-label">{label}</p>
-                      <input className={inp} value={val} onChange={e => set(e.target.value)} required={label.includes('*')} />
+                      <input className={inp} value={val} onChange={e => set(e.target.value)} required={label.includes('*')} list={list} />
                     </div>
                   ))}
+                  {/* Suggest existing spellings so "Knoll" and "Knoll Healthcare" don't both appear */}
+                  <datalist id="company-names">
+                    {companies.map(c => <option key={c} value={c} />)}
+                  </datalist>
                 </div>
               )}
             </div>
@@ -216,10 +325,15 @@ export default function AddStockPage() {
             {/* Batch Details */}
             <div className="bg-white rounded-lg border border-[#EBEBEB] p-4 space-y-3">
               <p className="text-caption font-medium text-label">Batch Details</p>
+              {prefilledFrom && (
+                <p className="text-caption text-[#999]">
+                  MRP, prices, GST, distributor and box filled from last batch <span className="font-mono">{prefilledFrom}</span>. Check them against this invoice.
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="space-y-1">
                   <LabelWithInfo text="Batch no. *" tip="Manufacturer batch identifier printed on the pack." />
-                  <input className={inp} value={batchNo} onChange={e => setBatchNo(e.target.value)} required />
+                  <input className={inp} value={batchNo} onChange={e => { setBatchNo(e.target.value); setExistingBatch(null) }} required />
                 </div>
                 <div className="space-y-1">
                   <LabelWithInfo text="Expiry date *" tip="Expiry date printed on the pack." />
@@ -315,13 +429,53 @@ export default function AddStockPage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading || !productReady}
-              className="w-full h-9 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
-            >
-              {loading ? 'Adding…' : 'Add Stock'}
-            </button>
+            {existingBatch ? (
+              <div className="bg-[#FFF8E6] border border-[#FFE5B4] rounded-lg p-4 space-y-3">
+                <div>
+                  <p className="text-body font-medium text-[#111]">
+                    Batch <span className="font-mono">{existingBatch.batch_no}</span> already exists for this product
+                  </p>
+                  <p className="text-caption text-[#888] mt-0.5">
+                    In stock {existingBatch.available_stock} · Exp {fmtDate(existingBatch.expiry_date)} · MRP {fmtCurrency(Number(existingBatch.mrp))} · Selling {fmtCurrency(Number(existingBatch.selling_price))}
+                  </p>
+                </div>
+                {existingExpired && (
+                  <p className="text-caption text-red-600">
+                    This batch has expired, so stock can&apos;t be added to it. Check the batch no. on the pack.
+                  </p>
+                )}
+                {!existingExpired && keptFields.length > 0 && (
+                  <p className="text-caption text-[#996600]">
+                    The {keptFields.join(', ')} you entered differ{keptFields.length === 1 ? 's' : ''} from this batch. The batch keeps its current values. Use Edit batch in Inventory to change them.
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  {!existingExpired && <button
+                    type="button"
+                    onClick={addToExistingBatch}
+                    disabled={loading || !(parseInt(purchaseQty) > 0)}
+                    className="flex-1 h-9 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
+                  >
+                    {loading ? 'Adding…' : `Add ${parseInt(purchaseQty) || 0} units to this batch`}
+                  </button>}
+                  <button
+                    type="button"
+                    onClick={() => setExistingBatch(null)}
+                    className="h-9 px-3 text-body text-[#555] border border-[#E5E5E5] rounded-lg bg-white hover:border-[#CCC] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="submit"
+                disabled={loading || !productReady}
+                className="w-full h-9 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
+              >
+                {loading ? 'Adding…' : 'Add Stock'}
+              </button>
+            )}
           </div>
 
         </div>

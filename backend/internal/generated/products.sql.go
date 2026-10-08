@@ -57,6 +57,36 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
+const findProductByNameCompany = `-- name: FindProductByNameCompany :one
+SELECT product_id, name, company_name, sku, hsn_code, created_at FROM products
+WHERE regexp_replace(lower(name), '[^a-z0-9]', '', 'g')
+      = regexp_replace(lower($1::text), '[^a-z0-9]', '', 'g')
+  AND regexp_replace(lower(company_name), '[^a-z0-9]', '', 'g')
+      = regexp_replace(lower($2::text), '[^a-z0-9]', '', 'g')
+LIMIT 1
+`
+
+type FindProductByNameCompanyParams struct {
+	Name        string `json:"name"`
+	CompanyName string `json:"company_name"`
+}
+
+// Same key as the products_name_company_norm_key index: letters and digits only,
+// so case, spacing, punctuation and "+" vs "&" don't create a second product.
+func (q *Queries) FindProductByNameCompany(ctx context.Context, arg FindProductByNameCompanyParams) (Product, error) {
+	row := q.db.QueryRow(ctx, findProductByNameCompany, arg.Name, arg.CompanyName)
+	var i Product
+	err := row.Scan(
+		&i.ProductID,
+		&i.Name,
+		&i.CompanyName,
+		&i.Sku,
+		&i.HsnCode,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getProduct = `-- name: GetProduct :one
 SELECT product_id, name, company_name, sku, hsn_code, created_at FROM products WHERE product_id = $1
 `
@@ -73,6 +103,30 @@ func (q *Queries) GetProduct(ctx context.Context, productID pgtype.UUID) (Produc
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const listCompanyNames = `-- name: ListCompanyNames :many
+SELECT DISTINCT trim(company_name)::text AS company_name FROM products ORDER BY 1
+`
+
+func (q *Queries) ListCompanyNames(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listCompanyNames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var company_name string
+		if err := rows.Scan(&company_name); err != nil {
+			return nil, err
+		}
+		items = append(items, company_name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const searchProducts = `-- name: SearchProducts :many
