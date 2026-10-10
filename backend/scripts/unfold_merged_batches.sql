@@ -9,7 +9,8 @@
 --   psql "$DATABASE_URL" -v schema=tenant_xxxxxxxx -f backend/scripts/unfold_merged_batches.sql
 --
 -- Sales billed against the combined batch after the merge stay on the older row.
--- Aborts without changes if any row would end up with negative stock.
+-- Aborts without changes if any row would end up with negative stock, or if any
+-- involved batch's sold qty no longer matches its bill lines after the split.
 -- Idempotent: rows already restored are skipped. One transaction.
 
 \set ON_ERROR_STOP on
@@ -68,6 +69,23 @@ UPDATE stock_adjustments t SET batch_id = r.old_batch_id
 FROM merge_archive_repoints r
 WHERE r.table_name = 'stock_adjustments' AND t.adjustment_id = r.row_id
   AND t.batch_id = r.new_batch_id AND r.old_batch_id IN (SELECT batch_id FROM todo);
+
+-- Self-check: every batch involved must have sold_qty = units billed minus returned
+-- on its bill lines. This held for all of them before the merge; a mismatch means
+-- something moved stock between the rows since (e.g. a return after the merge on a
+-- re-pointed line), so roll everything back for a manual look.
+DO $$
+DECLARE bad text;
+BEGIN
+  SELECT string_agg(b.batch_no || ' (' || b.batch_id || ')', ', ') INTO bad
+  FROM batches b
+  LEFT JOIN (SELECT batch_id, sum(qty - returned_qty) net FROM order_items GROUP BY 1) s USING (batch_id)
+  WHERE b.batch_id IN (SELECT batch_id FROM todo UNION SELECT kept_batch_id FROM todo)
+    AND b.sold_qty <> coalesce(s.net, 0);
+  IF bad IS NOT NULL THEN
+    RAISE EXCEPTION 'Sold qty does not match bill lines after split, rolled back: %', bad;
+  END IF;
+END $$;
 
 UPDATE merge_archive_batches SET restored_at = now() WHERE batch_id IN (SELECT batch_id FROM todo);
 

@@ -19,7 +19,7 @@ Sipra Lifeline had 100 duplicate products (84 groups). The same medicine was bei
 **Commits:** `82d8e48`, `a4e3084`
 
 - **One product per name + company.** Case, spacing and punctuation are ignored, so "Omeprazole 20mg + Domperidone" and "OMEPRAZOLE 20mg & domperidone" count as the same product.
-- **Strengths stay separate.** Punctuation between digits is kept, so "Thyronorm 12.5 mcg" ≠ "Thyronorm 125 mcg" and "50/1000" ≠ "501000". Names in non-Latin scripts keep their letters.
+- **Strengths and variants stay separate.** Punctuation between digits is kept, so "Thyronorm 12.5 mcg" ≠ "Thyronorm 125 mcg" and "50/1000" ≠ "501000". A "+" attached to the end of a word is kept too, so "Sugar Free Gold+" ≠ "Sugar Free Gold", "SPF 50+" ≠ "SPF 50" and "PA+++" ≠ "PA++++". A spaced " + " between ingredients is still ignored. Names in non-Latin scripts keep their letters.
 - **Matches are never used silently.** If "+ Add as new product" matches an existing product, Add Stock stops and shows it: *"This product is already in your catalog: Thyronorm 12.5 mcg · Abbott"*, with **Use this product** or **Edit name**.
 - **Search finishes before "+ Add as new product" appears.** It used to show from the first keystroke, before results had loaded.
 - **Company name suggestions** on the new-product form, so "Knoll" and "Knoll Healthcare" don't both get created.
@@ -27,9 +27,10 @@ Sipra Lifeline had 100 duplicate products (84 groups). The same medicine was bei
 **Why it matters:** "+ Add as new product" was always on offer, and the backend accepted duplicates without complaint. About 90 of the 100 duplicates were created more than a day after the original, during restocks. Split stock means billing shows the same medicine several times and stock counts are wrong.
 
 **Technical Notes:**
-- Migration `000011` creates `products_name_company_norm_key` on `regexp_replace(regexp_replace(lower(x), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')` for name and company, then drops the exact-name `products_name_company_key`. It runs as one implicit transaction. If near-duplicates still exist, the `CREATE` fails (logged as a warning), the `DROP` never runs, and the exact-name index stays in force. `IF NOT EXISTS` makes later startups a no-op.
+- Migration `000011` creates `products_name_company_norm_key` on a normalized name and company. The key is built in three steps on `lower(x) COLLATE "C"`: trailing "+" runs become one `p` each, punctuation between digits becomes `d`, and the remaining spaces and punctuation are stripped. It then drops the exact-name `products_name_company_key`. It runs as one implicit transaction. If near-duplicates still exist, the `CREATE` fails (logged as a warning), the `DROP` never runs, and the exact-name index stays in force. `IF NOT EXISTS` makes later startups a no-op.
 - `CreateProduct` looks up the product first, then inserts, so it works whether or not a tenant's index exists yet. It returns `200 {…, existing: true}` on a match and `201 {…, existing: false}` on create. If a concurrent identical create hits the unique index, it looks up again and returns the winning row.
-- The key expression was checked on production's `C.UTF-8` collation: `[[:punct:]]` covers ASCII punctuation, and Devanagari letters are kept.
+- `COLLATE "C"` pins `[[:punct:]]` / `[[:space:]]` to ASCII, so the key is identical on every server locale. Without it, a Mac's `en_US.UTF-8` doesn't treat "+" as punctuation, while production (`C.UTF-8`) does. The same test cases were verified on production and on an `en_US.UTF-8` copy with identical results. Pinning it now matters, because changing the key after the index is built means rebuilding the index.
+- `FindProductByNameCompany` uses the same expression and orders by `created_at`, so a tenant that still has near-duplicates always gets the oldest product.
 
 ---
 
@@ -37,8 +38,8 @@ Sipra Lifeline had 100 duplicate products (84 groups). The same medicine was bei
 **Commits:** `82d8e48`, `a4e3084`
 
 - **"Add batch" on every inventory row** opens Add Stock with the product selected. MRP, selling price, GST rate, distributor and box no. are filled from the latest batch, with a note saying so. Batch no., expiry, qty, buying price and invoice no. are always left blank.
-- **Pre-fill respects what you type.** A field is only replaced if it's empty or still holds the value carried in last time. A slow response for a previously selected product is ignored.
-- **A batch no. bought again is saved as its own entry.** Add Stock lists the earlier purchases of that batch no. as soon as it's typed: date, buying, selling, MRP, stock, invoice and distributor. It includes a **View batch ↗** link that opens Inventory searched to that batch in a new tab. The expiry is filled from the earlier entry and highlighted if changed. Corrections to an earlier entry go through Edit batch.
+- **Pre-fill respects what you type.** A field is only replaced if it's empty or still holds the value carried in last time. A slow response for a previously selected product is ignored. Moving away from a selected product (new search, or "+ Add as new product") clears its untouched carried values, so one product's prices can't carry over to another.
+- **A batch no. bought again is saved as its own entry.** Add Stock lists the earlier purchases of that batch no. as soon as it's typed: date, buying, selling, MRP, stock, invoice and distributor. It includes a **View batch ↗** link that opens Inventory searched to that batch in a new tab. The expiry is filled from the earlier entry and highlighted if changed. An auto-filled expiry is cleared again if the batch no. stops matching (e.g. "2301" matching on the way to typing "23015"); an expiry you typed is kept. Corrections to an earlier entry go through Edit batch.
 - **Billing tells repeated batches apart.** When a product has the same batch no. more than once, the dropdown shows `TN001 · cost ₹90.00 · sells ₹120.00 · 10 left` for each entry, older purchase first. Batch nos. that appear once keep the plain label.
 
 **Why it matters:** `UNIQUE(product_id, batch_no)` rejected a second purchase of the same batch with a raw database error, and creating the product again was the only workaround. Adding the units onto the old batch row instead would put a later purchase into an earlier month of the purchase GST report, at the old price and GST rate. Separate rows keep each purchase's date, price, GST, invoice and distributor, so GST, distributor and margin reports stay correct with no report changes.
@@ -54,7 +55,7 @@ Sipra Lifeline had 100 duplicate products (84 groups). The same medicine was bei
 **Commits:** `82d8e48`, `a4e3084`
 
 - `backend/scripts/merge_duplicate_products.sql` merges exact-duplicate products in one tenant. It keeps the oldest product, moves the copies' batches to it unchanged, copies removed products into `merge_archive_products`, and runs in one transaction.
-- `backend/scripts/unfold_merged_batches.sql` splits batches that the first version of the merge script combined. It restores each folded purchase as its own row from `merge_archive_batches`, takes its quantities off the older row, and points bill lines and adjustments back using `merge_archive_repoints`. It aborts if any row would go negative, and it's idempotent.
+- `backend/scripts/unfold_merged_batches.sql` splits batches that the first version of the merge script combined. It restores each folded purchase as its own row from `merge_archive_batches`, takes its quantities off the older row, and points bill lines and adjustments back using `merge_archive_repoints`. It aborts if any row would go negative. After the split, it checks that every involved batch's sold qty equals the units billed minus returned on its bill lines; that held for all 20 batches before the merge. Any mismatch (e.g. a return after the merge on a re-pointed line) rolls everything back. It's idempotent.
 
 **Why it matters:** The first merge on Sipra Lifeline (2026-10-08) combined 10 same-batch-no. pairs. 8 of them moved a purchase into an earlier month of the purchase GST report, and one folded a 0% GST purchase into a 5% batch. Nothing was lost, since every row was archived, and the split script restores them exactly.
 
@@ -149,7 +150,7 @@ Sipra Lifeline had 100 duplicate products (84 groups). The same medicine was bei
 
 ## Known Considerations
 
-- **Sipra Lifeline production data.** The 100 exact duplicates were merged on 2026-10-08 after a verified full backup. The 10 batch pairs that merge combined are still combined in production until `unfold_merged_batches.sql` runs, after shop hours, with a fresh backup. Since the merge, 2 bill lines (3 units) were billed against those batches. They stay on the older row, and no row goes negative.
+- **Sipra Lifeline production data.** The 100 exact duplicates were merged on 2026-10-08 after a verified full backup. The 10 batch pairs that merge combined are still combined in production until `unfold_merged_batches.sql` runs, after shop hours, with a fresh backup. Since the merge, 2 bill lines (3 units) were billed against those batches. They stay on the older row, and no row goes negative. No re-pointed bill line has been returned, deleted or edited since the merge (checked on 2026-10-10).
 - **Near-duplicates still on Sipra.** 10 groups (same company) differ only by punctuation, plus company-name variants such as "Knoll" vs "Knoll Healthcare". Until they're cleaned up with a reviewed mapping, `000011` logs a warning on Sipra and the exact-name index keeps enforcing uniqueness.
 - **Punctuation between digits is treated alike**, so "12-5" and "12.5" match. The existing-product confirmation shows the match before anything is saved.
 - **A sale larger than one entry's stock.** When a batch no. has two entries, a sale bigger than either entry's stock needs a second bill line from the other entry.
@@ -171,8 +172,11 @@ Sipra Lifeline had 100 duplicate products (84 groups). The same medicine was bei
 - [ ] Inventory row → "Add batch" → product selected; MRP, selling, GST, distributor, box match the latest batch, and the note names its batch no.
 - [ ] Batch no., expiry, qty, buying price and invoice no. are empty
 - [ ] Type an MRP, then switch product → the typed MRP is kept; untouched fields take the new product's values
+- [ ] Select a product (prices pre-fill), then retype the search and choose "+ Add as new product" → the pre-filled prices and note are cleared
+- [ ] "+ Add as new product" with "Sugar Free Gold+ 100 Pellets" when "Sugar Free Gold 100 Pellets" exists (same company) → created as a separate product
 - [ ] Type an existing batch no. → expiry fills in; the panel lists each earlier purchase; **View batch ↗** opens Inventory in a new tab searched to that batch (expired included)
 - [ ] Change the expiry on a repeated batch → field highlighted with a warning
+- [ ] Product has batch `2301`; type `23015` into Batch no. → the expiry auto-filled at `2301` is cleared at `23015`
 - [ ] Save → a second row with the same batch no. appears in Inventory with this purchase's date, price, invoice and distributor
 - [ ] Billing → that product → the dropdown shows both entries with cost, selling and stock, older first; picking each fills its own selling price
 - [ ] Reports → purchase GST for this month includes the new purchase; earlier months are unchanged
@@ -180,7 +184,7 @@ Sipra Lifeline had 100 duplicate products (84 groups). The same medicine was bei
 ### Migrations and data scripts
 - [ ] Backend startup on a tenant without near-duplicates → `000011` and `000012` OK; `products_name_company_norm_key` exists; `batches_product_id_batch_no_key` is gone
 - [ ] On Sipra → `000011` logs a warning; `products_name_company_key` still exists; `000012` OK
-- [ ] `unfold_merged_batches.sql` on a restore of Sipra → 10 batches restored; batch rows, purchase GST by month and bill-line links match the pre-merge backup; a second run restores 0
+- [ ] `unfold_merged_batches.sql` on a restore of Sipra → 10 batches restored; batch rows, purchase GST by month and bill-line links match the pre-merge backup; a second run restores 0; with a return on a re-pointed line made first, the run rolls back with nothing changed
 
 ### Responsive dashboard
 - [ ] At 390px: top bar and drawer open/close (Escape, backdrop, navigation); no horizontal page scroll on billing, inventory or orders

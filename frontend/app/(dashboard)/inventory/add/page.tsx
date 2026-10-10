@@ -95,6 +95,7 @@ function AddStockForm() {
   const [matchedProduct, setMatchedProduct] = useState<Product | null>(null)
   const carried = useRef<Carried>(NOTHING_CARRIED)
   const prefillRequest = useRef(0)
+  const autoExpiry = useRef('')
 
   useEffect(() => {
     const cached = getCachedDistributors()
@@ -132,6 +133,12 @@ function AddStockForm() {
       distributorId: last.distributor_id ?? '',
       boxNo: last.box_no ?? '',
     } : NOTHING_CARRIED
+    applyCarried(next)
+    setPrefilledFrom(last?.batch_no ?? null)
+  }
+
+  // Swap carried-over values for `next`, leaving anything the user typed alone.
+  function applyCarried(next: Carried) {
     const prev = carried.current
     const untouched = <T,>(cur: T, old: T) => cur === '' || cur === old
     setMrp(cur => untouched(cur, prev.mrp) ? next.mrp : cur)
@@ -140,7 +147,16 @@ function AddStockForm() {
     setDistributorId(cur => untouched(cur, prev.distributorId) ? next.distributorId : cur)
     setBoxNo(cur => untouched(cur, prev.boxNo) ? next.boxNo : cur)
     carried.current = next
-    setPrefilledFrom(last?.batch_no ?? null)
+  }
+
+  // Leaving a selected product: its carried-over values must not follow into the
+  // next product (they'd end up on bills), and any in-flight prefill is dropped.
+  function dropCarried() {
+    prefillRequest.current++
+    applyCarried(NOTHING_CARRIED)
+    setPrefilledFrom(null)
+    setProductBatches([])
+    clearAutoExpiry()
   }
 
   function selectProduct(p: Product) {
@@ -159,7 +175,7 @@ function AddStockForm() {
     setNewProductName(query)
     setSuggestions([])
     setFocused(false)
-    setProductBatches([])
+    dropCarried()
     if (companies.length === 0) api.listCompanyNames().then(c => setCompanies(c ?? [])).catch(() => {})
   }
 
@@ -167,13 +183,14 @@ function AddStockForm() {
     setSelectedProduct(null)
     setIsNewProduct(false)
     setMatchedProduct(null)
-    setProductBatches([])
-    prefillRequest.current++
+    dropCarried()
     handleQuery(val)
   }
 
   // Earlier purchases of the batch no. being entered. Same batch no. means the same
-  // physical lot, so its expiry is filled in when the field is still empty.
+  // physical lot, so its expiry is filled in when the field is empty. An auto-filled
+  // expiry only lives while the batch no. still matches (e.g. "2301" matching on the
+  // way to typing "23015" must not leave 2301's expiry behind); a typed one is kept.
   const sameBatchKey = (v: string) => v.trim().toLowerCase()
   const sameBatch = batchNo.trim()
     ? productBatches.filter(pb => sameBatchKey(pb.batch_no) === sameBatchKey(batchNo))
@@ -181,7 +198,16 @@ function AddStockForm() {
   function onBatchNoChange(v: string) {
     setBatchNo(v)
     const earlier = v.trim() && productBatches.find(pb => sameBatchKey(pb.batch_no) === sameBatchKey(v))
-    if (earlier && !expiryDate) setExpiryDate(earlier.expiry_date)
+    if (earlier && (!expiryDate || expiryDate === autoExpiry.current)) {
+      setExpiryDate(earlier.expiry_date)
+      autoExpiry.current = earlier.expiry_date
+    } else if (!earlier) {
+      clearAutoExpiry()
+    }
+  }
+  function clearAutoExpiry() {
+    if (autoExpiry.current && expiryDate === autoExpiry.current) setExpiryDate('')
+    autoExpiry.current = ''
   }
   const expiryDiffers = sameBatch.length > 0 && !!expiryDate && expiryDate !== sameBatch[0].expiry_date
   const distributorName = (id: string | null) => distributors.find(d => d.distributor_id === id)?.name
