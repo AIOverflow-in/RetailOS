@@ -23,13 +23,12 @@ WHERE $1::text = ''
 SELECT * FROM products WHERE product_id = $1;
 
 -- name: FindProductByNameCompany :one
--- Same key as the products_name_company_norm_key index: letters and digits only,
--- so case, spacing, punctuation and "+" vs "&" don't create a second product.
+-- Same key as the products_name_company_norm_key index (migration 000011).
 SELECT * FROM products
-WHERE regexp_replace(lower(name), '[^a-z0-9]', '', 'g')
-      = regexp_replace(lower(sqlc.arg(name)::text), '[^a-z0-9]', '', 'g')
-  AND regexp_replace(lower(company_name), '[^a-z0-9]', '', 'g')
-      = regexp_replace(lower(sqlc.arg(company_name)::text), '[^a-z0-9]', '', 'g')
+WHERE regexp_replace(regexp_replace(lower(name), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+      = regexp_replace(regexp_replace(lower(sqlc.arg(name)::text), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+  AND regexp_replace(regexp_replace(lower(company_name), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+      = regexp_replace(regexp_replace(lower(sqlc.arg(company_name)::text), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
 LIMIT 1;
 
 -- name: ListCompanyNames :many

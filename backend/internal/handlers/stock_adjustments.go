@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -26,7 +25,6 @@ var validReasons = map[string]bool{
 	"miscount":       true,
 	"physical_count": true,
 	"other":          true,
-	"restock":        true,
 }
 
 func (h *StockAdjustmentHandler) CreateAdjustment(w http.ResponseWriter, r *http.Request) {
@@ -50,11 +48,7 @@ func (h *StockAdjustmentHandler) CreateAdjustment(w http.ResponseWriter, r *http
 		return
 	}
 	if !validReasons[body.Reason] {
-		writeError(w, http.StatusBadRequest, "reason must be one of: damage, theft, miscount, physical_count, other, restock")
-		return
-	}
-	if body.Reason == "restock" && body.QtyChange < 0 {
-		writeError(w, http.StatusBadRequest, "restock must add stock (qty_change > 0)")
+		writeError(w, http.StatusBadRequest, "reason must be one of: damage, theft, miscount, physical_count, other")
 		return
 	}
 
@@ -79,19 +73,6 @@ func (h *StockAdjustmentHandler) CreateAdjustment(w http.ResponseWriter, r *http
 	if err != nil {
 		writeError(w, http.StatusNotFound, "batch not found")
 		return
-	}
-
-	// Restocking an expired batch would add stock that can never be sold.
-	if body.Reason == "restock" {
-		full, err := q.GetBatch(r.Context(), bid)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "could not load batch")
-			return
-		}
-		if !full.ExpiryDate.Time.After(time.Now()) {
-			writeError(w, http.StatusBadRequest, "batch "+full.BatchNo+" has expired; add the new stock as a new batch")
-			return
-		}
 	}
 
 	// Validate: purchase_qty + qty_change >= sold_qty

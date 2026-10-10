@@ -65,6 +65,12 @@ func (h *InventoryHandler) ListProducts(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+// productResponse is a product plus whether CreateProduct matched an existing one.
+type productResponse struct {
+	generated.Product
+	Existing bool `json:"existing"`
+}
+
 func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name        string  `json:"name"`
@@ -85,17 +91,19 @@ func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request)
 	conn := middleware.ConnFromCtx(r.Context())
 	queries := generated.New(conn)
 
-	// Same name + company already exists → return it instead of creating a duplicate.
-	// Also makes a retried Add Stock submit (product created, batch failed) safe.
-	existing, err := queries.FindProductByNameCompany(r.Context(), generated.FindProductByNameCompanyParams{
-		Name:        body.Name,
-		CompanyName: body.CompanyName,
-	})
-	if err == nil {
-		writeJSON(w, http.StatusOK, existing)
-		return
+	// Same name + company already exists → return it, flagged, instead of creating a
+	// duplicate. The client must confirm before using it, since the match ignores
+	// case, spacing and punctuation.
+	find := func() (generated.Product, error) {
+		return queries.FindProductByNameCompany(r.Context(), generated.FindProductByNameCompanyParams{
+			Name:        body.Name,
+			CompanyName: body.CompanyName,
+		})
 	}
-	if !errors.Is(err, pgx.ErrNoRows) {
+	if existing, err := find(); err == nil {
+		writeJSON(w, http.StatusOK, productResponse{existing, true})
+		return
+	} else if !errors.Is(err, pgx.ErrNoRows) {
 		writeError(w, http.StatusInternalServerError, "could not check existing products")
 		return
 	}
@@ -106,11 +114,18 @@ func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request)
 		Sku:         body.SKU,
 		HsnCode:     body.HSNCode,
 	})
+	if isUniqueViolation(err) {
+		// Lost a race with an identical create: hand back the winner.
+		if existing, findErr := find(); findErr == nil {
+			writeJSON(w, http.StatusOK, productResponse{existing, true})
+			return
+		}
+	}
 	if err != nil {
 		writeError(w, http.StatusConflict, "product creation failed: "+err.Error())
 		return
 	}
-	writeJSON(w, http.StatusCreated, product)
+	writeJSON(w, http.StatusCreated, productResponse{product, false})
 }
 
 func (h *InventoryHandler) ListBatches(w http.ResponseWriter, r *http.Request) {
@@ -277,25 +292,6 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 		DistributorID:     distributorID,
 		PurchaseInvoiceNo: body.PurchaseInvoiceNo,
 	})
-	if isUniqueViolation(err) {
-		// Same batch no. on this product: hand back the existing batch so the
-		// client can offer to add the quantity to it as a restock.
-		existing, getErr := queries.GetBatchByProductAndNo(r.Context(), generated.GetBatchByProductAndNoParams{
-			ProductID: pid,
-			BatchNo:   body.BatchNo,
-		})
-		msg := fmt.Sprintf("Batch %s already exists for this product", body.BatchNo)
-		if getErr != nil {
-			writeError(w, http.StatusConflict, msg)
-			return
-		}
-		writeJSON(w, http.StatusConflict, map[string]any{
-			"error": msg,
-			"code":  "batch_exists",
-			"batch": existing,
-		})
-		return
-	}
 	if err != nil {
 		writeError(w, http.StatusConflict, "batch creation failed: "+err.Error())
 		return

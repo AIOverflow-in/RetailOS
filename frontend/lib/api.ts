@@ -9,13 +9,6 @@ function notifyServiceUnavailable() {
   toast.error(SERVICE_DOWN_MSG, { id: 'service-unavailable', duration: 6000 })
 }
 
-/** Thrown for non-2xx responses; `data` is the parsed error body (e.g. `code`). */
-export class ApiError extends Error {
-  constructor(message: string, public data: Record<string, unknown> | null) {
-    super(message)
-  }
-}
-
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem('token')
@@ -57,7 +50,7 @@ async function request<T>(
   const data = text ? JSON.parse(text) : null
 
   if (!res.ok) {
-    throw new ApiError(data?.error || `Request failed: ${res.status}`, data)
+    throw new Error(data?.error || `Request failed: ${res.status}`)
   }
 
   return data as T
@@ -87,7 +80,8 @@ export const api = {
   getProduct: (id: string) => request<Product>(`/products/${id}`),
   listCompanyNames: () => request<string[]>('/products/companies'),
   createProduct: (data: { name: string; company_name: string; sku?: string; hsn_code?: string }) =>
-    request('/products', { method: 'POST', body: JSON.stringify(data) }),
+    // existing: true when the name + company matched a product already in the catalog
+    request<Product & { existing: boolean }>('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id: string, data: { name: string; company_name: string; sku?: string | null; hsn_code?: string | null }) =>
     request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 

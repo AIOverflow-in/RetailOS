@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Plus,
   Search,
@@ -167,13 +167,24 @@ function MultiSelectFilter<T extends string>({
   )
 }
 
+// useSearchParams needs a Suspense boundary (Next 16).
 export default function InventoryPage() {
+  return (
+    <Suspense fallback={null}>
+      <InventoryContent />
+    </Suspense>
+  )
+}
+
+function InventoryContent() {
+  // ?q= comes from Add Stock's "View batch" link: search for that batch, expired included.
+  const initialQ = useSearchParams().get('q') ?? ''
   const [rows, setRows] = useState<InventoryRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [q, setQ] = useState('')
+  const [q, setQ] = useState(initialQ)
   const [page, setPage] = useState(1)
 
-  const [hideExpired, setHideExpired] = useState(true)
+  const [hideExpired, setHideExpired] = useState(!initialQ)
   const [companyFilter, setCompanyFilter] = useState<Set<string>>(new Set())
   const [boxFilter, setBoxFilter] = useState<Set<string>>(new Set())
   const [distributorFilter, setDistributorFilter] = useState<Set<string>>(new Set())

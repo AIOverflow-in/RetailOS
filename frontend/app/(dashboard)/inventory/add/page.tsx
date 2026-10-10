@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { api, ApiError } from '@/lib/api'
+import { api } from '@/lib/api'
 import { fmtCurrency, fmtDate } from '@/lib/gst'
 import type { Distributor, Product } from '@/types'
 import { useProductSearch } from '@/lib/useProductSearch'
@@ -29,14 +29,24 @@ function LabelWithInfo({ text, tip }: { text: string; tip: string }) {
   )
 }
 
-interface ExistingBatch {
+interface ProductBatch {
   batch_id: string
   batch_no: string
   expiry_date: string
+  created_at: string
   mrp: number
+  buying_price: number
   selling_price: number
   available_stock: number
+  purchase_gst_rate: number | null
+  distributor_id: string | null
+  box_no: string | null
+  purchase_invoice_no: string | null
 }
+
+// Fields carried over from a product's latest batch.
+type Carried = { mrp: string; sellingPrice: string; gst: number | ''; distributorId: string; boxNo: string }
+const NOTHING_CARRIED: Carried = { mrp: '', sellingPrice: '', gst: '', distributorId: '', boxNo: '' }
 
 // useSearchParams needs a Suspense boundary (Next 16).
 export default function AddStockPage() {
@@ -81,7 +91,10 @@ function AddStockForm() {
   const [loading, setLoading] = useState(false)
   const [prefilledFrom, setPrefilledFrom] = useState<string | null>(null)
   const [companies, setCompanies] = useState<string[]>([])
-  const [existingBatch, setExistingBatch] = useState<ExistingBatch | null>(null)
+  const [productBatches, setProductBatches] = useState<ProductBatch[]>([])
+  const [matchedProduct, setMatchedProduct] = useState<Product | null>(null)
+  const carried = useRef<Carried>(NOTHING_CARRIED)
+  const prefillRequest = useRef(0)
 
   useEffect(() => {
     const cached = getCachedDistributors()
@@ -103,21 +116,31 @@ function AddStockForm() {
 
   // Carry over what usually stays the same between purchases. Batch no., expiry,
   // qty, buying price and invoice are always new, so they are never pre-filled.
+  // A field is only replaced if the user hasn't typed over it (empty, or still the
+  // value carried in last time), and a slower response for an earlier product is ignored.
   async function prefillFromLastBatch(productId: string) {
-    const [last] = (await api.listBatches(productId).catch(() => null)) ?? []
-    if (!last) {
-      if (prefilledFrom) {
-        setMrp(''); setSellingPrice(''); setPurchaseGSTRate(''); setDistributorId(''); setBoxNo('')
-      }
-      setPrefilledFrom(null)
-      return
-    }
-    setMrp(String(last.mrp))
-    setSellingPrice(String(last.selling_price))
-    setPurchaseGSTRate(last.purchase_gst_rate != null ? Number(last.purchase_gst_rate) : '')
-    setDistributorId(last.distributor_id ?? '')
-    setBoxNo(last.box_no ?? '')
-    setPrefilledFrom(last.batch_no)
+    const request = ++prefillRequest.current
+    const batches: ProductBatch[] = (await api.listBatches(productId).catch(() => null)) ?? []
+    if (request !== prefillRequest.current) return
+    setProductBatches(batches)
+
+    const last = batches[0]
+    const next: Carried = last ? {
+      mrp: String(last.mrp),
+      sellingPrice: String(last.selling_price),
+      gst: last.purchase_gst_rate != null ? Number(last.purchase_gst_rate) : '',
+      distributorId: last.distributor_id ?? '',
+      boxNo: last.box_no ?? '',
+    } : NOTHING_CARRIED
+    const prev = carried.current
+    const untouched = <T,>(cur: T, old: T) => cur === '' || cur === old
+    setMrp(cur => untouched(cur, prev.mrp) ? next.mrp : cur)
+    setSellingPrice(cur => untouched(cur, prev.sellingPrice) ? next.sellingPrice : cur)
+    setPurchaseGSTRate(cur => untouched(cur, prev.gst) ? next.gst : cur)
+    setDistributorId(cur => untouched(cur, prev.distributorId) ? next.distributorId : cur)
+    setBoxNo(cur => untouched(cur, prev.boxNo) ? next.boxNo : cur)
+    carried.current = next
+    setPrefilledFrom(last?.batch_no ?? null)
   }
 
   function selectProduct(p: Product) {
@@ -126,7 +149,7 @@ function AddStockForm() {
     setSuggestions([])
     setIsNewProduct(false)
     setFocused(false)
-    setExistingBatch(null)
+    setMatchedProduct(null)
     prefillFromLastBatch(p.product_id)
   }
 
@@ -136,16 +159,32 @@ function AddStockForm() {
     setNewProductName(query)
     setSuggestions([])
     setFocused(false)
-    setExistingBatch(null)
+    setProductBatches([])
     if (companies.length === 0) api.listCompanyNames().then(c => setCompanies(c ?? [])).catch(() => {})
   }
 
   function handleInputChange(val: string) {
     setSelectedProduct(null)
     setIsNewProduct(false)
-    setExistingBatch(null)
+    setMatchedProduct(null)
+    setProductBatches([])
+    prefillRequest.current++
     handleQuery(val)
   }
+
+  // Earlier purchases of the batch no. being entered. Same batch no. means the same
+  // physical lot, so its expiry is filled in when the field is still empty.
+  const sameBatchKey = (v: string) => v.trim().toLowerCase()
+  const sameBatch = batchNo.trim()
+    ? productBatches.filter(pb => sameBatchKey(pb.batch_no) === sameBatchKey(batchNo))
+    : []
+  function onBatchNoChange(v: string) {
+    setBatchNo(v)
+    const earlier = v.trim() && productBatches.find(pb => sameBatchKey(pb.batch_no) === sameBatchKey(v))
+    if (earlier && !expiryDate) setExpiryDate(earlier.expiry_date)
+  }
+  const expiryDiffers = sameBatch.length > 0 && !!expiryDate && expiryDate !== sameBatch[0].expiry_date
+  const distributorName = (id: string | null) => distributors.find(d => d.distributor_id === id)?.name
 
   const b = parseFloat(buyingPrice), s = parseFloat(sellingPrice), m = parseFloat(mrp)
   const gstRate = typeof purchaseGSTRate === 'number' ? purchaseGSTRate : 0
@@ -167,7 +206,9 @@ function AddStockForm() {
         const p = await api.createProduct({
           name: newProductName, company_name: newCompanyName,
           sku: newSku || undefined, hsn_code: newHsn || undefined,
-        }) as { product_id: string }
+        })
+        // The name matched a product already in the catalog: confirm before using it.
+        if (p.existing) { setMatchedProduct(p); return }
         productId = p.product_id
       }
       await api.createBatch({
@@ -182,48 +223,11 @@ function AddStockForm() {
       toast.success('Stock added')
       router.push('/inventory')
     } catch (err: unknown) {
-      if (err instanceof ApiError && err.data?.code === 'batch_exists' && err.data.batch) {
-        setExistingBatch(err.data.batch as ExistingBatch)
-      } else {
-        toast.error(err instanceof Error ? err.message : 'Failed to add stock')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Same batch no. already on this product: record the new units as a restock
-  // adjustment, keeping this purchase's invoice / distributor / price in the notes.
-  async function addToExistingBatch() {
-    if (!existingBatch) return
-    const qty = parseInt(purchaseQty)
-    const distributor = distributors.find(d => d.distributor_id === distributorId)?.name
-    const notes = [
-      purchaseInvoiceNo.trim() && `Invoice ${purchaseInvoiceNo.trim()}`,
-      distributor,
-      buyingPrice && `Buying ₹${buyingPrice}`,
-      purchaseGSTRate !== '' && `GST ${purchaseGSTRate}%`,
-    ].filter(Boolean).join(' · ')
-    setLoading(true)
-    try {
-      await api.createStockAdjustment({
-        batch_id: existingBatch.batch_id, qty_change: qty, reason: 'restock', notes: notes || null,
-      })
-      toast.success(`Added ${qty} units to batch ${existingBatch.batch_no}`)
-      router.push('/inventory')
-    } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to add stock')
     } finally {
       setLoading(false)
     }
   }
-
-  const existingExpired = existingBatch ? new Date(existingBatch.expiry_date) <= new Date() : false
-  const keptFields = existingBatch ? [
-    expiryDate && expiryDate !== existingBatch.expiry_date && 'expiry',
-    mrp && parseFloat(mrp) !== Number(existingBatch.mrp) && 'MRP',
-    sellingPrice && parseFloat(sellingPrice) !== Number(existingBatch.selling_price) && 'selling price',
-  ].filter(Boolean) : []
 
   const productReady = selectedProduct || (isNewProduct && newProductName && newCompanyName)
   const inp = "w-full h-10 md:h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
@@ -333,11 +337,11 @@ function AddStockForm() {
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="space-y-1">
                   <LabelWithInfo text="Batch no. *" tip="Manufacturer batch identifier printed on the pack." />
-                  <input className={inp} value={batchNo} onChange={e => { setBatchNo(e.target.value); setExistingBatch(null) }} required />
+                  <input className={inp} value={batchNo} onChange={e => onBatchNoChange(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
                   <LabelWithInfo text="Expiry date *" tip="Expiry date printed on the pack." />
-                  <input type="date" className={inp} value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required />
+                  <input type="date" className={expiryDiffers ? errInp : inp} value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
                   <LabelWithInfo text="Buying price (incl. GST, ₹) *" tip="Per-unit price you paid the distributor, including GST. Enter the figure on the invoice." />
@@ -404,6 +408,42 @@ function AddStockForm() {
                 </div>
               </div>
               {priceError && <p className="text-body-sm text-red-500">{priceError}</p>}
+
+              {sameBatch.length > 0 && (
+                <div className="bg-[#FFF8E6] border border-[#FFE5B4] rounded-lg p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-body-sm font-medium text-[#111]">
+                      Batch <span className="font-mono">{sameBatch[0].batch_no}</span> was already added
+                      {sameBatch.length > 1 ? ` ${sameBatch.length} times` : ''}
+                    </p>
+                    <a
+                      href={`/inventory?q=${encodeURIComponent(batchNo.trim())}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-body-sm text-[#555] underline underline-offset-2 hover:text-[#111]"
+                    >
+                      View batch ↗
+                    </a>
+                  </div>
+                  <ul className="space-y-1">
+                    {sameBatch.map(pb => (
+                      <li key={pb.batch_id} className="text-caption text-[#777]">
+                        {fmtDate(pb.created_at)} · buying {fmtCurrency(Number(pb.buying_price))} · selling {fmtCurrency(Number(pb.selling_price))} · MRP {fmtCurrency(Number(pb.mrp))} · {pb.available_stock} in stock
+                        {pb.purchase_invoice_no && ` · Invoice ${pb.purchase_invoice_no}`}
+                        {distributorName(pb.distributor_id) && ` · ${distributorName(pb.distributor_id)}`}
+                      </li>
+                    ))}
+                  </ul>
+                  {expiryDiffers && (
+                    <p className="text-caption text-red-600">
+                      Expiry differs from the earlier entry ({fmtDate(sameBatch[0].expiry_date)}). The same batch no. normally has the same expiry, so check the batch no. on the pack.
+                    </p>
+                  )}
+                  <p className="text-caption text-[#996600]">
+                    This purchase will be saved as a separate entry. If the earlier entry has a mistake (e.g. wrong quantity), fix it with Edit batch instead.
+                  </p>
+                </div>
+              )}
             </div>
 
           </div>
@@ -429,41 +469,31 @@ function AddStockForm() {
               </div>
             </div>
 
-            {existingBatch ? (
+            {matchedProduct ? (
               <div className="bg-[#FFF8E6] border border-[#FFE5B4] rounded-lg p-4 space-y-3">
                 <div>
-                  <p className="text-body font-medium text-[#111]">
-                    Batch <span className="font-mono">{existingBatch.batch_no}</span> already exists for this product
+                  <p className="text-body font-medium text-[#111]">This product is already in your catalog</p>
+                  <p className="text-body-sm text-[#555] mt-1">
+                    <span className="font-medium">{matchedProduct.name}</span> · {matchedProduct.company_name}
                   </p>
-                  <p className="text-caption text-[#888] mt-0.5">
-                    In stock {existingBatch.available_stock} · Exp {fmtDate(existingBatch.expiry_date)} · MRP {fmtCurrency(Number(existingBatch.mrp))} · Selling {fmtCurrency(Number(existingBatch.selling_price))}
-                  </p>
+                  {(newSku || newHsn) && (
+                    <p className="text-caption text-[#888] mt-1">The SKU / HSN you typed won&apos;t be applied. Use Edit product to change them.</p>
+                  )}
                 </div>
-                {existingExpired && (
-                  <p className="text-caption text-red-600">
-                    This batch has expired, so stock can&apos;t be added to it. Check the batch no. on the pack.
-                  </p>
-                )}
-                {!existingExpired && keptFields.length > 0 && (
-                  <p className="text-caption text-[#996600]">
-                    The {keptFields.join(', ')} you entered differ{keptFields.length === 1 ? 's' : ''} from this batch. The batch keeps its current values. Use Edit batch in Inventory to change them.
-                  </p>
-                )}
                 <div className="flex gap-2">
-                  {!existingExpired && <button
-                    type="button"
-                    onClick={addToExistingBatch}
-                    disabled={loading || !(parseInt(purchaseQty) > 0)}
-                    className="flex-1 h-9 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
-                  >
-                    {loading ? 'Adding…' : `Add ${parseInt(purchaseQty) || 0} units to this batch`}
-                  </button>}
                   <button
                     type="button"
-                    onClick={() => setExistingBatch(null)}
+                    onClick={() => selectProduct(matchedProduct)}
+                    className="flex-1 h-9 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors"
+                  >
+                    Use this product
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMatchedProduct(null)}
                     className="h-9 px-3 text-body text-[#555] border border-[#E5E5E5] rounded-lg bg-white hover:border-[#CCC] transition-colors"
                   >
-                    Cancel
+                    Edit name
                   </button>
                 </div>
               </div>

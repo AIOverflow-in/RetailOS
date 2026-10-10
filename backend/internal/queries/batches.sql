@@ -3,11 +3,6 @@ INSERT INTO batches (product_id, batch_no, expiry_date, mrp, buying_price, selli
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 RETURNING *;
 
--- name: GetBatchByProductAndNo :one
-SELECT b.*, (b.purchase_qty - b.sold_qty) AS available_stock
-FROM batches b
-WHERE b.product_id = $1 AND b.batch_no = $2;
-
 -- name: ListBatchesForProduct :many
 SELECT b.*,
        (b.purchase_qty - b.sold_qty) AS available_stock
@@ -22,7 +17,7 @@ FROM batches b
 WHERE b.product_id = $1
   AND b.expiry_date > CURRENT_DATE
   AND (b.purchase_qty - b.sold_qty) > 0
-ORDER BY b.expiry_date ASC;
+ORDER BY b.expiry_date ASC, b.created_at ASC;
 
 -- name: LockBatchForUpdate :one
 SELECT batch_id, purchase_qty, sold_qty
