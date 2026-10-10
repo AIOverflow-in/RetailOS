@@ -181,12 +181,12 @@ export default function OrderDetailPage() {
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {order.status === 'active' && (
             <AlertDialog>
               <AlertDialogTrigger
                 render={
-                  <button className="h-8 px-3 text-body-sm font-medium border border-amber-300 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors">
+                  <button className="h-10 md:h-8 px-3 text-body-sm font-medium border border-amber-300 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors">
                     Return Order
                   </button>
                 }
@@ -280,7 +280,7 @@ export default function OrderDetailPage() {
         <div className="flex justify-end print:hidden">
           <button
             onClick={() => setAddOpen(v => !v)}
-            className="flex items-center gap-1.5 h-9 px-4 text-body-sm font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="flex items-center gap-1.5 h-10 md:h-9 px-4 text-body-sm font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" /> Add Product
           </button>
@@ -380,7 +380,7 @@ export default function OrderDetailPage() {
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCC] pointer-events-none" />
                         <input
-                          className="h-9 px-3 pl-9 w-56 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999] transition-colors"
+                          className="h-10 md:h-9 px-3 pl-9 w-56 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999] transition-colors"
                           placeholder="Search product…"
                           value={query}
                           onChange={e => handleQuery(e.target.value)}
@@ -412,7 +412,7 @@ export default function OrderDetailPage() {
                       <div className="flex flex-col gap-1">
                         <span className="text-caption text-label">Batch</span>
                         <select
-                          className="h-9 px-3 w-48 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999]"
+                          className="h-10 md:h-9 px-3 w-48 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999]"
                           value={addBatch?.batch_id ?? ''}
                           onChange={e => {
                             const b = addBatches.find(b => b.batch_id === e.target.value)
@@ -435,7 +435,7 @@ export default function OrderDetailPage() {
                           <span className="text-caption text-label">Qty</span>
                           <input
                             type="number" min={1} max={addBatch.available_stock}
-                            className="h-9 px-3 w-16 text-body text-right border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999]"
+                            className="h-10 md:h-9 px-3 w-16 text-body text-right border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999]"
                             value={addQty}
                             onChange={e => setAddQty(Math.max(1, Math.min(addBatch.available_stock, parseInt(e.target.value) || 1)))}
                           />
@@ -444,7 +444,7 @@ export default function OrderDetailPage() {
                           <span className="text-caption text-label">Sale Price</span>
                           <input
                             type="number" min={0} step={0.01}
-                            className="h-9 px-3 w-24 text-body text-right border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999]"
+                            className="h-10 md:h-9 px-3 w-24 text-body text-right border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999]"
                             value={addPrice || ''}
                             onChange={e => setAddPrice(parseFloat(e.target.value) || 0)}
                           />
@@ -452,7 +452,7 @@ export default function OrderDetailPage() {
                         <div className="flex flex-col gap-1">
                           <span className="text-caption text-label">GST</span>
                           <select
-                            className="h-9 px-3 w-20 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999]"
+                            className="h-10 md:h-9 px-3 w-20 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#999]"
                             value={String(addGst)}
                             onChange={e => setAddGst(parseInt(e.target.value) as GSTRate)}
                           >

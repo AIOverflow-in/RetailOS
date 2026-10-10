@@ -1,4 +1,4 @@
-import type { Distributor, DistributorBatchRow, ShopSettings } from '@/types'
+import type { Distributor, DistributorBatchRow, Product, ShopSettings } from '@/types'
 import { toast } from 'sonner'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
@@ -77,8 +77,11 @@ export const api = {
     request<{ products: any[]; total: number; page: number; limit: number }>(
       '/products?q=&limit=200'
     ).then(r => ({ products: r.products ?? [], total: r.total ?? 0 })),
+  getProduct: (id: string) => request<Product>(`/products/${id}`),
+  listCompanyNames: () => request<string[]>('/products/companies'),
   createProduct: (data: { name: string; company_name: string; sku?: string; hsn_code?: string }) =>
-    request('/products', { method: 'POST', body: JSON.stringify(data) }),
+    // existing: true when the name + company matched a product already in the catalog
+    request<Product & { existing: boolean }>('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id: string, data: { name: string; company_name: string; sku?: string | null; hsn_code?: string | null }) =>
     request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 

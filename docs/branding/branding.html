@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SellOS — Brand Identity Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Brand tokens — locked */
+    --sky-50:  #F0F9FF;
+    --sky-100: #E0F2FE;
+    --sky-200: #BAE6FD;
+    --sky-300: #7DD3FC;
+    --sky-400: #38BDF8;
+    --sky-500: #0EA5E9;   /* PRIMARY ACCENT */
+    --sky-600: #0284C7;
+    --sky-700: #0369A1;
+    --sky-800: #075985;
+    --sky-900: #0C4A6E;
+
+    --ink-950: #09090B;   /* PRIMARY INK */
+    --ink-900: #18181B;
+    --ink-800: #27272A;
+    --ink-700: #3F3F46;
+    --ink-600: #52525B;
+    --ink-500: #71717A;
+    --ink-400: #A1A1AA;
+    --ink-300: #D4D4D8;
+    --ink-200: #E4E4E7;
+    --ink-100: #F4F4F5;
+    --ink-50:  #FAFAF9;   /* PAPER */
+
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger:  #EF4444;
+
+    /* Page tokens */
+    --line: var(--ink-200);
+    --muted: var(--ink-500);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: var(--ink-50);
+    color: var(--ink-950);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 1240px; margin: 0 auto; padding: 40px 32px 96px; }
+
+  /* Section frame */
+  section { margin-top: 80px; }
+  section:first-of-type { margin-top: 0; }
+  .kicker {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--sky-600);
+    font-weight: 700;
+  }
+  h1 { font-size: 56px; font-weight: 800; letter-spacing: -0.03em; margin: 12px 0 12px; }
+  h2 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin: 6px 0 16px; }
+  h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; margin: 16px 0 6px; }
+  p { color: var(--ink-600); font-size: 15px; margin: 0 0 12px; }
+  p.lead { color: var(--ink-500); font-size: 17px; max-width: 720px; }
+  code, .mono { font-family: "JetBrains Mono", "SF Mono", Menlo, monospace; font-size: 12.5px; }
+
+  /* Cards */
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .card-body { padding: 24px 28px; }
+  .card-head {
+    padding: 20px 28px 6px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* Grids */
+  .grid { display: grid; gap: 20px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 900px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  }
+
+  /* ─── Cover ────────────────────────────────────────────────── */
+  .cover {
+    background: var(--ink-950);
+    color: #fff;
+    border-radius: 20px;
+    padding: 72px 56px 64px;
+    margin-bottom: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 40px;
+  }
+  @media (max-width: 900px) { .cover { grid-template-columns: 1fr; padding: 48px 28px; } }
+  .cover .kicker { color: var(--sky-400); }
+  .cover h1 { color: #fff; margin: 12px 0 20px; }
+  .cover p { color: var(--ink-400); font-size: 17px; max-width: 480px; }
+  .cover .locked-lockup { display: flex; justify-content: center; }
+
+  /* ─── Colour swatches ─────────────────────────────────────── */
+  .swatch {
+    border-radius: 12px;
+    padding: 24px 20px 16px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 140px;
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .swatch .name { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+  .swatch .hex  { font-family: "JetBrains Mono", monospace; font-size: 12px; opacity: 0.85; }
+  .swatch .role { font-size: 11px; opacity: 0.75; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+  .swatch.lite  { color: var(--ink-950); }
+
+  .scale {
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+    gap: 4px;
+    margin: 12px 0 8px;
+  }
+  .scale > div { padding: 14px 6px 8px; border-radius: 6px; display: flex; flex-direction: column; gap: 2px; }
+  .scale .step { font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 700; }
+  .scale .hex  { font-family: "JetBrains Mono", monospace; font-size: 9.5px; opacity: 0.75; }
+  @media (max-width: 900px) {
+    .scale { grid-template-columns: repeat(6, 1fr); }
+  }
+
+  /* ─── Font comparison ─────────────────────────────────────── */
+  .font-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .font-card .display {
+    padding: 32px 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink-50);
+    border-bottom: 1px solid var(--line);
+    min-height: 160px;
+  }
+  .font-card .display .wm {
+    font-size: 68px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .font-card .display .wm .os { color: var(--sky-500); }
+  .font-card .meta { padding: 16px 20px 20px; }
+  .font-card .name { font-size: 15px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .font-card .desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0 0 8px; }
+  .font-card .verdict {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .verdict.rec  { color: var(--sky-700); background: var(--sky-100); }
+  .verdict.alt  { color: var(--ink-700); background: var(--ink-100); }
+  .verdict.pass { color: var(--ink-500); background: var(--ink-100); }
+
+  /* ─── Logo variations ─────────────────────────────────────── */
+  .variation-stage {
+    padding: 40px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+  .stage-light { background: var(--ink-50); }
+  .stage-dark  { background: var(--ink-950); }
+  .stage-sky   { background: var(--sky-500); }
+
+  /* ─── Don'ts grid ─────────────────────────────────────────── */
+  .dont {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+  }
+  .dont .x {
+    position: absolute;
+    top: 8px; right: 12px;
+    color: var(--danger);
+    font-weight: 700;
+    font-size: 20px;
+  }
+  .dont { position: relative; }
+  .dont p { font-size: 12px; color: var(--muted); margin: 0; }
+
+  /* ─── Application mocks ───────────────────────────────────── */
+  .mock {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .mock-head {
+    padding: 10px 14px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+    background: var(--ink-50);
+    font-weight: 600;
+  }
+  .mock-body { padding: 20px; }
+
+  .navbar-mock {
+    background: var(--ink-950);
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .navbar-mock nav { display: flex; gap: 22px; }
+  .navbar-mock nav a { color: var(--ink-400); font-size: 12px; text-decoration: none; }
+  .navbar-mock .cta {
+    background: var(--sky-500);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .button-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary   { background: var(--sky-500); color: #fff; }
+  .btn-ink       { background: var(--ink-950); color: #fff; }
+  .btn-outline   { background: transparent; color: var(--ink-950); border: 1px solid var(--ink-300); }
+  .btn-ghost     { background: transparent; color: var(--sky-600); }
+  .btn-danger    { background: var(--danger); color: #fff; }
+  .btn-success   { background: var(--success); color: #fff; }
+
+  /* ─── Bill mock ───────────────────────────────────────────── */
+  .bill-mock {
+    background: #fff;
+    padding: 20px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--ink-800);
+    line-height: 1.6;
+    max-width: 300px;
+  }
+  .bill-mock .bill-head { text-align: center; border-bottom: 1px dashed var(--ink-300); padding-bottom: 12px; margin-bottom: 12px; }
+  .bill-mock .bill-head .shop { font-family: "Inter", sans-serif; font-size: 16px; font-weight: 700; color: var(--ink-950); }
+  .bill-mock .bill-head .addr { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .bill-mock .row { display: flex; justify-content: space-between; }
+  .bill-mock .total { border-top: 1px dashed var(--ink-300); margin-top: 8px; padding-top: 8px; font-weight: 700; color: var(--ink-950); }
+  .bill-mock .footer { text-align: center; font-family: "Inter", sans-serif; font-size: 9px; color: var(--muted); margin-top: 12px; }
+
+  /* ─── Tokens block ────────────────────────────────────────── */
+  .tokens {
+    background: var(--ink-950);
+    color: var(--ink-200);
+    border-radius: 10px;
+    padding: 20px 22px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .tokens .k { color: var(--sky-300); }
+  .tokens .c { color: var(--ink-500); }
+  .tokens .v { color: #fff; }
+
+  /* ─── Voice examples ──────────────────────────────────────── */
+  .voice-card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    background: #fff;
+  }
+  .voice-card .tag {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .voice-card .good, .voice-card .bad {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .voice-card .good { background: rgba(16,185,129,0.08); color: var(--ink-900); border-left: 3px solid var(--success); }
+  .voice-card .bad  { background: rgba(239,68,68,0.06);   color: var(--ink-700); border-left: 3px solid var(--danger); text-decoration: line-through; text-decoration-color: rgba(239,68,68,0.4); }
+
+  /* Reusable primary logo SVG */
+  .logo-lg svg  { width: 200px; height: 200px; }
+  .logo-md svg  { width: 96px; height: 96px; }
+  .logo-sm svg  { width: 40px; height: 40px; }
+  .logo-xs svg  { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     COVER
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div>
+    <div class="kicker">SellOS · Brand Identity Guide</div>
+    <h1>The system<br/>your shop runs on.</h1>
+    <p>SellOS is billing, inventory, and GST infrastructure for Indian medical and grocery shops. This document defines how the brand looks, sounds, and shows up everywhere it appears.</p>
+  </div>
+  <div class="locked-lockup">
+    <!-- LOCKED PRIMARY LOGO — B1 Sky Blue -->
+    <svg width="280" height="280" viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg" aria-label="sellOS logo">
+      <rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/>
+      <rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/>
+      <text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk', 'Inter', sans-serif" font-weight="700" font-size="20" letter-spacing="-1">
+        <tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan>
+      </text>
+    </svg>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     01 · FOUNDATION
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="kicker">01 · Foundation</div>
+  <h2>What SellOS stands for</h2>
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="card-body">
+        <h3>Positioning</h3>
+        <p>SellOS is <strong>infrastructure, not a gadget</strong>. It doesn't try to be exciting — it tries to be trustworthy, fast, and out of the way. The shop owner is the hero; SellOS is the utility.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>Personality</h3>
+        <p>Calm, engineered, decisive. Reads more like a well-lit bank ATM than a colourful consumer app. Never chatty, never cute, never patronising.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>Audience</h3>
+        <p>Owners and billing staff of Indian medical + grocery shops. Their CAs. Ages 25–60. English + Hindi comfort. Value <strong>speed and predictability</strong> above novelty.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     02 · LOGO SYSTEM
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="kicker">02 · Logo System</div>
+  <h2>The mark</h2>
+  <p class="lead">The primary mark is a <strong>layered square tile</strong>: an ink front tile carrying the wordmark, with a sky-blue back tile peeking behind it. The word "sellOS" sits inside on a single line — <em>sell</em> in paper white, <em>OS</em> in sky blue.</p>
+
+  <div class="grid grid-2" style="margin-top:24px">
+    <!-- Primary — on light -->
+    <div class="card">
+      <div class="card-head"><h3>Primary — on light</h3></div>
+      <div class="variation-stage stage-light">
+        <svg width="220" height="220" viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+          <rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/>
+          <rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/>
+          <text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk', 'Inter', sans-serif" font-weight="700" font-size="20" letter-spacing="-1">
+            <tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan>
+          </text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Primary — on dark -->
+    <div class="card">
+      <div class="card-head"><h3>Primary — on dark</h3></div>
+      <div class="variation-stage stage-dark">
+        <svg width="220" height="220" viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+          <rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/>
+          <rect x="4" y="4" width="92" height="92" rx="20" fill="#FAFAF9"/>
+          <text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk', 'Inter', sans-serif" font-weight="700" font-size="20" letter-spacing="-1">
+            <tspan fill="#09090B">sell</tspan><tspan fill="#0EA5E9">OS</tspan>
+          </text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sizes / clear space -->
+  <div class="grid grid-2" style="margin-top:20px">
+    <div class="card">
+      <div class="card-head"><h3>Size ladder</h3></div>
+      <div class="card-body" style="display:flex;align-items:flex-end;gap:32px;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <svg width="160" height="160" viewBox="0 0 110 110"><rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/><rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/><text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="20" letter-spacing="-1"><tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan></text></svg>
+          <span class="mono" style="color:var(--muted)">160 · marketing</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <svg width="80" height="80" viewBox="0 0 110 110"><rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/><rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/><text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="20" letter-spacing="-1"><tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan></text></svg>
+          <span class="mono" style="color:var(--muted)">80 · app icon</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <svg width="40" height="40" viewBox="0 0 110 110"><rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/><rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/><text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="20" letter-spacing="-1"><tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan></text></svg>
+          <span class="mono" style="color:var(--muted)">40 · header</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <svg width="16" height="16" viewBox="0 0 110 110"><rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/><rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/></svg>
+          <span class="mono" style="color:var(--muted)">16 · favicon (glyph only)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Clear space</h3></div>
+      <div class="card-body" style="display:flex;justify-content:center;padding:32px;">
+        <svg width="280" height="280" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+          <!-- Clear space guides -->
+          <rect x="30" y="30" width="160" height="160" fill="none" stroke="#38BDF8" stroke-width="1" stroke-dasharray="4 4"/>
+          <!-- Logo -->
+          <g transform="translate(55, 55)">
+            <rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/>
+            <rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/>
+            <text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="20" letter-spacing="-1">
+              <tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan>
+            </text>
+          </g>
+          <!-- Measurement labels -->
+          <text x="110" y="24" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#0284C7">½ tile</text>
+          <text x="205" y="112" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#0284C7">½ tile</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Don'ts -->
+  <h3 style="margin-top:32px">Never do this</h3>
+  <div class="grid grid-4">
+    <div class="dont">
+      <span class="x">×</span>
+      <svg width="90" height="90" viewBox="0 0 110 110">
+        <rect x="14" y="14" width="92" height="92" rx="20" fill="#F59E0B"/>
+        <rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/>
+        <text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="20" letter-spacing="-1"><tspan fill="#FAFAF9">sell</tspan><tspan fill="#F59E0B">OS</tspan></text>
+      </svg>
+      <p>Don't swap the accent colour</p>
+    </div>
+    <div class="dont">
+      <span class="x">×</span>
+      <svg width="120" height="80" viewBox="0 0 220 110">
+        <rect x="14" y="14" width="200" height="82" rx="18" fill="#0EA5E9"/>
+        <rect x="4" y="4" width="200" height="82" rx="18" fill="#09090B"/>
+        <text x="104" y="58" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="34" letter-spacing="-1.4"><tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan></text>
+      </svg>
+      <p>Don't stretch the tile to a rectangle</p>
+    </div>
+    <div class="dont">
+      <span class="x">×</span>
+      <svg width="90" height="90" viewBox="0 0 110 110">
+        <rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/>
+        <text x="50" y="60" text-anchor="middle" font-family="Comic Sans MS, cursive" font-weight="700" font-size="20" letter-spacing="-1"><tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan></text>
+      </svg>
+      <p>Don't substitute the font</p>
+    </div>
+    <div class="dont">
+      <span class="x">×</span>
+      <svg width="90" height="90" viewBox="0 0 110 110">
+        <rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/>
+        <text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="20" letter-spacing="-1"><tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan></text>
+      </svg>
+      <p>Don't remove the back tile</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     03 · FONT EXPLORATION
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="kicker">03 · Font exploration</div>
+  <h2>Which typeface for the wordmark?</h2>
+  <p class="lead">Same layered tile. Same colour system. Same letters. The typeface changes the personality more than any other single decision. Here are seven honest candidates.</p>
+
+  <div class="grid grid-3" style="margin-top:24px">
+
+    <!-- Helvetica -->
+    <div class="font-card">
+      <div class="display">
+        <div class="wm" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">sell<span class="os">OS</span></div>
+      </div>
+      <div class="meta">
+        <div class="name">Helvetica Neue <span class="verdict pass" style="margin-left:6px">PASS</span></div>
+        <p class="desc">Timeless and neutral — famously so. Reads corporate / insurance / airline. On a modern POS the neutrality tips into <em>dated</em>. Also: not free to license commercially outside of macOS.</p>
+      </div>
+    </div>
+
+    <!-- Poppins -->
+    <div class="font-card">
+      <div class="display">
+        <div class="wm" style="font-family: 'Poppins', sans-serif; font-weight: 700;">sell<span class="os">OS</span></div>
+      </div>
+      <div class="meta">
+        <div class="name">Poppins <span class="verdict alt" style="margin-left:6px">ALT</span></div>
+        <p class="desc">Geometric, round, friendly. Enormously popular in Indian design — instantly familiar to your audience. Downside: <em>overexposed</em>. Every Indian SaaS/startup uses it. The 'O' being a perfect circle sits beautifully next to the S, though.</p>
+      </div>
+    </div>
+
+    <!-- Inter -->
+    <div class="font-card">
+      <div class="display">
+        <div class="wm" style="font-family: 'Inter', sans-serif; font-weight: 800;">sell<span class="os">OS</span></div>
+      </div>
+      <div class="meta">
+        <div class="name">Inter <span class="verdict alt" style="margin-left:6px">ALT</span></div>
+        <p class="desc">The modern SaaS default. Extremely legible at every size, huge weight range, free forever. Safe. The tradeoff: it reads generic — you'll look like every other Vercel-adjacent startup.</p>
+      </div>
+    </div>
+
+    <!-- Space Grotesk -->
+    <div class="font-card">
+      <div class="display">
+        <div class="wm" style="font-family: 'Space Grotesk', sans-serif; font-weight: 700;">sell<span class="os">OS</span></div>
+      </div>
+      <div class="meta">
+        <div class="name">Space Grotesk <span class="verdict rec" style="margin-left:6px">RECOMMENDED</span></div>
+        <p class="desc">Geometric with subtle character — the terminals on the lowercase letters give <em>sell</em> personality, while the caps stay confident for <em>OS</em>. Free, well-hinted, and far less used than Poppins/Inter in India. Best fit for a POS that wants to feel modern-infrastructure.</p>
+      </div>
+    </div>
+
+    <!-- Manrope -->
+    <div class="font-card">
+      <div class="display">
+        <div class="wm" style="font-family: 'Manrope', sans-serif; font-weight: 800;">sell<span class="os">OS</span></div>
+      </div>
+      <div class="meta">
+        <div class="name">Manrope <span class="verdict alt" style="margin-left:6px">ALT</span></div>
+        <p class="desc">A softer, friendlier Inter. Slight rounding gives warmth without cutesy. Solid alternative if Space Grotesk feels too editorial for your taste.</p>
+      </div>
+    </div>
+
+    <!-- DM Sans -->
+    <div class="font-card">
+      <div class="display">
+        <div class="wm" style="font-family: 'DM Sans', sans-serif; font-weight: 800;">sell<span class="os">OS</span></div>
+      </div>
+      <div class="meta">
+        <div class="name">DM Sans <span class="verdict pass" style="margin-left:6px">PASS</span></div>
+        <p class="desc">Utilitarian, quiet, easy to read. Great for body text, less exciting for a wordmark — the lowercase letters flatten out at logo size and the 'O' is a plain oval.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Verdict block -->
+  <div class="card" style="margin-top:24px">
+    <div class="card-body">
+      <h3 style="margin-top:0">Verdict — lock Space Grotesk</h3>
+      <p><strong>Space Grotesk 700 for the wordmark.</strong> It gives <em>OS</em> the confident geometric shapes you want (uppercase O and S both sit clean), while the lowercase <em>sell</em> has enough character to not feel corporate-plain. Free on Google Fonts, well-supported everywhere, and not the shade of typography you see on every other Indian SaaS logo.</p>
+      <p><strong>Poppins</strong> is the safe alternate if the team decides Space Grotesk feels too "design-y" and you want maximum familiarity to Indian users. <strong>Inter</strong> is the fallback if the primary font ever fails to load.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     04 · COLOUR SYSTEM
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="kicker">04 · Colour</div>
+  <h2>Palette</h2>
+  <p class="lead">Two primaries do 90% of the work: <strong>ink</strong> for structure, <strong>sky</strong> for action and accent. Neutrals fill the rest of the interface. Semantic colours (success, warning, danger) appear only where they carry meaning.</p>
+
+  <div class="grid grid-2" style="margin-top:24px">
+    <div class="swatch" style="background:#0EA5E9">
+      <div>
+        <div class="name">Sky · Primary Accent</div>
+        <div class="hex">#0EA5E9 · sky-500</div>
+      </div>
+      <div class="role">Buttons · Links · Brand accent · OS wordmark</div>
+    </div>
+    <div class="swatch" style="background:#09090B">
+      <div>
+        <div class="name">Ink · Primary Foreground</div>
+        <div class="hex">#09090B · ink-950</div>
+      </div>
+      <div class="role">Body text · Logo tile · Headings</div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:32px">Sky scale — for tints, hovers, backgrounds</h3>
+  <div class="scale">
+    <div style="background:#F0F9FF;color:#0C4A6E;"><span class="step">50</span><span class="hex">#F0F9FF</span></div>
+    <div style="background:#E0F2FE;color:#0C4A6E;"><span class="step">100</span><span class="hex">#E0F2FE</span></div>
+    <div style="background:#BAE6FD;color:#0C4A6E;"><span class="step">200</span><span class="hex">#BAE6FD</span></div>
+    <div style="background:#7DD3FC;color:#0C4A6E;"><span class="step">300</span><span class="hex">#7DD3FC</span></div>
+    <div style="background:#38BDF8;color:#0C4A6E;"><span class="step">400</span><span class="hex">#38BDF8</span></div>
+    <div style="background:#0EA5E9;color:#fff;"><span class="step">500</span><span class="hex">#0EA5E9</span></div>
+    <div style="background:#0284C7;color:#fff;"><span class="step">600</span><span class="hex">#0284C7</span></div>
+    <div style="background:#0369A1;color:#fff;"><span class="step">700</span><span class="hex">#0369A1</span></div>
+    <div style="background:#075985;color:#fff;"><span class="step">800</span><span class="hex">#075985</span></div>
+    <div style="background:#0C4A6E;color:#fff;"><span class="step">900</span><span class="hex">#0C4A6E</span></div>
+    <div style="background:#082F49;color:#fff;"><span class="step">950</span><span class="hex">#082F49</span></div>
+  </div>
+
+  <h3 style="margin-top:24px">Ink scale — for text, borders, backgrounds</h3>
+  <div class="scale">
+    <div style="background:#FAFAF9;color:#18181B;border:1px solid var(--line);"><span class="step">50</span><span class="hex">#FAFAF9</span></div>
+    <div style="background:#F4F4F5;color:#18181B;"><span class="step">100</span><span class="hex">#F4F4F5</span></div>
+    <div style="background:#E4E4E7;color:#18181B;"><span class="step">200</span><span class="hex">#E4E4E7</span></div>
+    <div style="background:#D4D4D8;color:#18181B;"><span class="step">300</span><span class="hex">#D4D4D8</span></div>
+    <div style="background:#A1A1AA;color:#18181B;"><span class="step">400</span><span class="hex">#A1A1AA</span></div>
+    <div style="background:#71717A;color:#fff;"><span class="step">500</span><span class="hex">#71717A</span></div>
+    <div style="background:#52525B;color:#fff;"><span class="step">600</span><span class="hex">#52525B</span></div>
+    <div style="background:#3F3F46;color:#fff;"><span class="step">700</span><span class="hex">#3F3F46</span></div>
+    <div style="background:#27272A;color:#fff;"><span class="step">800</span><span class="hex">#27272A</span></div>
+    <div style="background:#18181B;color:#fff;"><span class="step">900</span><span class="hex">#18181B</span></div>
+    <div style="background:#09090B;color:#fff;"><span class="step">950</span><span class="hex">#09090B</span></div>
+  </div>
+
+  <h3 style="margin-top:32px">Semantic — use only when the colour carries information</h3>
+  <div class="grid grid-3">
+    <div class="swatch" style="background:#10B981">
+      <div><div class="name">Success</div><div class="hex">#10B981 · emerald-500</div></div>
+      <div class="role">Completed sales · Confirmations · Healthy stock</div>
+    </div>
+    <div class="swatch" style="background:#F59E0B">
+      <div><div class="name">Warning</div><div class="hex">#F59E0B · amber-500</div></div>
+      <div class="role">Near-expiry batches · Low-stock alerts · Non-blocking issues</div>
+    </div>
+    <div class="swatch" style="background:#EF4444">
+      <div><div class="name">Danger</div><div class="hex">#EF4444 · red-500</div></div>
+      <div class="role">Expired stock · Delete confirmations · Out-of-stock</div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:32px">CSS tokens — drop into <code>frontend/app/globals.css</code></h3>
+  <div class="tokens">
+<span class="c">/* SellOS brand tokens */</span>
+<span class="k">:root</span> {
+  <span class="c">/* Primary */</span>
+  --brand-sky:      <span class="v">#0EA5E9</span>;
+  --brand-ink:      <span class="v">#09090B</span>;
+  --brand-paper:    <span class="v">#FAFAF9</span>;
+
+  <span class="c">/* Sky scale */</span>
+  --sky-50:  <span class="v">#F0F9FF</span>;  --sky-100: <span class="v">#E0F2FE</span>;
+  --sky-200: <span class="v">#BAE6FD</span>;  --sky-300: <span class="v">#7DD3FC</span>;
+  --sky-400: <span class="v">#38BDF8</span>;  --sky-500: <span class="v">#0EA5E9</span>;
+  --sky-600: <span class="v">#0284C7</span>;  --sky-700: <span class="v">#0369A1</span>;
+  --sky-800: <span class="v">#075985</span>;  --sky-900: <span class="v">#0C4A6E</span>;
+
+  <span class="c">/* Ink scale (zinc) */</span>
+  --ink-50:  <span class="v">#FAFAF9</span>;  --ink-100: <span class="v">#F4F4F5</span>;
+  --ink-200: <span class="v">#E4E4E7</span>;  --ink-300: <span class="v">#D4D4D8</span>;
+  --ink-400: <span class="v">#A1A1AA</span>;  --ink-500: <span class="v">#71717A</span>;
+  --ink-600: <span class="v">#52525B</span>;  --ink-700: <span class="v">#3F3F46</span>;
+  --ink-800: <span class="v">#27272A</span>;  --ink-900: <span class="v">#18181B</span>;
+  --ink-950: <span class="v">#09090B</span>;
+
+  <span class="c">/* Semantic */</span>
+  --success: <span class="v">#10B981</span>;
+  --warning: <span class="v">#F59E0B</span>;
+  --danger:  <span class="v">#EF4444</span>;
+}
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     05 · PRODUCT TYPOGRAPHY
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="kicker">05 · Typography</div>
+  <h2>Type system inside the product</h2>
+  <p class="lead">One display face, one body face, one monospace. Everything else is size and weight.</p>
+
+  <div class="grid grid-3" style="margin-top:24px">
+    <div class="card">
+      <div class="card-body">
+        <h3 style="font-family:'Space Grotesk', sans-serif; font-size:32px; font-weight:700; letter-spacing:-0.02em; margin-bottom:8px;">Space Grotesk</h3>
+        <p style="font-family:'Space Grotesk';">Display · Headings · Wordmark · Marketing hero</p>
+        <div style="font-family:'Space Grotesk'; font-size:44px; font-weight:700; letter-spacing:-0.02em; margin:12px 0; color:var(--ink-950);">Aa</div>
+        <p class="mono" style="color:var(--muted); font-size:11px;">weights: 400 · 500 · 600 · 700</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3 style="font-family:'Inter', sans-serif; font-size:32px; font-weight:700; letter-spacing:-0.02em; margin-bottom:8px;">Inter</h3>
+        <p style="font-family:'Inter';">Body · UI · Buttons · Tables · Long-form</p>
+        <div style="font-family:'Inter'; font-size:44px; font-weight:700; letter-spacing:-0.02em; margin:12px 0; color:var(--ink-950);">Aa</div>
+        <p class="mono" style="color:var(--muted); font-size:11px;">weights: 400 · 500 · 600 · 700</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3 style="font-family:'JetBrains Mono', monospace; font-size:26px; font-weight:700; margin-bottom:8px;">JetBrains Mono</h3>
+        <p>Numbers · Codes · Batch IDs · Invoice IDs · GSTIN</p>
+        <div style="font-family:'JetBrains Mono'; font-size:38px; font-weight:700; margin:12px 0; color:var(--ink-950);">Aa</div>
+        <p class="mono" style="color:var(--muted); font-size:11px;">weights: 400 · 500 · 600 · 700</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:32px">Type scale</h3>
+  <div class="card">
+    <div class="card-body" style="font-family:'Inter';">
+      <div style="font-family:'Space Grotesk'; font-size:48px; font-weight:700; letter-spacing:-0.03em; color:var(--ink-950); line-height:1.1;">Display · 48/700 · Space Grotesk</div>
+      <div style="font-family:'Space Grotesk'; font-size:32px; font-weight:700; letter-spacing:-0.02em; color:var(--ink-950); line-height:1.2; margin-top:20px;">H1 · 32/700 · Space Grotesk</div>
+      <div style="font-family:'Inter'; font-size:20px; font-weight:600; letter-spacing:-0.01em; color:var(--ink-950); line-height:1.3; margin-top:16px;">H2 · 20/600 · Inter</div>
+      <div style="font-family:'Inter'; font-size:16px; font-weight:600; color:var(--ink-950); margin-top:12px;">H3 · 16/600 · Inter</div>
+      <div style="font-family:'Inter'; font-size:14px; color:var(--ink-700); margin-top:10px; max-width:520px;">Body · 14/400 · Inter · Standard interface text. Long descriptions, table cells, form fields, and everything else that isn't a heading or a number.</div>
+      <div style="font-family:'Inter'; font-size:12px; color:var(--ink-500); margin-top:10px;">Caption · 12/500 · Inter · used for helper text and metadata.</div>
+      <div style="font-family:'JetBrains Mono'; font-size:14px; color:var(--ink-800); margin-top:14px;">INV/0042/25-26 · ₹451.60 · Mono for identifiers &amp; money</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     06 · APPLICATIONS
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="kicker">06 · Applications</div>
+  <h2>The brand in real places</h2>
+
+  <div class="grid grid-2" style="margin-top:24px">
+
+    <!-- Navbar mock -->
+    <div class="mock">
+      <div class="mock-head">Landing navbar</div>
+      <div class="navbar-mock">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <svg width="32" height="32" viewBox="0 0 110 110"><rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/><rect x="4" y="4" width="92" height="92" rx="20" fill="#FAFAF9"/><text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk'" font-weight="700" font-size="20" letter-spacing="-1"><tspan fill="#09090B">sell</tspan><tspan fill="#0EA5E9">OS</tspan></text></svg>
+          <span style="color:#fff;font-weight:700;font-family:'Space Grotesk';letter-spacing:-0.01em;">sellOS</span>
+        </div>
+        <nav>
+          <a>Features</a><a>How it works</a><a>Pricing</a>
+        </nav>
+        <div class="cta">Sign in →</div>
+      </div>
+    </div>
+
+    <!-- Button system -->
+    <div class="mock">
+      <div class="mock-head">Buttons</div>
+      <div class="mock-body">
+        <div class="button-row">
+          <button class="btn btn-primary">Create bill</button>
+          <button class="btn btn-ink">Print receipt</button>
+          <button class="btn btn-outline">Cancel</button>
+          <button class="btn btn-ghost">Learn more</button>
+        </div>
+        <div class="button-row" style="margin-top:12px">
+          <button class="btn btn-success">✓ Order complete</button>
+          <button class="btn btn-danger">Delete batch</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Favicon + app icon row -->
+    <div class="mock">
+      <div class="mock-head">Icons — favicon, app tile, PWA</div>
+      <div class="mock-body" style="display:flex;align-items:flex-end;gap:36px;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div style="background:#fff;padding:4px;border:1px solid var(--line);border-radius:4px;">
+            <svg width="16" height="16" viewBox="0 0 110 110"><rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/><rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/></svg>
+          </div>
+          <span class="mono" style="color:var(--muted);font-size:10px;">16 · favicon</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <svg width="32" height="32" viewBox="0 0 110 110"><rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/><rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/><text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk'" font-weight="700" font-size="20" letter-spacing="-1"><tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan></text></svg>
+          <span class="mono" style="color:var(--muted);font-size:10px;">32 · tab</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <svg width="64" height="64" viewBox="0 0 110 110"><rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/><rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/><text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk'" font-weight="700" font-size="20" letter-spacing="-1"><tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan></text></svg>
+          <span class="mono" style="color:var(--muted);font-size:10px;">64 · PWA</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <svg width="128" height="128" viewBox="0 0 110 110"><rect x="14" y="14" width="92" height="92" rx="20" fill="#0EA5E9"/><rect x="4" y="4" width="92" height="92" rx="20" fill="#09090B"/><text x="50" y="60" text-anchor="middle" font-family="'Space Grotesk'" font-weight="700" font-size="20" letter-spacing="-1"><tspan fill="#FAFAF9">sell</tspan><tspan fill="#0EA5E9">OS</tspan></text></svg>
+          <span class="mono" style="color:var(--muted);font-size:10px;">128 · app store</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Printed receipt mock -->
+    <div class="mock">
+      <div class="mock-head">Printed receipt header</div>
+      <div class="mock-body" style="display:flex;justify-content:center;background:var(--ink-100);padding:24px;">
+        <div class="bill-mock">
+          <div class="bill-head">
+            <div class="shop">Test Medical Store</div>
+            <div class="addr">Shop 4, Main Road · Bangalore 560001<br/>GSTIN: 29AABCT1234A1Z5</div>
+          </div>
+          <div class="row"><span>Amoxicillin 500mg × 10</span><span>₹80.00</span></div>
+          <div class="row"><span>Metformin 500mg × 6</span><span>₹45.00</span></div>
+          <div class="row"><span>Vitamin D3 × 1</span><span>₹126.00</span></div>
+          <div class="row"><span>CGST 6%</span><span>₹15.06</span></div>
+          <div class="row"><span>SGST 6%</span><span>₹15.06</span></div>
+          <div class="row total"><span>Grand total</span><span>₹281.12</span></div>
+          <div class="footer">Powered by sellOS · sellos.in</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     07 · VOICE & TONE
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="kicker">07 · Voice</div>
+  <h2>How SellOS sounds</h2>
+  <p class="lead">Short. Specific. Never patronising. When the user has messed something up, tell them what happened and how to fix it — do not apologise, do not soften, do not personify the software.</p>
+
+  <div class="grid grid-3" style="margin-top:24px">
+    <div class="voice-card">
+      <div class="tag">Marketing headline</div>
+      <div class="good">Bill faster. Track stock. File GST with confidence.</div>
+      <div class="bad">Revolutionary AI-powered next-gen billing solution ✨</div>
+    </div>
+    <div class="voice-card">
+      <div class="tag">Empty state</div>
+      <div class="good">No products yet. Add your first batch to start billing.</div>
+      <div class="bad">Oops! Looks like there's nothing here yet 😅</div>
+    </div>
+    <div class="voice-card">
+      <div class="tag">Error message</div>
+      <div class="good">Selling price cannot exceed MRP (₹80).</div>
+      <div class="bad">Uh-oh — something went wrong. Please try again later!</div>
+    </div>
+    <div class="voice-card">
+      <div class="tag">Success confirmation</div>
+      <div class="good">Bill saved. Order #INV/0042/25-26.</div>
+      <div class="bad">Yayy! You did it! 🎉 Great job!</div>
+    </div>
+    <div class="voice-card">
+      <div class="tag">Warning</div>
+      <div class="good">This batch expires in 12 days.</div>
+      <div class="bad">Hey there! Just a friendly reminder that this batch might be expiring soon-ish...</div>
+    </div>
+    <div class="voice-card">
+      <div class="tag">Confirmation prompt</div>
+      <div class="good">Delete batch B-2245? This restores 40 units of stock.</div>
+      <div class="bad">Are you sure you want to do this? This action cannot be undone!</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     08 · TAGLINES
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="kicker">08 · Taglines</div>
+  <h2>Lines that carry the brand</h2>
+  <p class="lead">One primary, three alternates. Pick one and use it consistently across landing page, App Store description, and social bios.</p>
+
+  <div class="grid grid-2" style="margin-top:24px">
+    <div class="card">
+      <div class="card-body">
+        <div class="kicker">Primary</div>
+        <div style="font-family:'Space Grotesk';font-size:32px;font-weight:700;letter-spacing:-0.02em;color:var(--ink-950);margin:8px 0 6px;">The system your shop runs on.</div>
+        <p style="margin:0">"System" ties to the OS in the name. Ownership sits with the shopkeeper ("your shop"), not the software.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="kicker">Alt · Speed</div>
+        <div style="font-family:'Space Grotesk';font-size:24px;font-weight:700;letter-spacing:-0.02em;color:var(--ink-950);margin:8px 0 6px;">Bill in seconds. File GST without stress.</div>
+        <p style="margin:0">Product-first. Direct benefit. Best for App Store description.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="kicker">Alt · Trust</div>
+        <div style="font-family:'Space Grotesk';font-size:24px;font-weight:700;letter-spacing:-0.02em;color:var(--ink-950);margin:8px 0 6px;">Billing, stock, and GST — one calm place.</div>
+        <p style="margin:0">Emphasises the "no chaos" promise. Best for landing hero if audience skews first-time software buyer.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="kicker">Alt · Craft</div>
+        <div style="font-family:'Space Grotesk';font-size:24px;font-weight:700;letter-spacing:-0.02em;color:var(--ink-950);margin:8px 0 6px;">Built for the way Indian shops actually work.</div>
+        <p style="margin:0">Positions against generic global POS. Best for social bios and partner decks.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="margin-top:80px;padding-top:32px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;">
+  <p style="margin:0;font-family:'Space Grotesk';font-weight:700;color:var(--ink-950);font-size:15px;">sellOS · Brand Identity Guide · v1.0</p>
+  <p style="margin:8px 0 0;">Locked: primary logo (B1 Sky) · Space Grotesk wordmark · Sky #0EA5E9 accent · Ink #09090B foreground.</p>
+</footer>
+
+</div>
+</body>
+</html>

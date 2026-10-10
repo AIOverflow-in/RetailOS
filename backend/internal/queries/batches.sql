@@ -17,7 +17,7 @@ FROM batches b
 WHERE b.product_id = $1
   AND b.expiry_date > CURRENT_DATE
   AND (b.purchase_qty - b.sold_qty) > 0
-ORDER BY b.expiry_date ASC;
+ORDER BY b.expiry_date ASC, b.created_at ASC;
 
 -- name: LockBatchForUpdate :one
 SELECT batch_id, purchase_qty, sold_qty

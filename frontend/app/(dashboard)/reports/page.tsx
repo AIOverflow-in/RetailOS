@@ -44,7 +44,7 @@ export default function ReportsPage() {
   }
 
   const s = report?.summary
-  const dateInput = "h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors"
+  const dateInput = "h-10 md:h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors"
 
   return (
     <div className="space-y-6">
@@ -68,14 +68,14 @@ export default function ReportsPage() {
           <button
             onClick={fetchReport}
             disabled={loading}
-            className="h-8 px-4 text-body-sm font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors"
+            className="h-10 md:h-8 px-4 text-body-sm font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors"
           >
             {loading ? 'Loading…' : 'Generate'}
           </button>
           {report && (
             <button
               onClick={downloadCSV}
-              className="h-8 px-3 text-body-sm border border-[#E5E5E5] rounded-lg text-[#888] hover:text-[#111] hover:border-[#CCCCCC] flex items-center gap-1.5 transition-colors"
+              className="h-10 md:h-8 px-3 text-body-sm border border-[#E5E5E5] rounded-lg text-[#888] hover:text-[#111] hover:border-[#CCCCCC] flex items-center gap-1.5 transition-colors"
             >
               <Download className="w-3.5 h-3.5" /> CSV
             </button>
@@ -85,7 +85,7 @@ export default function ReportsPage() {
 
       {loading ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[1,2,3].map(i => <Skeleton key={i} className="h-20 rounded-lg bg-[#F2F2F2]" />)}
           </div>
           <Skeleton className="h-48 rounded-lg bg-[#F2F2F2]" />

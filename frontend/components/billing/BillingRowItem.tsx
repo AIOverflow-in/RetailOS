@@ -13,6 +13,7 @@ interface Batch {
   batch_no: string
   expiry_date: string
   mrp: number
+  buying_price: number
   selling_price: number
   available_stock: number
   box_no?: string | null
@@ -135,6 +136,14 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
     }
   }
 
+  // A batch no. bought more than once shows as separate entries; tell them apart
+  // by cost, selling price and stock. Unique batch nos. keep the plain label.
+  function batchLabel(b: Batch) {
+    const repeated = batches.filter(x => x.batch_no === b.batch_no).length > 1
+    if (!repeated) return b.batch_no
+    return `${b.batch_no} · cost ${fmtCurrency(Number(b.buying_price))} · sells ${fmtCurrency(Number(b.selling_price))} · ${b.available_stock} left`
+  }
+
   function onPickBatch(batchId: string) {
     const b = batches.find(x => x.batch_id === batchId)
     if (b) updateRow(row.rowId, batchPatch(b))
@@ -230,7 +239,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
             <option value="">Select…</option>
             {batches.map(b => (
               <option key={b.batch_id} value={b.batch_id}>
-                {b.batch_no}
+                {batchLabel(b)}
               </option>
             ))}
           </select>

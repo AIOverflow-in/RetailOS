@@ -81,8 +81,8 @@ export default function BillingTable({ rows, setRows }: Props) {
 
   return (
     <div className="bg-white rounded-lg border border-[#EBEBEB]">
-      <div>
-        <table className="w-full table-fixed">
+      <div className="overflow-x-auto">
+        <table className="w-full table-fixed min-w-215">
           <colgroup>
             <col />
             <col className="w-32" />
@@ -126,7 +126,7 @@ export default function BillingTable({ rows, setRows }: Props) {
         <button
           type="button"
           onClick={addRow}
-          className="inline-flex items-center gap-1.5 h-8 px-3 text-body-sm font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors"
+          className="inline-flex items-center gap-1.5 h-10 md:h-8 px-3 text-body-sm font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors"
         >
           <span aria-hidden>+</span> Add Item
         </button>

@@ -57,6 +57,37 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
+const findProductByNameCompany = `-- name: FindProductByNameCompany :one
+SELECT product_id, name, company_name, sku, hsn_code, created_at FROM products
+WHERE regexp_replace(regexp_replace(regexp_replace(lower(name) COLLATE "C", '(?<=[^[:space:]])\+(?=\+*([[:space:]]|$))', 'p', 'g'), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+      = regexp_replace(regexp_replace(regexp_replace(lower($1::text) COLLATE "C", '(?<=[^[:space:]])\+(?=\+*([[:space:]]|$))', 'p', 'g'), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+  AND regexp_replace(regexp_replace(regexp_replace(lower(company_name) COLLATE "C", '(?<=[^[:space:]])\+(?=\+*([[:space:]]|$))', 'p', 'g'), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+      = regexp_replace(regexp_replace(regexp_replace(lower($2::text) COLLATE "C", '(?<=[^[:space:]])\+(?=\+*([[:space:]]|$))', 'p', 'g'), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+ORDER BY created_at, product_id
+LIMIT 1
+`
+
+type FindProductByNameCompanyParams struct {
+	Name        string `json:"name"`
+	CompanyName string `json:"company_name"`
+}
+
+// Same key as the products_name_company_norm_key index (migration 000011). Oldest
+// first, so a tenant that still has near-duplicates always gets the same product.
+func (q *Queries) FindProductByNameCompany(ctx context.Context, arg FindProductByNameCompanyParams) (Product, error) {
+	row := q.db.QueryRow(ctx, findProductByNameCompany, arg.Name, arg.CompanyName)
+	var i Product
+	err := row.Scan(
+		&i.ProductID,
+		&i.Name,
+		&i.CompanyName,
+		&i.Sku,
+		&i.HsnCode,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getProduct = `-- name: GetProduct :one
 SELECT product_id, name, company_name, sku, hsn_code, created_at FROM products WHERE product_id = $1
 `
@@ -73,6 +104,30 @@ func (q *Queries) GetProduct(ctx context.Context, productID pgtype.UUID) (Produc
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const listCompanyNames = `-- name: ListCompanyNames :many
+SELECT DISTINCT trim(company_name)::text AS company_name FROM products ORDER BY 1
+`
+
+func (q *Queries) ListCompanyNames(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listCompanyNames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var company_name string
+		if err := rows.Scan(&company_name); err != nil {
+			return nil, err
+		}
+		items = append(items, company_name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const searchProducts = `-- name: SearchProducts :many

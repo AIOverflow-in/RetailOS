@@ -22,6 +22,20 @@ WHERE $1::text = ''
 -- name: GetProduct :one
 SELECT * FROM products WHERE product_id = $1;
 
+-- name: FindProductByNameCompany :one
+-- Same key as the products_name_company_norm_key index (migration 000011). Oldest
+-- first, so a tenant that still has near-duplicates always gets the same product.
+SELECT * FROM products
+WHERE regexp_replace(regexp_replace(regexp_replace(lower(name) COLLATE "C", '(?<=[^[:space:]])\+(?=\+*([[:space:]]|$))', 'p', 'g'), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+      = regexp_replace(regexp_replace(regexp_replace(lower(sqlc.arg(name)::text) COLLATE "C", '(?<=[^[:space:]])\+(?=\+*([[:space:]]|$))', 'p', 'g'), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+  AND regexp_replace(regexp_replace(regexp_replace(lower(company_name) COLLATE "C", '(?<=[^[:space:]])\+(?=\+*([[:space:]]|$))', 'p', 'g'), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+      = regexp_replace(regexp_replace(regexp_replace(lower(sqlc.arg(company_name)::text) COLLATE "C", '(?<=[^[:space:]])\+(?=\+*([[:space:]]|$))', 'p', 'g'), '([0-9])[[:punct:]]+([0-9])', '\1d\2', 'g'), '[[:space:][:punct:]]', '', 'g')
+ORDER BY created_at, product_id
+LIMIT 1;
+
+-- name: ListCompanyNames :many
+SELECT DISTINCT trim(company_name)::text AS company_name FROM products ORDER BY 1;
+
 -- name: CreateProduct :one
 INSERT INTO products (name, company_name, sku, hsn_code)
 VALUES ($1, $2, $3, $4)

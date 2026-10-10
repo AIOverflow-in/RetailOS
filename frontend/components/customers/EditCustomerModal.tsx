@@ -16,7 +16,7 @@ interface Props {
 }
 
 const fieldCls =
-  'w-full h-8 px-3 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors'
+  'w-full h-10 md:h-8 px-3 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors'
 
 export default function EditCustomerModal({ customer, open, onOpenChange, onSaved }: Props) {
   const [name, setName] = useState('')
@@ -80,7 +80,7 @@ export default function EditCustomerModal({ customer, open, onOpenChange, onSave
           <button
             type="submit"
             disabled={saving}
-            className="w-full h-8 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
+            className="w-full h-10 md:h-8 text-body font-medium bg-[#111] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors mt-1"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>

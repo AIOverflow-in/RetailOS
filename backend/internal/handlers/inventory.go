@@ -2,14 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -62,6 +65,12 @@ func (h *InventoryHandler) ListProducts(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+// productResponse is a product plus whether CreateProduct matched an existing one.
+type productResponse struct {
+	generated.Product
+	Existing bool `json:"existing"`
+}
+
 func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name        string  `json:"name"`
@@ -73,6 +82,7 @@ func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request)
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+	body.Name, body.CompanyName = strings.TrimSpace(body.Name), strings.TrimSpace(body.CompanyName)
 	if body.Name == "" || body.CompanyName == "" {
 		writeError(w, http.StatusBadRequest, "name and company_name are required")
 		return
@@ -81,17 +91,41 @@ func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request)
 	conn := middleware.ConnFromCtx(r.Context())
 	queries := generated.New(conn)
 
+	// Same name + company already exists → return it, flagged, instead of creating a
+	// duplicate. The client must confirm before using it, since the match ignores
+	// case, spacing and punctuation.
+	find := func() (generated.Product, error) {
+		return queries.FindProductByNameCompany(r.Context(), generated.FindProductByNameCompanyParams{
+			Name:        body.Name,
+			CompanyName: body.CompanyName,
+		})
+	}
+	if existing, err := find(); err == nil {
+		writeJSON(w, http.StatusOK, productResponse{existing, true})
+		return
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		writeError(w, http.StatusInternalServerError, "could not check existing products")
+		return
+	}
+
 	product, err := queries.CreateProduct(r.Context(), generated.CreateProductParams{
 		Name:        body.Name,
 		CompanyName: body.CompanyName,
 		Sku:         body.SKU,
 		HsnCode:     body.HSNCode,
 	})
+	if isUniqueViolation(err) {
+		// Lost a race with an identical create: hand back the winner.
+		if existing, findErr := find(); findErr == nil {
+			writeJSON(w, http.StatusOK, productResponse{existing, true})
+			return
+		}
+	}
 	if err != nil {
 		writeError(w, http.StatusConflict, "product creation failed: "+err.Error())
 		return
 	}
-	writeJSON(w, http.StatusCreated, product)
+	writeJSON(w, http.StatusCreated, productResponse{product, false})
 }
 
 func (h *InventoryHandler) ListBatches(w http.ResponseWriter, r *http.Request) {
@@ -280,6 +314,35 @@ func (h *InventoryHandler) ListInventory(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, rows)
 }
 
+func (h *InventoryHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
+	var pid pgtype.UUID
+	if err := pid.Scan(chi.URLParam(r, "id")); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid product id")
+		return
+	}
+	product, err := generated.New(middleware.ConnFromCtx(r.Context())).GetProduct(r.Context(), pid)
+	if errors.Is(err, pgx.ErrNoRows) {
+		writeError(w, http.StatusNotFound, "product not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not fetch product")
+		return
+	}
+	writeJSON(w, http.StatusOK, product)
+}
+
+// ListCompanyNames returns the distinct company names already in use, so the
+// new-product form can suggest an existing spelling.
+func (h *InventoryHandler) ListCompanyNames(w http.ResponseWriter, r *http.Request) {
+	names, err := generated.New(middleware.ConnFromCtx(r.Context())).ListCompanyNames(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not fetch companies")
+		return
+	}
+	writeJSON(w, http.StatusOK, names)
+}
+
 func (h *InventoryHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	var pid pgtype.UUID
@@ -313,6 +376,10 @@ func (h *InventoryHandler) UpdateProduct(w http.ResponseWriter, r *http.Request)
 		Sku:         body.SKU,
 		HsnCode:     body.HSNCode,
 	})
+	if isUniqueViolation(err) {
+		writeError(w, http.StatusConflict, "A product with this name and company already exists")
+		return
+	}
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "could not update product: "+err.Error())
 		return

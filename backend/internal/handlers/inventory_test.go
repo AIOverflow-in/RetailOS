@@ -333,3 +333,28 @@ func TestListActiveBatches_InvalidProductID(t *testing.T) {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
 	}
 }
+
+func TestCreateProduct_WhitespaceOnlyName(t *testing.T) {
+	handler := &InventoryHandler{pool: nil}
+
+	b, _ := json.Marshal(map[string]string{"name": "   ", "company_name": "Pharma Co"})
+	req := httptest.NewRequest(http.MethodPost, "/products", bytes.NewBuffer(b))
+	w := httptest.NewRecorder()
+	handler.CreateProduct(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+func TestGetProduct_InvalidID(t *testing.T) {
+	handler := &InventoryHandler{pool: nil}
+
+	req := httptest.NewRequest(http.MethodGet, "/products/not-a-uuid", nil)
+	w := httptest.NewRecorder()
+	handler.GetProduct(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}

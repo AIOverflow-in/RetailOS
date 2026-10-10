@@ -1,16 +1,21 @@
 import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 
 const geist = Geist({ subsets: ['latin'] })
 
 const BASE_URL = 'https://sellos.in'
 
+// Set in Vercel (Production only) once the pixel exists in Business Manager.
+// Unset = no script, no tracking.
+const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID
+
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: 'SellOS — GST Billing & Inventory for Indian Medical Shops',
   description:
-    'SellOS is a fast, GST-compliant billing and inventory management system for Indian medical and grocery shops. Generate bills, track stock, and file GST returns — all at ₹10/month.',
+    'SellOS is a fast, GST-compliant billing and inventory management system for Indian medical and grocery shops. Generate bills, track stock, and file GST returns. First month free, then ₹799/month.',
   keywords: [
     'GST billing software India',
     'medical shop billing software',
@@ -32,13 +37,13 @@ export const metadata: Metadata = {
     siteName: 'SellOS',
     title: 'SellOS — GST Billing & Inventory for Indian Medical Shops',
     description:
-      'Fast, GST-compliant billing and inventory for Indian medical and grocery shops. Real-time stock tracking, automatic CGST/SGST/IGST split, CSV export for your CA. Starting at ₹10/month.',
+      'Fast, GST-compliant billing and inventory for Indian medical and grocery shops. Real-time stock tracking, automatic CGST/SGST/IGST split, CSV export for your CA. First month free, then ₹799/month.',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'SellOS' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SellOS — GST Billing & Inventory for Indian Medical Shops',
-    description: 'Fast, GST-compliant billing and inventory for Indian medical shops. Starting at ₹10/month.',
+    description: 'Fast, GST-compliant billing and inventory for Indian medical shops. First month free, then ₹799/month.',
     images: ['/og-image.png'],
   },
   alternates: { canonical: BASE_URL },
@@ -53,7 +58,7 @@ const jsonLd = {
   description: 'GST-compliant billing and inventory management for Indian medical and grocery shops.',
   offers: {
     '@type': 'Offer',
-    price: '10',
+    price: '799',
     priceCurrency: 'INR',
   },
   featureList: [
@@ -77,7 +82,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {META_PIXEL_ID && (
+          <Script id="meta-pixel" strategy="afterInteractive">
+            {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','${META_PIXEL_ID}');fbq('track','PageView');`}
+          </Script>
+        )}
+      </body>
     </html>
   )
 }

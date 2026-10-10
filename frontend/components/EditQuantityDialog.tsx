@@ -115,7 +115,7 @@ export default function EditQuantityDialog({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="h-9 px-5 text-body font-medium bg-[#888] text-white rounded-lg hover:bg-[#666] transition-colors"
+            className="h-10 md:h-9 px-5 text-body font-medium bg-[#888] text-white rounded-lg hover:bg-[#666] transition-colors"
           >
             Close
           </button>
@@ -123,7 +123,7 @@ export default function EditQuantityDialog({
             type="button"
             onClick={submit}
             disabled={submitting}
-            className="h-9 px-5 text-body font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
+            className="h-10 md:h-9 px-5 text-body font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
           >
             {submitting ? 'Updating…' : 'Update Quantity'}
           </button>

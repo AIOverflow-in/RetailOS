@@ -7,7 +7,7 @@ import { api } from '@/lib/api'
 import { setCustomer } from '@/store/cartSlice'
 import type { RootState } from '@/store'
 
-const inputClass = "h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+const inputClass = "h-10 md:h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
 
 export default function CustomerLookup() {
   const dispatch = useDispatch()
