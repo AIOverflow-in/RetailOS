@@ -1,12 +1,35 @@
 import type { Distributor, DistributorBatchRow, Product, ShopSettings } from '@/types'
-import { toast } from 'sonner'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
-const SERVICE_DOWN_MSG = 'Service temporarily unavailable. Please try again in 5 minutes.'
+// A request that gets no answer within this time is abandoned, so the counter is
+// never stuck on a spinner. Bill creation is safe to retry (client_ref), so this
+// errs on the short side.
+const TIMEOUT_MS = 20_000
 
-function notifyServiceUnavailable() {
-  toast.error(SERVICE_DOWN_MSG, { id: 'service-unavailable', duration: 6000 })
+const OFFLINE_MSG = "You're offline. Check the shop's internet connection and try again."
+const TIMEOUT_MSG = 'The server is taking too long to respond. Please try again.'
+const UNREACHABLE_MSG = "Can't reach SellOS right now. Please try again in a minute."
+
+/**
+ * Thrown for every failed request. `kind` says whether the request may never
+ * have reached the server (offline / timeout / unreachable) or the server
+ * answered with an error (http). The page shows `message`; nothing is toasted
+ * here, so each failure is reported once.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public kind: 'offline' | 'timeout' | 'unreachable' | 'http',
+    public status = 0,
+  ) {
+    super(message)
+  }
+}
+
+/** True when the request may or may not have been processed (no reply received). */
+export function isConnectionError(err: unknown): boolean {
+  return err instanceof ApiError && err.kind !== 'http'
 }
 
 function getToken(): string | null {
@@ -27,30 +50,47 @@ async function request<T>(
 
   let res: Response
   try {
-    res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
-  } catch {
-    notifyServiceUnavailable()
-    throw new Error(SERVICE_DOWN_MSG)
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+      signal: options.signal ?? AbortSignal.timeout(TIMEOUT_MS),
+    })
+  } catch (err) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) throw new ApiError(OFFLINE_MSG, 'offline')
+    if (err instanceof DOMException && err.name === 'TimeoutError') throw new ApiError(TIMEOUT_MSG, 'timeout')
+    throw new ApiError(UNREACHABLE_MSG, 'unreachable')
   }
 
   if (res.status === 401 && path !== '/auth/login') {
+    // The bill in progress is kept in localStorage (lib/billDraft) and restored
+    // after logging back in.
     localStorage.removeItem('token')
     localStorage.removeItem('shop_name')
     localStorage.removeItem('schema_name')
     window.location.href = '/login'
-    throw new Error('Unauthorized')
+    throw new ApiError('Your session has expired. Please log in again.', 'http', 401)
   }
 
-  if (res.status === 503 || res.status === 502 || res.status === 504) {
-    notifyServiceUnavailable()
-    throw new Error(SERVICE_DOWN_MSG)
+  if (res.status === 502 || res.status === 503 || res.status === 504) {
+    throw new ApiError(UNREACHABLE_MSG, 'unreachable', res.status)
   }
 
   const text = await res.text()
-  const data = text ? JSON.parse(text) : null
+  let data: any = null
+  try {
+    data = text ? JSON.parse(text) : null
+  } catch {
+    // Not JSON (e.g. an HTML error page from a proxy): never show it raw.
+  }
 
   if (!res.ok) {
-    throw new Error(data?.error || `Request failed: ${res.status}`)
+    const fallback = res.status >= 500
+      ? 'Something went wrong on our side. Please try again.'
+      : `Request failed (${res.status}). Please try again.`
+    throw new ApiError(typeof data?.error === 'string' ? data.error : fallback, 'http', res.status)
+  }
+  if (text && data === null) {
+    throw new ApiError('Got an unexpected reply from the server. Please try again.', 'http', res.status)
   }
 
   return data as T

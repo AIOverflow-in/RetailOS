@@ -31,8 +31,10 @@ export default function CustomerLookup() {
         dispatch(setCustomer({ phone, name: c.name, age: c.age ? String(c.age) : '' }))
         toast.success(`${c.name} — visit #${c.visit_count + 1}`)
       }
-    } catch {
-      // new customer — fine
+    } catch (err) {
+      // "Not found" comes back as an empty answer, so this is a real failure:
+      // say so, or a returning customer would silently be treated as new.
+      toast.error(`Couldn't look up this phone number. ${err instanceof Error ? err.message : ''} You can still type the customer's details.`)
     } finally {
       setLoading(false)
     }

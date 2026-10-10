@@ -39,7 +39,7 @@ func TestCreateProduct_MissingName(t *testing.T) {
 
 	var resp map[string]string
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	if resp["error"] != "name and company_name are required" {
+	if resp["error"] != "Product name and company are required." {
 		t.Errorf("error = %q", resp["error"])
 	}
 }
@@ -128,7 +128,7 @@ func TestCreateBatch_ZeroPurchaseQty(t *testing.T) {
 
 	var resp map[string]string
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	if resp["error"] != "purchase_qty must be greater than 0" {
+	if resp["error"] != "Purchase qty must be at least 1." {
 		t.Errorf("error = %q", resp["error"])
 	}
 }
@@ -153,7 +153,7 @@ func TestCreateBatch_PriceHierarchy_BuyingGteSelling(t *testing.T) {
 
 	var resp map[string]string
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	if resp["error"] != "selling_price must be greater than buying_price" {
+	if resp["error"] != "Selling price must be more than the buying price." {
 		t.Errorf("error = %q", resp["error"])
 	}
 }
@@ -178,7 +178,7 @@ func TestCreateBatch_PriceHierarchy_SellingGteMRP(t *testing.T) {
 
 	var resp map[string]string
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	if resp["error"] != "mrp must be greater than selling_price" {
+	if resp["error"] != "MRP must be more than the selling price." {
 		t.Errorf("error = %q", resp["error"])
 	}
 }
@@ -222,7 +222,7 @@ func TestCreateBatch_PastExpiryDate(t *testing.T) {
 
 	var resp map[string]string
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	if resp["error"] != "expiry_date must be a future date" {
+	if resp["error"] != "Expiry date must be in the future." {
 		t.Errorf("error = %q", resp["error"])
 	}
 }

@@ -176,16 +176,16 @@ func parseDateRange(r *http.Request) (pgtype.Timestamptz, pgtype.Timestamptz, er
 	toStr := r.URL.Query().Get("to")
 
 	if fromStr == "" || toStr == "" {
-		return from, to, fmt.Errorf("from and to query params are required (YYYY-MM-DD)")
+		return from, to, fmt.Errorf("Pick both a start date and an end date.")
 	}
 
 	fromT, err := time.Parse("2006-01-02", fromStr)
 	if err != nil {
-		return from, to, fmt.Errorf("invalid from date format, use YYYY-MM-DD")
+		return from, to, fmt.Errorf("The start date isn't valid.")
 	}
 	toT, err := time.Parse("2006-01-02", toStr)
 	if err != nil {
-		return from, to, fmt.Errorf("invalid to date format, use YYYY-MM-DD")
+		return from, to, fmt.Errorf("The end date isn't valid.")
 	}
 
 	// End of day for 'to'

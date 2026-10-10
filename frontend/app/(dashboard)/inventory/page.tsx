@@ -18,6 +18,7 @@ import { api } from '@/lib/api'
 import type { InventoryRow } from '@/types'
 import { fmtCurrency, fmtDate } from '@/lib/gst'
 import TableSkeleton from '@/components/shared/TableSkeleton'
+import LoadError, { errorMessage } from '@/components/shared/LoadError'
 import Pagination from '@/components/shared/Pagination'
 import EditProductModal from '@/components/inventory/EditProductModal'
 import EditBatchModal from '@/components/inventory/EditBatchModal'
@@ -253,11 +254,15 @@ function InventoryContent() {
     setAdjustOpen(true)
   }
 
+  const [loadError, setLoadError] = useState<string | null>(null)
+
   const fetchInventory = useCallback(() => {
     setLoading(true)
+    setLoadError(null)
     api
       .listInventory()
       .then(d => setRows(d ?? []))
+      .catch(err => setLoadError(errorMessage(err)))
       .finally(() => setLoading(false))
   }, [])
 
@@ -487,6 +492,8 @@ function InventoryContent() {
 
       {loading ? (
         <TableSkeleton cols={10} />
+      ) : loadError ? (
+        <LoadError what="inventory" message={loadError} onRetry={fetchInventory} />
       ) : displayed.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#EBEBEB] py-20 text-center">
           <p className="text-body text-[#AAAAAA]">

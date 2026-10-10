@@ -45,7 +45,7 @@ func TestParseDateRange_MissingFrom(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for missing from")
 	}
-	if err.Error() != "from and to query params are required (YYYY-MM-DD)" {
+	if err.Error() != "Pick both a start date and an end date." {
 		t.Errorf("error = %q", err.Error())
 	}
 }
@@ -75,7 +75,7 @@ func TestParseDateRange_BadFromFormat(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for bad from format")
 	}
-	if err.Error() != "invalid from date format, use YYYY-MM-DD" {
+	if err.Error() != "The start date isn't valid." {
 		t.Errorf("error = %q", err.Error())
 	}
 }
@@ -87,7 +87,7 @@ func TestParseDateRange_BadToFormat(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for bad to format")
 	}
-	if err.Error() != "invalid to date format, use YYYY-MM-DD" {
+	if err.Error() != "The end date isn't valid." {
 		t.Errorf("error = %q", err.Error())
 	}
 }

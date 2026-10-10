@@ -124,8 +124,12 @@ func (h *CustomerHandler) UpdateCustomer(w http.ResponseWriter, r *http.Request)
 		Phone:      body.Phone,
 		Age:        body.Age,
 	})
+	if isUniqueViolation(err) {
+		writeError(w, http.StatusConflict, "Another customer already has this phone number.")
+		return
+	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "could not update customer: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "Could not update the customer. Please try again.", err)
 		return
 	}
 	writeJSON(w, http.StatusOK, customer)

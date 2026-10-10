@@ -353,3 +353,24 @@ func TestGetOrder_InvalidUUID(t *testing.T) {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
 	}
 }
+
+func TestCreateOrder_InvalidClientRef(t *testing.T) {
+	handler := &OrderHandler{pool: nil}
+
+	body := createOrderRequest{
+		Items:     []orderItemRequest{{BatchID: "00000000-0000-0000-0000-000000000001", Qty: 1}},
+		ClientRef: "not-a-uuid",
+	}
+	b, _ := json.Marshal(body)
+	req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewReader(b))
+	claims := &middleware.Claims{TenantID: "test", SchemaName: "test", OrderPrefix: "INV"}
+	req = req.WithContext(context.WithValue(req.Context(), middleware.ClaimsKey, claims))
+
+	w := httptest.NewRecorder()
+	handler.CreateOrder(w, req)
+
+	// Rejected before any DB access, so a malformed ref can never create a bill.
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
