@@ -29,7 +29,7 @@ const features = [
     icon: Package,
     title: 'Batch & Expiry Tracking',
     description:
-      'Add stock with batch numbers, buying price, MRP, and expiry dates. The system warns you about expired and near-expiry batches and prevents overselling automatically.',
+      'Add stock with batch numbers, buying price, MRP, and expiry dates. Restock any product straight from inventory with last prices pre-filled, record repeat purchases of the same batch separately, and never end up with duplicate products. Expired and near-expiry batches are flagged and overselling is blocked automatically.',
   },
   {
     icon: BarChart3,
@@ -82,7 +82,7 @@ const stats = [
   { value: '< 30s', label: 'Average bill creation time' },
   { value: '100%', label: 'GST compliant (CGST/SGST/IGST)' },
   { value: '₹0', label: 'Setup or hidden fees' },
-  { value: 'v1.5', label: 'Latest release — June 2026' },
+  { value: 'v1.6', label: 'Latest release — October 2026' },
 ]
 
 const inventoryRows = [
