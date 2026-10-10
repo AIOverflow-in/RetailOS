@@ -82,7 +82,7 @@ const stats = [
   { value: '< 30s', label: 'Average bill creation time' },
   { value: '100%', label: 'GST compliant (CGST/SGST/IGST)' },
   { value: '₹0', label: 'Setup or hidden fees' },
-  { value: 'v1.6', label: 'Latest release — October 2026' },
+  { value: 'v1.7', label: 'Latest release — October 2026' },
 ]
 
 const inventoryRows = [
