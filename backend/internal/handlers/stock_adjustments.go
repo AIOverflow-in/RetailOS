@@ -78,7 +78,7 @@ func (h *StockAdjustmentHandler) CreateAdjustment(w http.ResponseWriter, r *http
 	// Validate: purchase_qty + qty_change >= sold_qty
 	newPurchaseQty := batch.PurchaseQty + body.QtyChange
 	if newPurchaseQty < batch.SoldQty {
-		writeError(w, http.StatusBadRequest, "adjustment would make available stock negative (sold: "+strconv.Itoa(int(batch.SoldQty))+")")
+		writeError(w, http.StatusBadRequest, "That would leave less stock than the "+strconv.Itoa(int(batch.SoldQty))+" already sold from this batch.")
 		return
 	}
 	if newPurchaseQty < 0 {

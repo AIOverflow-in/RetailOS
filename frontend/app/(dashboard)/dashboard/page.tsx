@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import type { DashboardData } from '@/types'
 import { Skeleton } from '@/components/ui/skeleton'
+import LoadError, { errorMessage } from '@/components/shared/LoadError'
 
 function fmtCurrency(n: number) {
   return '\u20B9' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -13,10 +14,18 @@ function fmtCurrency(n: number) {
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  useEffect(() => {
-    api.getDashboard().then(setData).finally(() => setLoading(false))
+  const load = useCallback(() => {
+    setLoading(true)
+    setLoadError(null)
+    api.getDashboard()
+      .then(setData)
+      .catch(err => setLoadError(errorMessage(err)))
+      .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => { load() }, [load])
 
   if (loading) return (
     <div className="space-y-6">
@@ -24,6 +33,17 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[1,2,3,4].map(i => <Skeleton key={i} className="h-28 rounded-lg bg-[#F2F2F2]" />)}
       </div>
+    </div>
+  )
+
+  // Never show ₹0 / 0 orders for a failed load: they'd look like real numbers.
+  if (loadError) return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-heading-xl font-bold tracking-tight text-[#111]">Dashboard</h1>
+        <p className="text-body text-[#999] mt-0.5">Today's overview</p>
+      </div>
+      <LoadError what="today's overview" message={loadError} onRetry={load} />
     </div>
   )
 

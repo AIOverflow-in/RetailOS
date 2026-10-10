@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Search, Plus, Pencil, Trash2 } from 'lucide-react'
 import { api } from '@/lib/api'
+import LoadError, { errorMessage } from '@/components/shared/LoadError'
 import { toast } from 'sonner'
 import { clearDistributorCache, setCachedDistributors } from '@/lib/distributorCache'
 import type { Distributor, DistributorBatchRow } from '@/types'
@@ -33,13 +34,19 @@ export default function DistributorsPage() {
   // Delete confirmation
   const [deleting, setDeleting] = useState<string | null>(null)
 
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [batchesError, setBatchesError] = useState<string | null>(null)
+  const [batchesReload, setBatchesReload] = useState(0)
+
   const fetchDistributors = useCallback(() => {
     setLoading(true)
+    setLoadError(null)
     api.listDistributors()
       .then(list => {
         setDistributors(list ?? [])
         setCachedDistributors(list ?? [])
       })
+      .catch(err => setLoadError(errorMessage(err)))
       .finally(() => setLoading(false))
   }, [])
 
@@ -48,11 +55,12 @@ export default function DistributorsPage() {
   useEffect(() => {
     if (!selectedId) { setBatches([]); return }
     setBatchesLoading(true)
+    setBatchesError(null)
     api.listBatchesByDistributor(selectedId)
       .then(rows => setBatches(rows ?? []))
-      .catch(() => setBatches([]))
+      .catch(err => { setBatches([]); setBatchesError(errorMessage(err)) })
       .finally(() => setBatchesLoading(false))
-  }, [selectedId])
+  }, [selectedId, batchesReload])
 
   async function handleDelete(d: Distributor) {
     if (!confirm(`Delete "${d.name}"?\n\nCannot delete if batches are linked — reassign them first.\n\nThis cannot be undone.`)) return
@@ -108,6 +116,8 @@ export default function DistributorsPage() {
       {/* Distributors table */}
       {loading ? (
         <TableSkeleton cols={5} />
+      ) : loadError ? (
+        <LoadError what="distributors" message={loadError} onRetry={fetchDistributors} />
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#EBEBEB] py-20 text-center">
           <p className="text-body text-[#AAAAAA]">
@@ -188,6 +198,8 @@ export default function DistributorsPage() {
         {selectedId && (
           batchesLoading ? (
             <TableSkeleton cols={6} />
+          ) : batchesError ? (
+            <LoadError what="this distributor's batches" message={batchesError} onRetry={() => setBatchesReload(n => n + 1)} />
           ) : batches.length === 0 ? (
             <div className="bg-white rounded-lg border border-[#EBEBEB] py-12 text-center">
               <p className="text-body text-[#AAAAAA]">No batches linked to this distributor.</p>

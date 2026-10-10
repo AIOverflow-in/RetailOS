@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { api } from '@/lib/api'
+import LoadError, { errorMessage } from '@/components/shared/LoadError'
 import type { StockAdjustment } from '@/types'
 import { fmtDate } from '@/lib/gst'
 import TableSkeleton from '@/components/shared/TableSkeleton'
@@ -25,13 +26,17 @@ export default function AdjustmentsPage() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
 
+  const [loadError, setLoadError] = useState<string | null>(null)
+
   const load = useCallback(() => {
     setLoading(true)
+    setLoadError(null)
     api.listStockAdjustments(page, PAGE_SIZE)
       .then(d => {
         setAdjustments(d.adjustments ?? [])
         setTotal(d.total)
       })
+      .catch(err => setLoadError(errorMessage(err)))
       .finally(() => setLoading(false))
   }, [page])
 
@@ -58,6 +63,8 @@ export default function AdjustmentsPage() {
 
       {loading ? (
         <TableSkeleton cols={6} />
+      ) : loadError ? (
+        <LoadError what="stock adjustments" message={loadError} onRetry={load} />
       ) : adjustments.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#EBEBEB] py-20 text-center">
           <p className="text-body text-[#AAAAAA]">No stock adjustments yet.</p>

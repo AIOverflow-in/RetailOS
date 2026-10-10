@@ -63,12 +63,13 @@ function AddStockForm() {
 
   const {
     query, suggestions, loading: searching, handleQuery, triggerPreload, setQuery, setSuggestions,
-    allProducts, catalogExceedsCap,
+    allProducts, catalogExceedsCap, error: searchError,
   } = useProductSearch()
   // Offer "add new" only once a search has actually run, so an existing product
   // can't be missed and re-created while results are still loading.
   const serverSearch = allProducts === null || catalogExceedsCap
-  const searchSettled = !searching && !(serverSearch && query.trim().length < 3)
+  // A failed search is not a finished one: never offer "add new" off it.
+  const searchSettled = !searching && !searchError && !(serverSearch && query.trim().length < 3)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isNewProduct, setIsNewProduct] = useState(false)
   const [newProductName, setNewProductName] = useState('')
@@ -302,7 +303,7 @@ function AddStockForm() {
                     ))}
                     {query.trim().length > 0 && !searchSettled && (
                       <p className="px-3 py-2.5 text-body text-[#AAAAAA]">
-                        {searching ? 'Searching…' : 'Type at least 3 letters to search'}
+                        {searching ? 'Searching…' : searchError ? `Search failed: ${searchError} Keep typing to retry.` : 'Type at least 3 letters to search'}
                       </p>
                     )}
                     {query.trim().length > 0 && searchSettled && (

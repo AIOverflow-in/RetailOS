@@ -48,6 +48,9 @@ type createOrderRequest struct {
 	IGSTTotal   float64            `json:"igst_total"`
 	TotalAmount float64            `json:"total_amount"`
 	PaymentMode string             `json:"payment_mode"`
+	// ClientRef identifies one bill attempt. A retry with the same ref (after a
+	// timeout or dropped connection) returns the bill already saved.
+	ClientRef string `json:"client_ref"`
 }
 
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
@@ -75,10 +78,29 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	claims := middleware.ClaimsFromCtx(r.Context())
 	conn := middleware.ConnFromCtx(r.Context())
 
+	var clientRef pgtype.UUID
+	if req.ClientRef != "" {
+		if err := clientRef.Scan(req.ClientRef); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid client_ref")
+			return
+		}
+		// Already saved by an earlier attempt: hand back that bill, don't bill again.
+		existing, err := generated.New(conn).GetOrderByClientRef(r.Context(), clientRef)
+		if err == nil {
+			writeJSON(w, http.StatusOK, existing)
+			return
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			log.Printf("CreateOrder client_ref lookup: %v", err)
+			writeError(w, http.StatusInternalServerError, "Could not save the bill. Please try again.")
+			return
+		}
+	}
+
 	// Begin ACID transaction
 	tx, err := conn.Begin(r.Context())
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "could not start transaction")
+		writeError(w, http.StatusInternalServerError, "Could not save the bill. Please try again.")
 		return
 	}
 	defer tx.Rollback(r.Context()) // no-op if committed
@@ -89,21 +111,22 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	for _, item := range req.Items {
 		var batchID pgtype.UUID
 		if err := batchID.Scan(item.BatchID); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid batch_id: "+item.BatchID)
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("%s: the selected batch is invalid. Re-select the batch and try again.", item.ProductName))
 			return
 		}
 
 		batch, err := q.LockBatchForUpdate(r.Context(), batchID)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "batch not found: "+item.BatchID)
+			log.Printf("CreateOrder lock batch %s: %v", item.BatchID, err)
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("%s: batch %s is no longer available. Re-select the batch and try again.", item.ProductName, item.BatchNo))
 			return
 		}
 
 		available := batch.PurchaseQty - batch.SoldQty
 		if available < item.Qty {
 			writeError(w, http.StatusBadRequest,
-				fmt.Sprintf("insufficient stock for %s: requested %d, available %d",
-					item.ProductName, item.Qty, available))
+				fmt.Sprintf("Not enough stock for %s (batch %s): %d requested, only %d available.",
+					item.ProductName, item.BatchNo, item.Qty, available))
 			return
 		}
 	}
@@ -170,10 +193,25 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		IgstTotal:   numericFromFloat(igstTotal),
 		TotalAmount: numericFromFloat(totalAmount),
 		PaymentMode: req.PaymentMode,
+		ClientRef:   clientRef,
 	})
+	if isUniqueViolation(err) {
+		tx.Rollback(r.Context())
+		// Same bill submitted twice at once: the other request saved it.
+		if clientRef.Valid {
+			if existing, findErr := generated.New(conn).GetOrderByClientRef(r.Context(), clientRef); findErr == nil {
+				writeJSON(w, http.StatusOK, existing)
+				return
+			}
+		}
+		// Otherwise another bill took the same bill number at the same moment.
+		log.Printf("CreateOrder unique violation: %v", err)
+		writeError(w, http.StatusConflict, "Another bill was saved at the same moment. Please press Place Order again.")
+		return
+	}
 	if err != nil {
 		log.Printf("CreateOrder error: %v", err)
-		writeError(w, http.StatusInternalServerError, "could not create order")
+		writeError(w, http.StatusInternalServerError, "Could not save the bill. Please try again.")
 		return
 	}
 
@@ -619,12 +657,12 @@ func (h *OrderHandler) EditOrder(w http.ResponseWriter, r *http.Request) {
 	for _, edit := range req.Edits {
 		var itemID pgtype.UUID
 		if err := itemID.Scan(edit.ItemID); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid item_id: "+edit.ItemID)
+			writeError(w, http.StatusBadRequest, "One of the bill lines is invalid. Reload the order and try again.")
 			return
 		}
 		item, err := txq.GetOrderItemByID(r.Context(), itemID)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "item not found: "+edit.ItemID)
+			writeError(w, http.StatusBadRequest, "One of the bill lines no longer exists. Reload the order and try again.")
 			return
 		}
 		if item.OrderID != order.OrderID {
@@ -719,12 +757,12 @@ func (h *OrderHandler) EditOrder(w http.ResponseWriter, r *http.Request) {
 		}
 		var batchID pgtype.UUID
 		if err := batchID.Scan(add.BatchID); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid batch_id: "+add.BatchID)
+			writeError(w, http.StatusBadRequest, "The selected batch is invalid. Re-select the batch and try again.")
 			return
 		}
 		batch, err := txq.LockBatchForUpdate(r.Context(), batchID)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "batch not found: "+add.BatchID)
+			writeError(w, http.StatusBadRequest, "The selected batch is no longer available. Re-select the batch and try again.")
 			return
 		}
 		available := batch.PurchaseQty - batch.SoldQty
