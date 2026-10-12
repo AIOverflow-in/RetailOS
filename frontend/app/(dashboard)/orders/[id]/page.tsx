@@ -7,14 +7,15 @@ import {
   Pencil, Trash2, Check, X, Plus, Search,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { api } from '@/lib/api'
+import { api, ApiError } from '@/lib/api'
 import { getCachedSettings, setCachedSettings } from '@/lib/settingsCache'
 import type { OrderDetail, ShopSettings, OrderItem, GSTRate } from '@/types'
 import { fmtCurrency, fmtDate, GST_RATES } from '@/lib/gst'
-import { buildBillData, generateBill, sendBillViaWhatsApp } from '@/lib/generateBill'
+import { buildBillData, printBill, sendBillViaWhatsApp } from '@/lib/generateBill'
 import { useProductSearch } from '@/lib/useProductSearch'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip } from '@/components/ui/tooltip'
+import LoadError, { errorMessage } from '@/components/shared/LoadError'
 import EditQuantityDialog from '@/components/EditQuantityDialog'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -36,6 +37,7 @@ export default function OrderDetailPage() {
     typeof window !== 'undefined' ? getCachedSettings() : null,
   )
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [returning, setReturning] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -52,19 +54,41 @@ export default function OrderDetailPage() {
   const [addGst, setAddGst] = useState<GSTRate>(0)
 
   function load() {
-    api.getOrder(id).then(setData).finally(() => setLoading(false))
+    setLoadError(null)
+    api.getOrder(id)
+      .then(setData)
+      .catch(err => {
+        // A missing order is a real answer; anything else is a failed load to retry.
+        if (err instanceof ApiError && (err.status === 404 || err.status === 400)) setData(null)
+        else setLoadError(errorMessage(err))
+      })
+      .finally(() => setLoading(false))
   }
 
   useEffect(() => {
     load()
+    // Settings are only needed for the WhatsApp PDF, which fetches them again if this fails.
     api.getSettings().then(fresh => {
       const prev = getCachedSettings()
       if (!prev || JSON.stringify(prev) !== JSON.stringify(fresh)) {
         setSettings(fresh)
         setCachedSettings(fresh)
       }
-    })
+    }).catch(() => {})
   }, [id])
+
+  async function settingsForWhatsApp(): Promise<ShopSettings | null> {
+    if (settings) return settings
+    try {
+      const fresh = await api.getSettings()
+      setSettings(fresh)
+      setCachedSettings(fresh)
+      return fresh
+    } catch (err) {
+      toast.error(`Couldn't load shop settings for the bill PDF. ${errorMessage(err)}`)
+      return null
+    }
+  }
 
   async function handleReturn() {
     setReturning(true)
@@ -100,8 +124,14 @@ export default function OrderDetailPage() {
     setAddProduct(p)
     setQuery(p.name)
     setSuggestions([])
-    const bs = (await api.listActiveBatches(p.product_id)) ?? []
-    setAddBatches(bs as BatchOption[])
+    let bs: BatchOption[]
+    try {
+      bs = ((await api.listActiveBatches(p.product_id)) ?? []) as BatchOption[]
+    } catch (err) {
+      toast.error(`Couldn't load batches for ${p.name}. ${errorMessage(err)}`)
+      bs = []
+    }
+    setAddBatches(bs)
     if (bs.length === 1) selectAddBatch(bs[0] as BatchOption)
   }
 
@@ -155,6 +185,12 @@ export default function OrderDetailPage() {
       <Skeleton className="h-8 w-48 bg-[#F2F2F2]" />
       <Skeleton className="h-28 w-full rounded-lg bg-[#F2F2F2]" />
       <Skeleton className="h-56 w-full rounded-lg bg-[#F2F2F2]" />
+    </div>
+  )
+
+  if (loadError) return (
+    <div className="max-w-2xl">
+      <LoadError what="this order" message={loadError} onRetry={() => { setLoading(true); load() }} />
     </div>
   )
 
@@ -214,9 +250,10 @@ export default function OrderDetailPage() {
             <Tooltip content="Send bill via WhatsApp">
               <button
                 onClick={async () => {
-                  if (!data || !settings) return
+                  const s = await settingsForWhatsApp()
+                  if (!data || !s) return
                   const shopName = localStorage.getItem('shop_name') ?? ''
-                  await sendBillViaWhatsApp(buildBillData(data, settings, shopName))
+                  await sendBillViaWhatsApp(buildBillData(data, s, shopName))
                 }}
                 className="flex items-center gap-1.5 text-body-sm font-medium border border-[#E0E0E0] rounded-lg px-3 h-8 text-[#555555] hover:bg-[#F5F5F5] hover:border-[#C8C8C8] transition-colors"
               >
@@ -226,11 +263,7 @@ export default function OrderDetailPage() {
           )}
           <Tooltip content="Print bill">
             <button
-              onClick={() => {
-                if (!data || !settings) return
-                const shopName = localStorage.getItem('shop_name') ?? ''
-                generateBill(buildBillData(data, settings, shopName))
-              }}
+              onClick={() => printBill(order.order_id)}
               className="flex items-center gap-1.5 text-body-sm font-medium border border-[#E0E0E0] rounded-lg px-3 h-8 text-[#555555] hover:bg-[#F5F5F5] hover:border-[#C8C8C8] transition-colors"
             >
               <Printer className="w-3.5 h-3.5" /> Print

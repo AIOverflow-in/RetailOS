@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import type { OrderDetail, ShopSettings } from '@/types'
 import type { BillData, BillItem } from '@/components/bill/BillDocument'
 
@@ -58,12 +59,30 @@ async function buildPdfBlob(data: BillData): Promise<Blob> {
   return pdf(<BillDocument data={{ ...data, googleReviewQr }} />).toBlob()
 }
 
-export function generateBill(data: BillData): void {
-  window.open(`/bill/${data.orderId}`, '_blank')
+// Returns false when the browser blocked the new tab (popup blockers can do this
+// when the tab opens a while after the click, e.g. after a slow save), so the
+// caller can offer a "Print bill" button instead.
+export function generateBill(data: Pick<BillData, 'orderId'>): boolean {
+  return window.open(`/bill/${data.orderId}`, '_blank') !== null
+}
+
+/** Opens the print tab, or offers a "Print bill" button if the browser blocked it. */
+export function printBill(orderId: string): void {
+  if (generateBill({ orderId })) return
+  toast('Your browser blocked the print tab.', {
+    action: { label: 'Print bill', onClick: () => generateBill({ orderId }) },
+    duration: 15_000,
+  })
 }
 
 export async function sendBillViaWhatsApp(data: BillData): Promise<void> {
-  const blob = await buildPdfBlob(data)
+  let blob: Blob
+  try {
+    blob = await buildPdfBlob(data)
+  } catch {
+    toast.error("Couldn't prepare the bill PDF for WhatsApp. Please try again.")
+    return
+  }
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

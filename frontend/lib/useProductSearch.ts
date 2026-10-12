@@ -10,6 +10,9 @@ export function useProductSearch() {
   const [loading, setLoading] = useState(false)
   const [allProducts, setAllProducts] = useState<Product[] | null>(null)
   const [catalogExceedsCap, setCatalogExceedsCap] = useState(false)
+  // Set when the server search failed, so callers can say so instead of showing
+  // "no results" (and must not offer to create a new product off a failed search).
+  const [error, setError] = useState<string | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   async function triggerPreload() {
@@ -30,6 +33,7 @@ export function useProductSearch() {
 
   function handleQuery(val: string) {
     setQuery(val)
+    setError(null)
 
     if (searchTimer.current) clearTimeout(searchTimer.current)
 
@@ -59,6 +63,7 @@ export function useProductSearch() {
         setSuggestions(res ?? [])
       } catch (err) {
         setSuggestions([])
+        setError(err instanceof Error ? err.message : 'Search failed. Please try again.')
       } finally {
         setLoading(false)
       }
@@ -75,5 +80,6 @@ export function useProductSearch() {
     setSuggestions,
     allProducts,
     catalogExceedsCap,
+    error,
   }
 }

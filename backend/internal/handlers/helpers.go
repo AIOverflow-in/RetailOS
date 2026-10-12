@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"reflect"
@@ -31,8 +32,24 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 
 // isUniqueViolation reports whether err is a Postgres unique-constraint violation.
 func isUniqueViolation(err error) bool {
+	return pgErrorCode(err) == "23505"
+}
+
+// pgErrorCode returns the Postgres SQLSTATE of err, or "" if it isn't a Postgres error.
+// 23505 unique, 23503 foreign key, 23514 check constraint.
+func pgErrorCode(err error) string {
 	var pgErr *pgconn.PgError
-	return errors.As(err, &pgErr) && pgErr.Code == "23505"
+	if errors.As(err, &pgErr) {
+		return pgErr.Code
+	}
+	return ""
+}
+
+// serverError logs the underlying error for us and sends the shop owner a plain
+// message. Raw database text never reaches the screen.
+func serverError(w http.ResponseWriter, status int, userMsg string, err error) {
+	log.Printf("%s: %v", userMsg, err)
+	writeError(w, status, userMsg)
 }
 
 // numericFromFloat converts a float64 to pgtype.Numeric via string scanning.

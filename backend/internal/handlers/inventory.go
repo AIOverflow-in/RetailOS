@@ -84,7 +84,7 @@ func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request)
 	}
 	body.Name, body.CompanyName = strings.TrimSpace(body.Name), strings.TrimSpace(body.CompanyName)
 	if body.Name == "" || body.CompanyName == "" {
-		writeError(w, http.StatusBadRequest, "name and company_name are required")
+		writeError(w, http.StatusBadRequest, "Product name and company are required.")
 		return
 	}
 
@@ -121,8 +121,12 @@ func (h *InventoryHandler) CreateProduct(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
+	if isUniqueViolation(err) {
+		writeError(w, http.StatusConflict, "Another product already uses this SKU.")
+		return
+	}
 	if err != nil {
-		writeError(w, http.StatusConflict, "product creation failed: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "Could not save the product. Please try again.", err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, productResponse{product, false})
@@ -197,11 +201,11 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 
 	// Mandatory field validation
 	if body.ProductID == "" || body.BatchNo == "" || body.ExpiryDate == "" {
-		writeError(w, http.StatusBadRequest, "product_id, batch_no, and expiry_date are required")
+		writeError(w, http.StatusBadRequest, "Product, batch no. and expiry date are required.")
 		return
 	}
 	if body.PurchaseQty <= 0 {
-		writeError(w, http.StatusBadRequest, "purchase_qty must be greater than 0")
+		writeError(w, http.StatusBadRequest, "Purchase qty must be at least 1.")
 		return
 	}
 
@@ -223,11 +227,11 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 		if landingPrice == nil {
 			field = "buying_price"
 		}
-		writeError(w, http.StatusBadRequest, "selling_price must be greater than "+field)
+		writeError(w, http.StatusBadRequest, "Selling price must be more than the "+strings.Replace(field, "_", " ", 1)+".")
 		return
 	}
 	if body.SellingPrice >= body.MRP {
-		writeError(w, http.StatusBadRequest, "mrp must be greater than selling_price")
+		writeError(w, http.StatusBadRequest, "MRP must be more than the selling price.")
 		return
 	}
 
@@ -238,7 +242,7 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !expiry.After(time.Now()) {
-		writeError(w, http.StatusBadRequest, "expiry_date must be a future date")
+		writeError(w, http.StatusBadRequest, "Expiry date must be in the future.")
 		return
 	}
 
@@ -292,8 +296,12 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 		DistributorID:     distributorID,
 		PurchaseInvoiceNo: body.PurchaseInvoiceNo,
 	})
+	if pgErrorCode(err) == "23514" {
+		writeError(w, http.StatusBadRequest, "Prices don't add up: buying price must be below selling price, and selling price below MRP.")
+		return
+	}
 	if err != nil {
-		writeError(w, http.StatusConflict, "batch creation failed: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "Could not save the stock. Please try again.", err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, batch)
@@ -308,7 +316,7 @@ func (h *InventoryHandler) ListInventory(w http.ResponseWriter, r *http.Request)
 		// Log the actual error for debugging
 		errMsg := fmt.Sprintf("ListInventory error: %v", err)
 		log.Println(errMsg)
-		writeError(w, http.StatusInternalServerError, "could not fetch inventory: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "Could not load inventory. Please try again.", err)
 		return
 	}
 	writeJSON(w, http.StatusOK, rows)
@@ -362,7 +370,7 @@ func (h *InventoryHandler) UpdateProduct(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if body.Name == "" || body.CompanyName == "" {
-		writeError(w, http.StatusBadRequest, "name and company_name are required")
+		writeError(w, http.StatusBadRequest, "Product name and company are required.")
 		return
 	}
 
@@ -377,11 +385,11 @@ func (h *InventoryHandler) UpdateProduct(w http.ResponseWriter, r *http.Request)
 		HsnCode:     body.HSNCode,
 	})
 	if isUniqueViolation(err) {
-		writeError(w, http.StatusConflict, "A product with this name and company already exists")
+		writeError(w, http.StatusConflict, "Another product already has this name and company, or this SKU.")
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "could not update product: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "Could not update the product. Please try again.", err)
 		return
 	}
 	writeJSON(w, http.StatusOK, product)
@@ -429,11 +437,11 @@ func (h *InventoryHandler) UpdateBatch(w http.ResponseWriter, r *http.Request) {
 		if landingPrice == nil {
 			field = "buying_price"
 		}
-		writeError(w, http.StatusBadRequest, "selling_price must be greater than "+field)
+		writeError(w, http.StatusBadRequest, "Selling price must be more than the "+strings.Replace(field, "_", " ", 1)+".")
 		return
 	}
 	if body.SellingPrice >= body.MRP {
-		writeError(w, http.StatusBadRequest, "mrp must be greater than selling_price")
+		writeError(w, http.StatusBadRequest, "MRP must be more than the selling price.")
 		return
 	}
 
@@ -456,7 +464,7 @@ func (h *InventoryHandler) UpdateBatch(w http.ResponseWriter, r *http.Request) {
 
 	// Cannot reduce purchase_qty below what's already been sold
 	if body.PurchaseQty < current.SoldQty {
-		writeError(w, http.StatusBadRequest, "purchase_qty cannot be less than sold_qty ("+strconv.Itoa(int(current.SoldQty))+")")
+		writeError(w, http.StatusBadRequest, "Purchase qty can't be less than the "+strconv.Itoa(int(current.SoldQty))+" already sold from this batch.")
 		return
 	}
 
@@ -497,7 +505,11 @@ func (h *InventoryHandler) UpdateBatch(w http.ResponseWriter, r *http.Request) {
 		PurchaseInvoiceNo: body.PurchaseInvoiceNo,
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "could not update batch: "+err.Error())
+		if pgErrorCode(err) == "23514" {
+			writeError(w, http.StatusBadRequest, "Prices don't add up: buying price must be below selling price, and selling price below MRP.")
+			return
+		}
+		serverError(w, http.StatusInternalServerError, "Could not update the batch. Please try again.", err)
 		return
 	}
 	writeJSON(w, http.StatusOK, batch)

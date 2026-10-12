@@ -59,6 +59,7 @@ type Order struct {
 	PaymentMode   string             `json:"payment_mode"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 	ReturnComment *string            `json:"return_comment"`
+	ClientRef     pgtype.UUID        `json:"client_ref"`
 }
 
 type OrderItem struct {

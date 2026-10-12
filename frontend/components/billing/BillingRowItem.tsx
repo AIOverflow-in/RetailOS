@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import type { GSTRate } from '@/types'
 import { useProductSearch } from '@/lib/useProductSearch'
@@ -34,6 +35,7 @@ const cellSelect =
 
 export default function BillingRowItem({ row, updateRow, removeRow, canRemove }: Props) {
   const [batches, setBatches] = useState<Batch[]>([])
+  const [batchError, setBatchError] = useState(false)
   const [focused, setFocused] = useState(false)
   const [qtyText, setQtyText] = useState<string>(String(row.qty))
   const [salePriceText, setSalePriceText] = useState<string>(
@@ -42,7 +44,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
   const {
     query, suggestions, loading,
     handleQuery, triggerPreload, setQuery, setSuggestions,
-    allProducts, catalogExceedsCap,
+    allProducts, catalogExceedsCap, error: searchError,
   } = useProductSearch()
 
   // Sync local input text with external row changes (e.g., batch prefill)
@@ -50,6 +52,29 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
   useEffect(() => {
     setSalePriceText(row.salePrice ? String(row.salePrice) : '')
   }, [row.salePrice])
+
+  // A row restored from a saved bill draft has a product but no batch list yet.
+  useEffect(() => {
+    if (row.productName) setQuery(row.productName)
+    if (row.productId) loadBatches(row.productId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Returns null when the batch list couldn't be loaded; the batch cell then
+  // offers a retry instead of wrongly saying "Out of stock".
+  async function loadBatches(productId: string): Promise<Batch[] | null> {
+    try {
+      const bs = (await api.listActiveBatches(productId)) ?? []
+      setBatches(bs)
+      setBatchError(false)
+      return bs
+    } catch (err) {
+      setBatches([])
+      setBatchError(true)
+      toast.error(err instanceof Error ? err.message : "Couldn't load batches")
+      return null
+    }
+  }
 
   // When focused and the catalog cache is loaded, seed the dropdown with the
   // top suggestions so the user sees options immediately on click.
@@ -76,6 +101,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
         gstRate: 0,
       })
       setBatches([])
+      setBatchError(false)
     }
     if (val.trim().length === 0 && allProducts && !catalogExceedsCap) {
       setQuery('')
@@ -102,8 +128,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
     setSuggestions([])
     setFocused(false)
 
-    const bs = (await api.listActiveBatches(p.product_id)) ?? []
-    setBatches(bs)
+    const bs = (await loadBatches(p.product_id)) ?? []
 
     const patch: Partial<BillingRow> = {
       productId: p.product_id,
@@ -158,7 +183,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
     : 0
 
   const dropdownOpen =
-    focused && (suggestions.length > 0 || loading || (!allProducts && !catalogExceedsCap))
+    focused && (suggestions.length > 0 || loading || !!searchError || (!allProducts && !catalogExceedsCap))
 
   return (
     <tr className="border-b border-[#F7F7F7] last:border-0 group hover:bg-[#FAFAFA] transition-colors">
@@ -177,6 +202,9 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
             <div className="absolute z-50 top-full left-0 mt-1 w-72 bg-white border border-[#EBEBEB] rounded-lg shadow-xl overflow-hidden">
               {loading && suggestions.length === 0 && (
                 <p className="px-3 py-2 text-body-sm text-label">Searching…</p>
+              )}
+              {searchError && !loading && (
+                <p className="px-3 py-2 text-body-sm text-red-600">Search failed: {searchError} Keep typing to retry.</p>
               )}
               {!loading && suggestions.length === 0 && !allProducts && (
                 <p className="px-3 py-2 text-body-sm text-label">Loading products…</p>
@@ -243,6 +271,14 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
               </option>
             ))}
           </select>
+        ) : row.productId && batchError ? (
+          <button
+            type="button"
+            onClick={() => row.productId && loadBatches(row.productId)}
+            className="text-body-sm font-medium text-[#B45309] underline underline-offset-2"
+          >
+            Couldn&apos;t load · Retry
+          </button>
         ) : row.productId ? (
           <span className="text-body-sm font-medium text-red-600">Out of stock</span>
         ) : (

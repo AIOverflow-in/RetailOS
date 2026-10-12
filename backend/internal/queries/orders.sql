@@ -1,7 +1,10 @@
 -- name: CreateOrder :one
-INSERT INTO orders (order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, payment_mode)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO orders (order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, payment_mode, client_ref)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
+
+-- name: GetOrderByClientRef :one
+SELECT * FROM orders WHERE client_ref = $1;
 
 -- name: CreateOrderItem :one
 INSERT INTO order_items (order_id, batch_id, product_name, batch_no, qty, sale_price, gst_rate, cgst_amount, sgst_amount, igst_amount, line_total)

@@ -27,6 +27,7 @@ var tenantMigrations = []string{
 	"internal/migrations/tenant/000010_add_partial_return.up.sql",
 	"internal/migrations/tenant/000011_unique_product_name_company.up.sql",
 	"internal/migrations/tenant/000012_allow_repeat_batch_no.up.sql",
+	"internal/migrations/tenant/000013_add_order_client_ref.up.sql",
 }
 
 // RunPublicMigrations runs migrations in migrations/public/ against the public schema.

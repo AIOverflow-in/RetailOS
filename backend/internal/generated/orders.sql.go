@@ -73,9 +73,9 @@ func (q *Queries) CountOrdersInFY(ctx context.Context, createdAt pgtype.Timestam
 }
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders (order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, payment_mode)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING order_id, order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, status, created_at, payment_mode, updated_at, return_comment
+INSERT INTO orders (order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, payment_mode, client_ref)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING order_id, order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, status, created_at, payment_mode, updated_at, return_comment, client_ref
 `
 
 type CreateOrderParams struct {
@@ -86,6 +86,7 @@ type CreateOrderParams struct {
 	IgstTotal   pgtype.Numeric `json:"igst_total"`
 	TotalAmount pgtype.Numeric `json:"total_amount"`
 	PaymentMode string         `json:"payment_mode"`
+	ClientRef   pgtype.UUID    `json:"client_ref"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
@@ -97,6 +98,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		arg.IgstTotal,
 		arg.TotalAmount,
 		arg.PaymentMode,
+		arg.ClientRef,
 	)
 	var i Order
 	err := row.Scan(
@@ -112,6 +114,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.PaymentMode,
 		&i.UpdatedAt,
 		&i.ReturnComment,
+		&i.ClientRef,
 	)
 	return i, err
 }
@@ -165,6 +168,31 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 		&i.IgstAmount,
 		&i.LineTotal,
 		&i.ReturnedQty,
+	)
+	return i, err
+}
+
+const getOrderByClientRef = `-- name: GetOrderByClientRef :one
+SELECT order_id, order_number, customer_id, cgst_total, sgst_total, igst_total, total_amount, status, created_at, payment_mode, updated_at, return_comment, client_ref FROM orders WHERE client_ref = $1
+`
+
+func (q *Queries) GetOrderByClientRef(ctx context.Context, clientRef pgtype.UUID) (Order, error) {
+	row := q.db.QueryRow(ctx, getOrderByClientRef, clientRef)
+	var i Order
+	err := row.Scan(
+		&i.OrderID,
+		&i.OrderNumber,
+		&i.CustomerID,
+		&i.CgstTotal,
+		&i.SgstTotal,
+		&i.IgstTotal,
+		&i.TotalAmount,
+		&i.Status,
+		&i.CreatedAt,
+		&i.PaymentMode,
+		&i.UpdatedAt,
+		&i.ReturnComment,
+		&i.ClientRef,
 	)
 	return i, err
 }

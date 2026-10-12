@@ -92,7 +92,7 @@ func (h *SettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 		"UPDATE tenants SET settings = $2::jsonb WHERE tenant_id = $1",
 		tid, string(normalized),
 	); err != nil {
-		writeError(w, http.StatusInternalServerError, "could not update settings: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "Could not save settings. Please try again.", err)
 		return
 	}
 

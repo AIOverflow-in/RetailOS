@@ -28,19 +28,30 @@ export default function ReportsPage() {
     finally { setLoading(false) }
   }
 
-  function downloadCSV() {
+  async function downloadCSV() {
     const url = api.gstReportExportURL(from, to)
     const token = localStorage.getItem('token')
-    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.blob())
-      .then(blob => {
-        const a = document.createElement('a')
-        a.href = URL.createObjectURL(blob)
-        a.download = `gst-report-${from}-to-${to}.csv`
-        a.click()
-        URL.revokeObjectURL(a.href)
-      })
-      .catch(() => toast.error('Export failed'))
+    let res: Response
+    try {
+      res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(30_000) })
+    } catch {
+      toast.error(navigator.onLine
+        ? "Couldn't download the report. Please try again."
+        : "You're offline. Check the shop's internet connection and try again.")
+      return
+    }
+    // An error reply must not be saved as the .csv file.
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      toast.error(typeof body?.error === 'string' ? body.error : "Couldn't download the report. Please try again.")
+      return
+    }
+    const blob = await res.blob()
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `gst-report-${from}-to-${to}.csv`
+    a.click()
+    URL.revokeObjectURL(a.href)
   }
 
   const s = report?.summary

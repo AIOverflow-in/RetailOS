@@ -64,14 +64,18 @@ func (h *AdminHandler) CreateTenant(w http.ResponseWriter, r *http.Request) {
 		Username:       req.Username,
 		HashedPassword: string(hashed),
 	})
+	if isUniqueViolation(err) {
+		writeError(w, http.StatusConflict, "That username is already taken.")
+		return
+	}
 	if err != nil {
-		writeError(w, http.StatusConflict, "username already exists or db error: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "Could not create the shop. Please try again.", err)
 		return
 	}
 
 	// Provision tenant schema + run migrations
 	if err := db.RunTenantMigrations(r.Context(), h.pool, schemaName, h.databaseURL); err != nil {
-		writeError(w, http.StatusInternalServerError, "schema provisioning failed: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "The shop was created but its setup failed. Check the server logs before retrying.", err)
 		return
 	}
 

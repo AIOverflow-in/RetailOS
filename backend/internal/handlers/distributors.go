@@ -57,7 +57,7 @@ func (h *DistributorHandler) CreateDistributor(w http.ResponseWriter, r *http.Re
 		Email:   body.Email,
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "could not create distributor: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "Could not save the distributor. Please try again.", err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, distributor)
@@ -99,7 +99,7 @@ func (h *DistributorHandler) UpdateDistributor(w http.ResponseWriter, r *http.Re
 		IsActive:      body.IsActive,
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "could not update distributor: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "Could not update the distributor. Please try again.", err)
 		return
 	}
 	writeJSON(w, http.StatusOK, distributor)
@@ -122,12 +122,12 @@ func (h *DistributorHandler) DeleteDistributor(w http.ResponseWriter, r *http.Re
 		return
 	}
 	if count > 0 {
-		writeError(w, http.StatusBadRequest, "cannot delete distributor with linked batches — reassign batches first")
+		writeError(w, http.StatusBadRequest, "This distributor is linked to stock batches, so it can't be deleted. Mark it inactive instead, or move those batches to another distributor first.")
 		return
 	}
 
 	if err := queries.DeleteDistributor(r.Context(), did); err != nil {
-		writeError(w, http.StatusInternalServerError, "could not delete distributor: "+err.Error())
+		serverError(w, http.StatusInternalServerError, "Could not delete the distributor. Please try again.", err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

@@ -20,6 +20,9 @@ const cartSlice = createSlice({
     setCustomer(state, action: PayloadAction<{ phone: string; name: string; age: string }>) {
       state.customer = action.payload
     },
+    restoreCart(_state, action: PayloadAction<CartState>) {
+      return action.payload
+    },
     clearCart(state) {
       state.paymentMode = 'cash'
       state.customer = { phone: '', name: '', age: '' }
@@ -28,7 +31,7 @@ const cartSlice = createSlice({
 })
 
 export const {
-  setIsInState, setPaymentMode, setCustomer, clearCart,
+  setIsInState, setPaymentMode, setCustomer, restoreCart, clearCart,
 } = cartSlice.actions
 
 export default cartSlice.reducer

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Search, ArrowUp, ArrowDown, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
+import LoadError from '@/components/shared/LoadError'
 import type { Order } from '@/types'
 import { fmtCurrency, fmtDate } from '@/lib/gst'
 import TableSkeleton from '@/components/shared/TableSkeleton'
@@ -323,16 +324,7 @@ export default function OrdersPage() {
       </div>
 
       {loadError && !loading && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center justify-between">
-          <p className="text-body-sm text-red-600">Couldn’t load orders: {loadError}</p>
-          <button
-            type="button"
-            onClick={() => load()}
-            className="text-body-sm font-medium text-red-700 hover:text-red-900 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
+        <LoadError what="orders" message={loadError} onRetry={() => load()} />
       )}
 
       {loading ? (
