@@ -124,6 +124,14 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 		available := batch.PurchaseQty - batch.SoldQty
 		if available < item.Qty {
+			// A retry that waited on this lock behind its own first attempt: that
+			// attempt has now committed and used the stock, so return its bill.
+			if clientRef.Valid {
+				if existing, findErr := q.GetOrderByClientRef(r.Context(), clientRef); findErr == nil {
+					writeJSON(w, http.StatusOK, existing)
+					return
+				}
+			}
 			writeError(w, http.StatusBadRequest,
 				fmt.Sprintf("Not enough stock for %s (batch %s): %d requested, only %d available.",
 					item.ProductName, item.BatchNo, item.Qty, available))
