@@ -326,7 +326,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
                       tabIndex={-1}
                       onMouseDown={e => { e.preventDefault(); selectProduct(p) }}
                       onMouseMove={() => { if (active !== i) setActive(i) }}
-                      className={`w-full text-left px-3 py-2 transition-colors border-b border-[#F5F5F5] last:border-0 ${i === active ? 'bg-[#F0F0F0]' : ''}`}
+                      className={`w-full text-left px-3 py-2 transition-colors border-b border-[#F5F5F5] last:border-0 ${i === active ? 'bg-sky-100 shadow-[inset_3px_0_0_#0EA5E9]' : ''}`}
                     >
                       <p className="text-body-sm font-medium text-[#111]">{p.name}</p>
                       <p className="text-caption text-[#999]">{p.company_name}</p>

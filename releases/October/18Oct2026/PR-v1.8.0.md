@@ -57,7 +57,7 @@ Billing is the most-used screen in SellOS, and its product search made the count
 ### 3. Full keyboard control
 **Commits:** `3b93c21`, `f15da6a`
 
-- **↓ / ↑** move the highlight through the list. Out-of-stock products are skipped, and the list scrolls to keep the highlight visible.
+- **↓ / ↑** move the highlight through the list. The highlighted product (also under the mouse) is shown in brand sky blue with a bar on the left, so it's easy to see at a glance. Out-of-stock products are skipped, and the list scrolls to keep the highlight visible.
 - **Enter** picks the highlighted product. **Esc** closes the list, and an arrow key or click reopens it.
 - The first in-stock match is highlighted after every keystroke, so typing a few letters and pressing Enter is enough.
 
