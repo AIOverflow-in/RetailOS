@@ -31,7 +31,7 @@ Billing is the most-used screen in SellOS, and its product search made the count
 **Technical Notes:**
 - `lib/productCatalog.ts`: the list is held in memory and in `localStorage` under `sellos:catalog:<schema_name>`. It's fetched page by page (200 per page, 4 pages at a time) and de-duplicated by `product_id`. Names are sorted A–Z, ignoring case and leading spaces.
 - Why not refresh only once a day: out-of-stock products can't be picked in billing. With a once-a-day list, a product restocked during the day would stay unpickable until the next day. So the cached list is always shown instantly, and a background refresh keeps it current.
-- `request()` in `lib/api.ts` marks the list stale after any successful non-GET request, so all change paths are covered in one place.
+- `request()` in `lib/api.ts` marks the list stale after any successful non-GET request, so all change paths are covered in one place. The flag lives in `lib/catalogStale.ts`, so `api.ts` and `productCatalog.ts` don't import each other.
 - A failed refresh keeps the cached list. If there's no list yet and loading fails, search falls back to the server, as before.
 - Switching shops on the same browser can't show another shop's list: the key includes the schema, and an in-flight refresh is discarded if the shop changed.
 
@@ -55,13 +55,16 @@ Billing is the most-used screen in SellOS, and its product search made the count
 ---
 
 ### 3. Full keyboard control
-**Commit:** `3b93c21`
+**Commits:** `3b93c21`, `f15da6a`
 
 - **↓ / ↑** move the highlight through the list. Out-of-stock products are skipped, and the list scrolls to keep the highlight visible.
 - **Enter** picks the highlighted product. **Esc** closes the list, and an arrow key or click reopens it.
 - The first in-stock match is highlighted after every keystroke, so typing a few letters and pressing Enter is enough.
 
 **Why it matters:** At a busy counter, reaching for the mouse for every line item slows billing down. Owners can now search and pick without taking their hands off the keyboard.
+
+**Technical Notes:**
+- The highlight is tracked by `product_id`, not by position. A background refresh can add products above the highlighted one while the dropdown is open, and Enter must never pick a neighbouring product. If the highlighted product leaves the list or goes out of stock, the first pickable match is highlighted instead.
 
 ---
 
@@ -78,6 +81,7 @@ Billing is the most-used screen in SellOS, and its product search made the count
 
 ### New Files
 - `frontend/lib/productCatalog.ts` — shared product list: background loading, `localStorage` cache, staleness and filtering
+- `frontend/lib/catalogStale.ts` — the "product list changed" flag shared by `api.ts` and `productCatalog.ts`
 - `releases/October/18Oct2026/PR-v1.8.0.md` — this file
 
 ### Modified Files (highlights)
@@ -110,6 +114,8 @@ Billing is the most-used screen in SellOS, and its product search made the count
 
 - **Batches still load after a product is picked** (one request per pick). They could be prefetched while a product is highlighted. That's a follow-up.
 - **Long product names wrap** in the dropdown, so only 2–3 long names fit in view at once. A wider dropdown or truncated names would show more.
+- **The whole list is refetched after every saved change, including every bill.** For Sipra that's 4 requests and about 120 KB, which is fine. At around 5,000 products it would be about 25 requests and 800 KB per bill, plus a large `localStorage` write, and it would approach the browser's 5 MB `localStorage` limit (past that, the write fails silently and search falls back to the slower path). Follow-up: update only the stock flags after a bill, or fetch only products changed since the last refresh.
+- **Just after a restock, the dropdown can briefly show the product as Out of stock.** The cached list is shown first, until the background refresh returns. That's normally under a second, and up to the 20s request timeout on a bad connection.
 - **Changes made on another device** (e.g. a product added on a second counter) appear after the next refresh, within 5 minutes or on the next app open. Changes made on the same browser show up right away.
 - The `npm run dev` server was very slow on the development machine (60s+ per page, even after compiling), so testing used `next build` + `next start`. Worth looking into separately.
 
@@ -132,6 +138,7 @@ Billing is the most-used screen in SellOS, and its product search made the count
 
 ### Keyboard
 - [ ] ↓ / ↑ move the highlight, skip Out of stock items, and keep the highlight in view
+- [ ] Highlight a product, then let a background refresh add a product above it (e.g. add one on another device, then wait for the refresh) → the highlight stays on the same product, and Enter picks it
 - [ ] Enter picks the highlighted product and loads its batches
 - [ ] Esc closes the list; ↓ or a click reopens it
 
