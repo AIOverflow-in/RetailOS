@@ -1,4 +1,5 @@
 import type { Distributor, DistributorBatchRow, Product, ShopSettings } from '@/types'
+import { markCatalogStale } from '@/lib/catalogStale'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
@@ -92,6 +93,10 @@ async function request<T>(
   if (text && data === null) {
     throw new ApiError('Got an unexpected reply from the server. Please try again.', 'http', res.status)
   }
+
+  // Any saved change (product, batch, bill, return, adjustment) can change the
+  // product list or its stock flags.
+  if (options.method && options.method !== 'GET') markCatalogStale()
 
   return data as T
 }

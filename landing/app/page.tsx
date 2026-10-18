@@ -23,7 +23,7 @@ const features = [
     icon: ShoppingCart,
     title: 'Lightning-fast Billing',
     description:
-      'Search products by name or company, pick a batch, enter quantity — bill done in under 30 seconds. Auto-calculates CGST, SGST, and IGST on every line item. Full order history with one-click returns that automatically restore stock.',
+      'Your whole product list opens the moment you click, and search filters it instantly as you type. Pick with the arrow keys and Enter, choose a batch, enter quantity — bill done in under 30 seconds. Auto-calculates CGST, SGST, and IGST on every line item. Full order history with one-click returns that automatically restore stock.',
   },
   {
     icon: Package,
@@ -82,7 +82,7 @@ const stats = [
   { value: '< 30s', label: 'Average bill creation time' },
   { value: '100%', label: 'GST compliant (CGST/SGST/IGST)' },
   { value: '₹0', label: 'Setup or hidden fees' },
-  { value: 'v1.7', label: 'Latest release — October 2026' },
+  { value: 'v1.8', label: 'Latest release — October 2026' },
 ]
 
 const inventoryRows = [

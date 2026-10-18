@@ -142,7 +142,7 @@ FROM products p
 WHERE $1::text = ''
    OR p.name ILIKE '%' || $1 || '%'
    OR p.company_name ILIKE '%' || $1 || '%'
-ORDER BY p.name
+ORDER BY p.name, p.product_id -- tie-break keeps paging stable for same-name products
 LIMIT $2 OFFSET $3
 `
 

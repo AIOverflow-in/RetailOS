@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import type { GSTRate } from '@/types'
 import { useProductSearch } from '@/lib/useProductSearch'
+import { filterCatalog } from '@/lib/productCatalog'
 import { GST_RATES, calcLineTotal, fmtCurrency } from '@/lib/gst'
 import type { BillingRow } from './BillingTable'
 
@@ -36,6 +37,7 @@ const cellSelect =
 export default function BillingRowItem({ row, updateRow, removeRow, canRemove }: Props) {
   const [batches, setBatches] = useState<Batch[]>([])
   const [batchError, setBatchError] = useState(false)
+  // Dropdown open: on focus/typing, closed by Esc, picking or leaving the box.
   const [focused, setFocused] = useState(false)
   const [qtyText, setQtyText] = useState<string>(String(row.qty))
   const [salePriceText, setSalePriceText] = useState<string>(
@@ -46,6 +48,67 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
     handleQuery, triggerPreload, setQuery, setSuggestions,
     allProducts, catalogExceedsCap, error: searchError,
   } = useProductSearch()
+
+  // Clicking into a row that already has a product shows the whole list too;
+  // the text is selected, so typing replaces it and filters.
+  const filterText = query === (row.productName ?? '') ? '' : query
+  // Every match from the cached list, A–Z; server results if the list isn't loaded.
+  const matches = useMemo(
+    () => (allProducts ? filterCatalog(allProducts, filterText) : suggestions),
+    [allProducts, filterText, suggestions],
+  )
+  // Rendered in pages of PAGE as the list is scrolled or arrowed through.
+  const PAGE = 20
+  const [visible, setVisible] = useState(PAGE)
+  const listRef = useRef<HTMLDivElement>(null)
+  const pickable = (i: number) => i >= 0 && i < matches.length && matches[i].has_active_stock !== false
+  // The highlight follows the product, not its position: a background refresh can
+  // insert products above it, and Enter must never pick a neighbour. If the
+  // product drops out of the list (or out of stock), the first pickable one is used.
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const active = useMemo(() => {
+    const i = matches.findIndex(p => p.product_id === activeId)
+    return pickable(i) ? i : matches.findIndex(p => p.has_active_stock !== false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matches, activeId])
+  const setActive = (i: number) => setActiveId(matches[i]?.product_id ?? null)
+
+  // New search text: back to the top, first pickable product highlighted. Not on
+  // a background refresh of the list, so browsing isn't thrown back to the top.
+  useEffect(() => {
+    setVisible(PAGE)
+    setActiveId(null)
+    listRef.current?.scrollTo({ top: 0 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterText, suggestions])
+
+  useEffect(() => {
+    listRef.current?.querySelector(`[data-i="${active}"]`)?.scrollIntoView({ block: 'nearest' })
+  }, [active])
+
+  function onProductKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Escape') { setFocused(false); return }
+    if (e.key === 'Enter') {
+      if (focused && pickable(active)) { e.preventDefault(); selectProduct(matches[active]) }
+      return
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+    e.preventDefault()
+    if (!focused) { setFocused(true); return }
+    const step = e.key === 'ArrowDown' ? 1 : -1
+    let i = active + step
+    while (i >= 0 && i < matches.length && !pickable(i)) i += step
+    if (!pickable(i)) return
+    setActive(i)
+    if (i >= visible - 1) setVisible(v => v + PAGE)
+  }
+
+  function onListScroll(e: React.UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget
+    if (el.scrollTop + el.clientHeight > el.scrollHeight - 80 && visible < matches.length) {
+      setVisible(v => v + PAGE)
+    }
+  }
 
   // Sync local input text with external row changes (e.g., batch prefill)
   useEffect(() => { setQtyText(String(row.qty)) }, [row.qty])
@@ -76,15 +139,6 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
     }
   }
 
-  // When focused and the catalog cache is loaded, seed the dropdown with the
-  // top suggestions so the user sees options immediately on click.
-  useEffect(() => {
-    if (!focused) return
-    if (!allProducts || catalogExceedsCap) return
-    if (query.trim().length > 0) return
-    setSuggestions(allProducts.slice(0, 20))
-  }, [focused, allProducts, catalogExceedsCap, query, setSuggestions])
-
   function handleProductInput(val: string) {
     if (row.productId) {
       updateRow(row.rowId, {
@@ -103,11 +157,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       setBatches([])
       setBatchError(false)
     }
-    if (val.trim().length === 0 && allProducts && !catalogExceedsCap) {
-      setQuery('')
-      setSuggestions(allProducts.slice(0, 20))
-      return
-    }
+    setFocused(true)
     handleQuery(val)
   }
 
@@ -182,8 +232,26 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
     ? ((row.mrp - row.salePrice) / row.mrp) * 100
     : 0
 
-  const dropdownOpen =
-    focused && (suggestions.length > 0 || loading || !!searchError || (!allProducts && !catalogExceedsCap))
+  const dropdownOpen = focused
+
+  // The table scrolls sideways, which also clips anything that overflows it
+  // vertically, so the dropdown is fixed to the viewport under the input instead.
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; maxHeight: number } | null>(null)
+  useLayoutEffect(() => {
+    if (!dropdownOpen) return
+    const place = () => {
+      const r = inputRef.current?.getBoundingClientRect()
+      if (r) setDropdownPos({ top: r.bottom + 4, left: r.left, maxHeight: Math.max(120, Math.min(256, window.innerHeight - r.bottom - 16)) })
+    }
+    place()
+    window.addEventListener('scroll', place, true)
+    window.addEventListener('resize', place)
+    return () => {
+      window.removeEventListener('scroll', place, true)
+      window.removeEventListener('resize', place)
+    }
+  }, [dropdownOpen])
 
   return (
     <tr className="border-b border-[#F7F7F7] last:border-0 group hover:bg-[#FAFAFA] transition-colors">
@@ -191,29 +259,41 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       <td className="py-2 px-3 align-middle">
         <div className="relative w-56">
           <input
+            ref={inputRef}
             className={`${cellInput}`}
             placeholder="Search product…"
             value={query}
             onFocus={onProductFocus}
             onBlur={onProductBlur}
+            onKeyDown={onProductKeyDown}
+            onClick={() => setFocused(true)}
             onChange={e => handleProductInput(e.target.value)}
           />
-          {dropdownOpen && (
-            <div className="absolute z-50 top-full left-0 mt-1 w-72 bg-white border border-[#EBEBEB] rounded-lg shadow-xl overflow-hidden">
-              {loading && suggestions.length === 0 && (
+          {dropdownOpen && dropdownPos && (
+            <div
+              style={{ top: dropdownPos.top, left: dropdownPos.left }}
+              className="fixed z-50 w-72 bg-white border border-[#EBEBEB] rounded-lg shadow-xl overflow-hidden"
+            >
+              {loading && matches.length === 0 && (
                 <p className="px-3 py-2 text-body-sm text-label">Searching…</p>
               )}
               {searchError && !loading && (
                 <p className="px-3 py-2 text-body-sm text-red-600">Search failed: {searchError} Keep typing to retry.</p>
               )}
-              {!loading && suggestions.length === 0 && !allProducts && (
+              {!loading && matches.length === 0 && !allProducts && !catalogExceedsCap && (
                 <p className="px-3 py-2 text-body-sm text-label">Loading products…</p>
               )}
-              {!loading && suggestions.length === 0 && allProducts && query.trim().length > 0 && (
+              {!loading && !searchError && matches.length === 0 && catalogExceedsCap && query.trim().length < 3 && (
+                <p className="px-3 py-2 text-body-sm text-label">Type 3 or more letters to search</p>
+              )}
+              {!loading && !searchError && matches.length === 0 && (allProducts || query.trim().length >= 3) && (
                 <p className="px-3 py-2 text-body-sm text-label">No matches</p>
               )}
-              <div className="max-h-64 overflow-y-auto">
-                {suggestions.map(p => {
+              <div style={{ maxHeight: dropdownPos.maxHeight }} className="overflow-y-auto overscroll-contain"
+                ref={listRef}
+                onScroll={onListScroll}
+              >
+                {matches.slice(0, Math.max(visible, active + 1)).map((p, i) => {
                   const outOfStock = p.has_active_stock === false
                   if (outOfStock) {
                     return (
@@ -242,8 +322,11 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
                     <button
                       key={p.product_id}
                       type="button"
+                      data-i={i}
+                      tabIndex={-1}
                       onMouseDown={e => { e.preventDefault(); selectProduct(p) }}
-                      className="w-full text-left px-3 py-2 hover:bg-[#F7F7F7] transition-colors border-b border-[#F5F5F5] last:border-0"
+                      onMouseMove={() => { if (active !== i) setActive(i) }}
+                      className={`w-full text-left px-3 py-2 transition-colors border-b border-[#F5F5F5] last:border-0 ${i === active ? 'bg-[#F0F0F0]' : ''}`}
                     >
                       <p className="text-body-sm font-medium text-[#111]">{p.name}</p>
                       <p className="text-caption text-[#999]">{p.company_name}</p>
