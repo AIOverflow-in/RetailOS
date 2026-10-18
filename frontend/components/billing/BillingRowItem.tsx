@@ -60,15 +60,24 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
   // Rendered in pages of PAGE as the list is scrolled or arrowed through.
   const PAGE = 20
   const [visible, setVisible] = useState(PAGE)
-  const [active, setActive] = useState(-1)
   const listRef = useRef<HTMLDivElement>(null)
   const pickable = (i: number) => i >= 0 && i < matches.length && matches[i].has_active_stock !== false
+  // The highlight follows the product, not its position: a background refresh can
+  // insert products above it, and Enter must never pick a neighbour. If the
+  // product drops out of the list (or out of stock), the first pickable one is used.
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const active = useMemo(() => {
+    const i = matches.findIndex(p => p.product_id === activeId)
+    return pickable(i) ? i : matches.findIndex(p => p.has_active_stock !== false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matches, activeId])
+  const setActive = (i: number) => setActiveId(matches[i]?.product_id ?? null)
 
   // New search text: back to the top, first pickable product highlighted. Not on
   // a background refresh of the list, so browsing isn't thrown back to the top.
   useEffect(() => {
     setVisible(PAGE)
-    setActive(matches.findIndex(p => p.has_active_stock !== false))
+    setActiveId(null)
     listRef.current?.scrollTo({ top: 0 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterText, suggestions])
@@ -284,7 +293,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
                 ref={listRef}
                 onScroll={onListScroll}
               >
-                {matches.slice(0, visible).map((p, i) => {
+                {matches.slice(0, Math.max(visible, active + 1)).map((p, i) => {
                   const outOfStock = p.has_active_stock === false
                   if (outOfStock) {
                     return (

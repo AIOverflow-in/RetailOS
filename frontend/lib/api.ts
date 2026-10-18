@@ -1,5 +1,5 @@
 import type { Distributor, DistributorBatchRow, Product, ShopSettings } from '@/types'
-import { markCatalogStale } from '@/lib/productCatalog'
+import { markCatalogStale } from '@/lib/catalogStale'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 

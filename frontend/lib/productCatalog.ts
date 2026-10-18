@@ -1,11 +1,12 @@
 import { api } from '@/lib/api'
+import { markCatalogStale, takeCatalogStale } from '@/lib/catalogStale'
 import type { Product } from '@/types'
 
 /**
  * The shop's whole product list, shared by every search box. It is kept in
  * localStorage so the dropdown fills instantly on every visit, and refreshed in
  * the background: on first use after a page load, after anything that changes
- * products or stock (see markCatalogStale), and at most every few minutes
+ * products or stock (see lib/catalogStale), and at most every few minutes
  * otherwise. Refreshing matters because "Out of stock" items can't be picked,
  * so a stale list could block billing a product that was just restocked.
  */
@@ -17,7 +18,6 @@ const MAX_AGE_MS = 5 * 60_000
 let products: Product[] | null = null
 let loadedFor: string | null = null // schema the in-memory list belongs to
 let fetchedAt = 0
-let stale = true
 let inflight: Promise<void> | null = null
 const listeners = new Set<() => void>()
 
@@ -33,7 +33,7 @@ export function getCatalog(): Product[] | null {
   if (loadedFor !== s) {
     loadedFor = s
     products = null
-    stale = true
+    markCatalogStale()
     try {
       const raw = localStorage.getItem(storageKey(s))
       if (raw) products = JSON.parse(raw) as Product[]
@@ -47,19 +47,13 @@ export function subscribeCatalog(fn: () => void): () => void {
   return () => { listeners.delete(fn) }
 }
 
-/** Products or stock changed: the next refreshCatalog() call fetches again. */
-export function markCatalogStale() {
-  stale = true
-}
-
 /** Fetches every page in the background unless the list is fresh. Never throws. */
 export function refreshCatalog(): Promise<void> {
   getCatalog()
   if (inflight) return inflight
-  if (!stale && products && Date.now() - fetchedAt < MAX_AGE_MS) return Promise.resolve()
+  if (!takeCatalogStale() && products && Date.now() - fetchedAt < MAX_AGE_MS) return Promise.resolve()
 
   const s = loadedFor
-  stale = false
   inflight = (async () => {
     try {
       const first = await api.searchProductsPaginated('', 1, PAGE_SIZE)
@@ -81,7 +75,7 @@ export function refreshCatalog(): Promise<void> {
       } catch {} // storage full: still works, just not instant next visit
       listeners.forEach(fn => fn())
     } catch {
-      stale = true // keep whatever we had; try again next time
+      markCatalogStale() // keep whatever we had; try again next time
     } finally {
       inflight = null
     }
