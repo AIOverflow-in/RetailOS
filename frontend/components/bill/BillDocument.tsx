@@ -125,7 +125,8 @@ export function buildGSTSlabs(items: BillItem[], isInState: boolean): GSTSlab[] 
     if (!map[item.gstRate]) {
       map[item.gstRate] = { rate: item.gstRate, taxable: 0, cgst: 0, sgst: 0, igst: 0 }
     }
-    map[item.gstRate].taxable += item.salePrice * item.qty
+    // Prices include GST, so the taxable value is the line total minus its tax.
+    map[item.gstRate].taxable += item.lineTotal - item.cgstAmount - item.sgstAmount - item.igstAmount
     if (isInState) {
       map[item.gstRate].cgst += item.cgstAmount
       map[item.gstRate].sgst += item.sgstAmount
