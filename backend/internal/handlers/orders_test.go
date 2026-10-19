@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
+
 	"github.com/retail-os/backend/internal/middleware"
 )
 
@@ -398,5 +400,46 @@ func TestLineAmounts_GSTInclusive(t *testing.T) {
 					total, cgst, sgst, igst, tt.total, tt.cgst, tt.sgst, tt.igst)
 			}
 		})
+	}
+}
+
+func TestValidateBillLine(t *testing.T) {
+	tests := []struct {
+		name    string
+		qty     int32
+		price   float64
+		rate    float64
+		wantErr bool
+	}{
+		{"valid", 2, 112, 12, false},
+		{"above MRP is allowed (MRP not checked)", 1, 200, 18, false},
+		{"zero qty", 0, 112, 12, true},
+		{"negative qty would add stock", -5, 112, 12, true},
+		{"zero price", 1, 0, 12, true},
+		{"negative price", 1, -50, 12, true},
+		{"GST rate not in the slabs", 1, 112, 3, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := validateBillLine("Item", tt.qty, tt.price, tt.rate)
+			if (got != "") != tt.wantErr {
+				t.Errorf("validateBillLine(%d, %v, %v) = %q, wantErr %v", tt.qty, tt.price, tt.rate, got, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestExpiredBatchMessage(t *testing.T) {
+	day := func(offset int) pgtype.Date {
+		return pgtype.Date{Time: todayIST().AddDate(0, 0, offset), Valid: true}
+	}
+	if expiredBatchMessage("Item", "B1", day(1)) != "" {
+		t.Error("batch expiring tomorrow should still be billable")
+	}
+	if expiredBatchMessage("Item", "B1", day(0)) == "" {
+		t.Error("batch expiring today should be refused, like the billing batch list")
+	}
+	if expiredBatchMessage("Item", "B1", day(-30)) == "" {
+		t.Error("expired batch should be refused")
 	}
 }

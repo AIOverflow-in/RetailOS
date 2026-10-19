@@ -140,6 +140,10 @@ export default function OrderDetailPage() {
     setAddPrice(b.selling_price)
     setAddGst((b.purchase_gst_rate as GSTRate) ?? 0)
     setAddQty(1)
+    // A batch saved without a GST rate would otherwise be added silently at 0%.
+    if (b.purchase_gst_rate == null) {
+      toast.warning('This batch has no GST rate saved, so GST is set to 0%. Check the GST % before adding.')
+    }
   }
 
   function resetAdd() {

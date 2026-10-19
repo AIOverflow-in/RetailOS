@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -75,6 +76,13 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for _, item := range req.Items {
+		if msg := validateBillLine(item.ProductName, item.Qty, item.SalePrice, item.GSTRate); msg != "" {
+			writeError(w, http.StatusBadRequest, msg)
+			return
+		}
+	}
+
 	claims := middleware.ClaimsFromCtx(r.Context())
 	conn := middleware.ConnFromCtx(r.Context())
 
@@ -107,23 +115,45 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	q := generated.New(tx)
 
-	// Step 1: Lock batches and validate stock
+	// Step 1: Lock batches and validate stock. The same batch can be on more than
+	// one line, so stock is checked against its total across the bill. Batches
+	// are locked in a fixed order so two bills sharing batches can't deadlock.
+	need := map[string]int32{}
+	lines := map[string]int{}
+	first := map[string]orderItemRequest{}
 	for _, item := range req.Items {
+		if _, seen := first[item.BatchID]; !seen {
+			first[item.BatchID] = item
+		}
+		need[item.BatchID] += item.Qty
+		lines[item.BatchID]++
+	}
+	batchIDs := make([]string, 0, len(need))
+	for id := range need {
+		batchIDs = append(batchIDs, id)
+	}
+	sort.Strings(batchIDs)
+	for _, id := range batchIDs {
+		item, qty := first[id], need[id]
 		var batchID pgtype.UUID
-		if err := batchID.Scan(item.BatchID); err != nil {
+		if err := batchID.Scan(id); err != nil {
 			writeError(w, http.StatusBadRequest, fmt.Sprintf("%s: the selected batch is invalid. Re-select the batch and try again.", item.ProductName))
 			return
 		}
 
 		batch, err := q.LockBatchForUpdate(r.Context(), batchID)
 		if err != nil {
-			log.Printf("CreateOrder lock batch %s: %v", item.BatchID, err)
+			log.Printf("CreateOrder lock batch %s: %v", id, err)
 			writeError(w, http.StatusBadRequest, fmt.Sprintf("%s: batch %s is no longer available. Re-select the batch and try again.", item.ProductName, item.BatchNo))
+			return
+		}
+		if msg := expiredBatchMessage(item.ProductName, item.BatchNo, batch.ExpiryDate); msg != "" {
+			writeError(w, http.StatusBadRequest, msg)
 			return
 		}
 
 		available := batch.PurchaseQty - batch.SoldQty
-		if available < item.Qty {
+		if available < qty {
 			// A retry that waited on this lock behind its own first attempt: that
 			// attempt has now committed and used the stock, so return its bill.
 			if clientRef.Valid {
@@ -132,9 +162,13 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+			onLines := ""
+			if lines[id] > 1 {
+				onLines = fmt.Sprintf(" across %d lines", lines[id])
+			}
 			writeError(w, http.StatusBadRequest,
-				fmt.Sprintf("Not enough stock for %s (batch %s): %d requested, only %d available.",
-					item.ProductName, item.BatchNo, item.Qty, available))
+				fmt.Sprintf("Not enough stock for %s (batch %s): %d requested%s, only %d available.",
+					item.ProductName, item.BatchNo, qty, onLines, available))
 			return
 		}
 	}
@@ -728,8 +762,8 @@ func (h *OrderHandler) EditOrder(w http.ResponseWriter, r *http.Request) {
 
 	// Process additions.
 	for _, add := range req.Additions {
-		if add.Qty <= 0 {
-			writeError(w, http.StatusBadRequest, "addition qty must be > 0")
+		if msg := validateBillLine(add.ProductName, add.Qty, add.SalePrice, add.GSTRate); msg != "" {
+			writeError(w, http.StatusBadRequest, msg)
 			return
 		}
 		var batchID pgtype.UUID
@@ -742,11 +776,15 @@ func (h *OrderHandler) EditOrder(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "The selected batch is no longer available. Re-select the batch and try again.")
 			return
 		}
+		if msg := expiredBatchMessage(add.ProductName, add.BatchNo, batch.ExpiryDate); msg != "" {
+			writeError(w, http.StatusBadRequest, msg)
+			return
+		}
 		available := batch.PurchaseQty - batch.SoldQty
 		if available < add.Qty {
 			writeError(w, http.StatusBadRequest,
-				fmt.Sprintf("insufficient stock for %s: requested %d, available %d",
-					add.ProductName, add.Qty, available))
+				fmt.Sprintf("Not enough stock for %s (batch %s): %d requested, only %d available.",
+					add.ProductName, add.BatchNo, add.Qty, available))
 			return
 		}
 		lineTotal, cgst, sgst, igst := lineAmounts(add.SalePrice, add.Qty, add.GSTRate, isInState)
@@ -845,6 +883,32 @@ func (h *OrderHandler) EditOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 // restoreOrderStock restores sold_qty for all items in an order, then soft-deletes it.
+var validGSTRates = map[float64]bool{0: true, 5: true, 12: true, 18: true, 28: true}
+
+// validateBillLine checks a line's quantity, price and GST rate before any stock
+// is touched, and returns a message for the shop owner ("" when fine). A price
+// above MRP is allowed on purpose.
+func validateBillLine(name string, qty int32, salePrice, gstRate float64) string {
+	switch {
+	case qty <= 0:
+		return fmt.Sprintf("%s: quantity must be at least 1.", name)
+	case salePrice <= 0:
+		return fmt.Sprintf("%s: enter a selling price above ₹0.", name)
+	case !validGSTRates[gstRate]:
+		return fmt.Sprintf("%s: GST must be 0%%, 5%%, 12%%, 18%% or 28%%.", name)
+	}
+	return ""
+}
+
+// expiredBatchMessage returns a message if the batch has expired (its expiry date
+// is today or earlier, IST), matching the batches offered for billing.
+func expiredBatchMessage(name, batchNo string, expiry pgtype.Date) string {
+	if expiry.Valid && !expiry.Time.After(todayIST()) {
+		return fmt.Sprintf("%s (batch %s) expired on %s. Remove it from the bill.", name, batchNo, expiry.Time.Format("02 Jan 2006"))
+	}
+	return ""
+}
+
 // lineAmounts prices one bill line. salePrice is GST-inclusive (the MRP-based
 // price the customer pays), so the tax is extracted from the line total, never
 // added on top. Used for new bills and for lines added or increased on edit.
