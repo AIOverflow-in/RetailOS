@@ -13,6 +13,7 @@ import {
   ArrowUp,
   ArrowDown,
   Check,
+  ReceiptText,
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { InventoryRow } from '@/types'
@@ -66,6 +67,11 @@ function BatchActions({ row, onEditProduct, onEditBatch, onAdjust }: {
     { label: 'Edit product', Icon: Pencil, run: () => onEditProduct(row) },
     { label: 'Edit batch', Icon: SlidersHorizontal, run: () => onEditBatch(row) },
     { label: 'Adjust stock', Icon: PackageMinus, run: () => onAdjust(row) },
+    // Every bill this batch was sold on, e.g. to find a walk-in's bill on a return.
+    {
+      label: 'Bills with this batch', Icon: ReceiptText,
+      run: () => router.push(`/orders?batch=${row.batch_id}&label=${encodeURIComponent(`Batch ${row.batch_no} · ${row.name}`)}`),
+    },
   ]
   return (
     <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">

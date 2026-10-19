@@ -327,6 +327,15 @@ func (h *OrderHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 	// Default (no chips selected) shows every order, deleted ones included, so the
 	// history is complete. Deleted orders never count in sales or reports.
 
+	// Bills containing one batch (Inventory → "Bills"), to find a walk-in's bill.
+	var batchID pgtype.UUID
+	if s := q.Get("batch_id"); s != "" {
+		if err := batchID.Scan(s); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid batch_id")
+			return
+		}
+	}
+
 	payments, err := parseEnumList(q["payment"], allowedPaymentModes)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid payment: "+err.Error())
@@ -361,6 +370,7 @@ func (h *OrderHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 		Column3: payments,
 		Column4: dateFrom,
 		Column5: dateTo,
+		Column6: batchID,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "could not count orders")
@@ -376,6 +386,7 @@ func (h *OrderHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 		Column6: sortKey,
 		Limit:   limit,
 		Offset:  offset,
+		Column9: batchID,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "could not fetch orders")
