@@ -162,6 +162,14 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 - Unit test `TestLineAmounts_HalvesAddUpToTax`: CGST + SGST equals the tax for every price tried, and CGST equals SGST or is 1 paisa more.
 - Existing bills keep their stored amounts. Only new bills and edits use the new split.
 
+### 11. Every new bill starts in-state
+**Commit:** `c6144ae`
+
+- After a bill is saved, or when **Clear** or **Start a new bill** is used, the next bill starts in-state with cash payment. Before, an out-of-state choice stayed on for every following bill.
+- New sessions already started in-state. A bill in progress that's restored after a reload keeps its own setting.
+
+**Why it matters:** Almost all bills are in-state. One out-of-state sale made every later bill IGST until someone noticed and switched it back, putting the wrong tax type on those invoices and in the GST report.
+
 ---
 
 ## Summary of Changes
@@ -178,6 +186,7 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 - `components/billing/BillingRowItem.tsx` — blue highlight; GST warning; ₹0 price outlined; Qty shows the billed quantity
 - `app/(dashboard)/billing/page.tsx` — price, quantity and same-batch stock errors before saving
 - `lib/gst.ts` — same rounding and CGST/SGST split as the server
+- `store/cartSlice.ts` — clearing a bill resets it to in-state and cash
 - `app/bill/[id]/page.tsx`, `lib/generateBill.tsx` — bill lines at kept quantities
 - `components/bill/BillDocument.tsx` — taxable value excludes GST
 - `package.json` — version 1.8.1
@@ -260,6 +269,10 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 ### GST warning
 - [ ] Pick a batch with no GST rate → warning shown, GST box amber; choose a rate → amber goes away
 - [ ] Leave it at 0% and place the order → the bill saves (0% is never blocked)
+
+### In-state default
+- [ ] Switch to Out-of-state, place a bill → the next bill shows In-state
+- [ ] Switch to Out-of-state, press Clear → In-state
 
 ### CGST / SGST split
 - [ ] Bill ₹112 at 5% in-state → CGST ₹2.67, SGST ₹2.66 (tax ₹5.33); cart summary, saved order, print and WhatsApp PDF all show the same
