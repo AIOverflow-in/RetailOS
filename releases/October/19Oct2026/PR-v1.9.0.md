@@ -1,6 +1,6 @@
-# SellOS v1.8.1 — Release Notes
+# SellOS v1.9.0 — Release Notes
 
-### Sales you can trust: partial returns counted right, tax shown correctly on reports and bills, bad bill lines stopped, and every date in IST
+### Sales you can trust, and every bill findable: partial returns counted right, tax correct on reports and bills, bad lines stopped, IST dates, and bills found by batch
 
 **Release Date:** October 2026
 **Branch:** `fix/returns-and-void-orders` → `main`
@@ -15,7 +15,7 @@ Partially returning a bill made the whole bill vanish from today's sales and fro
 - batches without a GST rate billed silently at 0%;
 - every "day" started at 05:30 IST.
 
-This release fixes all of these, verified on a local copy of Sipra's data. It also carries the blue search highlight that missed v1.8.0.
+This release fixes all of these, verified on a local copy of Sipra's data. It also adds a way to find a bill by batch number, for returns from walk-in customers billed under the shop's name, and carries the blue search highlight that missed v1.8.0.
 
 ---
 
@@ -170,13 +170,27 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 
 **Why it matters:** Almost all bills are in-state. One out-of-state sale made every later bill IGST until someone noticed and switched it back, putting the wrong tax type on those invoices and in the GST report.
 
+### 12. Find a bill by batch number or product
+**Commit:** `0cada5f`
+
+- **Orders search** now also matches the batch number and product name on any line of a bill. Typing the batch number printed on the strip lists every bill it was sold on.
+- **Inventory → Bills with this batch** (new action on each batch row) opens Orders filtered to exactly that batch, with a chip showing which batch it is. **✕** or **Clear filters** goes back to all bills.
+- Each result shows the matching line under the bill: product, batch, quantity kept (and any returned) and price each, so bills under the same name can be told apart. Date, status and payment filters still apply.
+
+**Why it matters:** Many customers don't want a bill in their name, so the cashier bills them under a default name. On Sipra, 1,611 bills (44%) are under one name, and searching it returned all of them. When such a customer returns an item, the cashier had no way to find the original bill. A batch appears on 4 bills in a typical case, so the batch number plus the date usually leaves one or two candidates.
+
+**Technical Notes:**
+- `ListOrders` and `CountOrdersFiltered`: the search adds an `EXISTS` on `order_items` (`batch_no` / `product_name` `ILIKE`); a new optional `batch_id` parameter filters by exact batch. `ListOrders` returns `matched_items`, the matching lines as text, or `''` when none matched.
+- Verified on a local copy of Sipra's data: batch ZD603029 (Cetirizine, CTZ) → 12 bills by search and by the Inventory link, matching the database (10 of them under the walk-in name); product search "Mupicip" → 14, matching the database; clearing returns all 3,677.
+- No migration. The search runs over a few thousand bill lines per shop, which is fast without an index.
+
 ---
 
 ## Summary of Changes
 
 ### New Files
 - `frontend/lib/billItems.ts` — bill lines at kept quantities, shared by print and WhatsApp PDF
-- `releases/October/19Oct2026/PR-v1.8.1.md` — this file
+- `releases/October/19Oct2026/PR-v1.9.0.md` — this file
 
 ### Modified Files (highlights)
 
@@ -187,14 +201,17 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 - `app/(dashboard)/billing/page.tsx` — price, quantity and same-batch stock errors before saving
 - `lib/gst.ts` — same rounding and CGST/SGST split as the server
 - `store/cartSlice.ts` — clearing a bill resets it to in-state and cash
+- `app/(dashboard)/orders/page.tsx` — search by batch/product; batch filter chip; matching lines under each bill
+- `app/(dashboard)/inventory/page.tsx` — "Bills with this batch" action
+- `lib/api.ts`, `types/index.ts` — `batchId` filter, `matched_items`
 - `app/bill/[id]/page.tsx`, `lib/generateBill.tsx` — bill lines at kept quantities
 - `components/bill/BillDocument.tsx` — taxable value excludes GST
-- `package.json` — version 1.8.1
+- `package.json` — version 1.9.0
 
 **Backend:**
 - `internal/queries/dashboard.sql` — partially returned bills count at net value
 - `internal/queries/reports.sql` — net of returns; taxable value excludes tax
-- `internal/queries/orders.sql` — deleted bills listed; delete stamps `updated_at`
+- `internal/queries/orders.sql` — deleted bills listed; delete stamps `updated_at`; search by batch/product; `batch_id` filter; `matched_items`
 - `internal/handlers/orders.go` — `lineAmounts()` for new and edited bills; `deleted` status filter; line validation, per-batch stock, expiry; IST financial year
 - `internal/middleware/tenant.go` — IST session time zone per request
 - `internal/handlers/{helpers,dashboard,reports,inventory}.go` — IST dates
@@ -270,6 +287,13 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 - [ ] Pick a batch with no GST rate → warning shown, GST box amber; choose a rate → amber goes away
 - [ ] Leave it at 0% and place the order → the bill saves (0% is never blocked)
 
+### Find bills by batch
+- [ ] Orders → search a batch number from a strip → only bills containing it; each shows the product, batch, qty and price under it
+- [ ] Inventory → a batch row → "Bills with this batch" → Orders shows the chip and only that batch's bills; count matches
+- [ ] ✕ on the chip (or Clear filters) → all bills again
+- [ ] Search by product name → bills containing it
+- [ ] Combine with a date range → narrows the list
+
 ### In-state default
 - [ ] Switch to Out-of-state, place a bill → the next bill shows In-state
 - [ ] Switch to Out-of-state, press Clear → In-state
@@ -283,4 +307,4 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 
 ---
 
-**SellOS v1.8.1** — Every return counted for what was kept, every rupee of tax in its column, and every deleted bill still on the books.
+**SellOS v1.9.0** — Every rupee of sales and tax where it belongs, and every bill one batch number away.
