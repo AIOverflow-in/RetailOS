@@ -374,3 +374,29 @@ func TestCreateOrder_InvalidClientRef(t *testing.T) {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
 	}
 }
+
+func TestLineAmounts_GSTInclusive(t *testing.T) {
+	tests := []struct {
+		name                    string
+		price                   float64
+		qty                     int32
+		rate                    float64
+		inState                 bool
+		total, cgst, sgst, igst float64
+	}{
+		// ₹112 incl. 12% GST is ₹100 + ₹12 tax: the bill total stays ₹112.
+		{"in-state 12%", 112, 1, 12, true, 112, 6, 6, 0},
+		{"out-of-state 12%", 112, 1, 12, false, 112, 0, 0, 12},
+		{"qty multiplies the inclusive price", 52.5, 2, 5, true, 105, 2.5, 2.5, 0},
+		{"0% GST has no tax", 40, 3, 0, true, 120, 0, 0, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			total, cgst, sgst, igst := lineAmounts(tt.price, tt.qty, tt.rate, tt.inState)
+			if total != tt.total || cgst != tt.cgst || sgst != tt.sgst || igst != tt.igst {
+				t.Errorf("got total=%v cgst=%v sgst=%v igst=%v, want %v %v %v %v",
+					total, cgst, sgst, igst, tt.total, tt.cgst, tt.sgst, tt.igst)
+			}
+		})
+	}
+}

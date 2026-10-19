@@ -173,19 +173,11 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	// so tax is extracted from the line total rather than added on top.
 	var cgstTotal, sgstTotal, igstTotal, totalAmount float64
 	for _, item := range req.Items {
-		lineTotal := round2(item.SalePrice * float64(item.Qty))
-		taxable := lineTotal
-		if item.GSTRate > 0 {
-			taxable = lineTotal / (1 + item.GSTRate/100)
-		}
-		totalTax := round2(lineTotal - taxable)
+		lineTotal, cgst, sgst, igst := lineAmounts(item.SalePrice, item.Qty, item.GSTRate, req.IsInState)
 		totalAmount += lineTotal
-		if req.IsInState {
-			cgstTotal += round2(totalTax / 2)
-			sgstTotal += round2(totalTax / 2)
-		} else {
-			igstTotal += totalTax
-		}
+		cgstTotal += cgst
+		sgstTotal += sgst
+		igstTotal += igst
 	}
 	cgstTotal = round2(cgstTotal)
 	sgstTotal = round2(sgstTotal)
@@ -228,19 +220,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		var batchID pgtype.UUID
 		batchID.Scan(item.BatchID)
 
-		lineTotal := round2(item.SalePrice * float64(item.Qty))
-		taxable := lineTotal
-		if item.GSTRate > 0 {
-			taxable = lineTotal / (1 + item.GSTRate/100)
-		}
-		totalTax := round2(lineTotal - taxable)
-		var cgst, sgst, igst float64
-		if req.IsInState {
-			cgst = round2(totalTax / 2)
-			sgst = round2(totalTax / 2)
-		} else {
-			igst = totalTax
-		}
+		lineTotal, cgst, sgst, igst := lineAmounts(item.SalePrice, item.Qty, item.GSTRate, req.IsInState)
 
 		if _, err := q.CreateOrderItem(r.Context(), generated.CreateOrderItemParams{
 			OrderID:     order.OrderID,
@@ -732,18 +712,7 @@ func (h *OrderHandler) EditOrder(w http.ResponseWriter, r *http.Request) {
 		}
 		// Recompute the line's GST + total for the new qty using the order's GST mode.
 		newQty := item.Qty + delta
-		salePrice := numericToFloat(item.SalePrice)
-		gstRate := numericToFloat(item.GstRate)
-		taxable := salePrice * float64(newQty)
-		totalTax := round2(taxable * (gstRate / 100))
-		lineTotal := round2(taxable + totalTax)
-		var cgst, sgst, igst float64
-		if isInState {
-			cgst = round2(totalTax / 2)
-			sgst = round2(totalTax / 2)
-		} else {
-			igst = totalTax
-		}
+		lineTotal, cgst, sgst, igst := lineAmounts(numericToFloat(item.SalePrice), newQty, numericToFloat(item.GstRate), isInState)
 		if err := txq.UpdateOrderItemQuantity(r.Context(), generated.UpdateOrderItemQuantityParams{
 			ItemID:     itemID,
 			Qty:        newQty,
@@ -780,16 +749,7 @@ func (h *OrderHandler) EditOrder(w http.ResponseWriter, r *http.Request) {
 					add.ProductName, add.Qty, available))
 			return
 		}
-		taxable := add.SalePrice * float64(add.Qty)
-		totalTax := round2(taxable * (add.GSTRate / 100))
-		lineTotal := round2(taxable + totalTax)
-		var cgst, sgst, igst float64
-		if isInState {
-			cgst = round2(totalTax / 2)
-			sgst = round2(totalTax / 2)
-		} else {
-			igst = totalTax
-		}
+		lineTotal, cgst, sgst, igst := lineAmounts(add.SalePrice, add.Qty, add.GSTRate, isInState)
 		if _, err := txq.CreateOrderItem(r.Context(), generated.CreateOrderItemParams{
 			OrderID:     order.OrderID,
 			BatchID:     batchID,
@@ -885,6 +845,25 @@ func (h *OrderHandler) EditOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 // restoreOrderStock restores sold_qty for all items in an order, then soft-deletes it.
+// lineAmounts prices one bill line. salePrice is GST-inclusive (the MRP-based
+// price the customer pays), so the tax is extracted from the line total, never
+// added on top. Used for new bills and for lines added or increased on edit.
+func lineAmounts(salePrice float64, qty int32, gstRate float64, inState bool) (lineTotal, cgst, sgst, igst float64) {
+	lineTotal = round2(salePrice * float64(qty))
+	taxable := lineTotal
+	if gstRate > 0 {
+		taxable = lineTotal / (1 + gstRate/100)
+	}
+	tax := round2(lineTotal - taxable)
+	if inState {
+		cgst = round2(tax / 2)
+		sgst = round2(tax / 2)
+	} else {
+		igst = tax
+	}
+	return
+}
+
 func restoreOrderStock(ctx interface {
 	Deadline() (deadline time.Time, ok bool)
 	Done() <-chan struct{}
