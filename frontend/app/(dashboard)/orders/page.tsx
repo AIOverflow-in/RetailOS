@@ -21,7 +21,7 @@ import {
 const PAGE_SIZE = 20
 
 type PaymentMode = 'cash' | 'upi' | 'card' | 'mixed'
-type OrderStatus = 'active' | 'returned' | 'partially_returned'
+type OrderStatus = 'active' | 'returned' | 'partially_returned' | 'deleted'
 type SortField = 'date' | 'total'
 type SortDir = 'asc' | 'desc'
 
@@ -36,6 +36,7 @@ const STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
   { value: 'active', label: 'Active' },
   { value: 'returned', label: 'Returned' },
   { value: 'partially_returned', label: 'Partially returned' },
+  { value: 'deleted', label: 'Deleted' },
 ]
 
 function MultiSelectFilter<T extends string>({
@@ -138,7 +139,7 @@ function OrderActions({ order, deleting, onDelete }: {
             <AlertDialogHeader>
               <AlertDialogTitle>Delete {order.order_number}?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will delete the order and restore stock to the respective batches.
+                Its stock goes back to the batches and it stops counting in sales and GST reports. The bill stays in Orders, marked Deleted.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -358,7 +359,7 @@ export default function OrdersPage() {
                     </td>
                     <td className="py-3 px-4 text-body text-[#888]">{o.customer_phone ?? '—'}</td>
                     <td className="py-3 px-4 text-body text-[#888] whitespace-nowrap">{fmtDate(o.created_at)}</td>
-                    <td className="py-3 px-4 text-body font-medium text-[#111]">{fmtCurrency(o.total_amount)}</td>
+                    <td className={`py-3 px-4 text-body font-medium ${o.status === 'deleted' ? 'text-[#BBBBBB] line-through' : 'text-[#111]'}`}>{fmtCurrency(o.total_amount)}</td>
                     <td className="py-3 px-4">
                       <span className="text-body-sm text-[#888] capitalize">{o.payment_mode ?? 'cash'}</span>
                     </td>
@@ -387,7 +388,7 @@ export default function OrdersPage() {
                       {o.customer_name ?? <span className="text-[#CCCCCC]">No name</span>}
                     </p>
                   </div>
-                  <p className="text-body font-semibold text-[#111] shrink-0">{fmtCurrency(o.total_amount)}</p>
+                  <p className={`text-body font-semibold shrink-0 ${o.status === 'deleted' ? 'text-[#BBBBBB] line-through' : 'text-[#111]'}`}>{fmtCurrency(o.total_amount)}</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-body-sm text-[#888]">

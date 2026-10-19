@@ -265,7 +265,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 var (
-	allowedOrderStatuses = map[string]bool{"active": true, "returned": true, "partially_returned": true}
+	allowedOrderStatuses = map[string]bool{"active": true, "returned": true, "partially_returned": true, "deleted": true}
 	allowedPaymentModes  = map[string]bool{"cash": true, "upi": true, "card": true, "mixed": true}
 	allowedOrderSorts    = map[string]bool{"date_asc": true, "date_desc": true, "total_asc": true, "total_desc": true}
 )
@@ -289,8 +289,8 @@ func (h *OrderHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid status: "+err.Error())
 		return
 	}
-	// Default (no chips selected) shows all non-deleted orders. The SQL itself
-	// hard-excludes 'deleted' so a nil status array is safe.
+	// Default (no chips selected) shows every order, deleted ones included, so the
+	// history is complete. Deleted orders never count in sales or reports.
 
 	payments, err := parseEnumList(q["payment"], allowedPaymentModes)
 	if err != nil {

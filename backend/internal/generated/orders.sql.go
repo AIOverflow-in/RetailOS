@@ -26,8 +26,7 @@ const countOrdersFiltered = `-- name: CountOrdersFiltered :one
 SELECT COUNT(*)
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.status <> 'deleted'
-  AND (
+WHERE (
       $1::text = ''
       OR o.order_number ILIKE '%' || $1 || '%'
       OR c.name         ILIKE '%' || $1 || '%'
@@ -363,8 +362,7 @@ SELECT o.order_id, o.order_number, o.total_amount, o.status, o.payment_mode, o.c
        c.phone AS customer_phone
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.status <> 'deleted'
-  AND (
+WHERE (
       $1::text = ''
       OR o.order_number ILIKE '%' || $1 || '%'
       OR c.name         ILIKE '%' || $1 || '%'
@@ -453,7 +451,7 @@ func (q *Queries) MarkOrderReturned(ctx context.Context, orderID pgtype.UUID) er
 }
 
 const softDeleteOrder = `-- name: SoftDeleteOrder :exec
-UPDATE orders SET status = 'deleted' WHERE order_id = $1
+UPDATE orders SET status = 'deleted', updated_at = NOW() WHERE order_id = $1
 `
 
 func (q *Queries) SoftDeleteOrder(ctx context.Context, orderID pgtype.UUID) error {

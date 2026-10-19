@@ -282,9 +282,16 @@ export default function OrderDetailPage() {
           </span>
           <span className="text-body-sm text-[#888] capitalize">{order.payment_mode ?? 'cash'}</span>
           {order.updated_at && (
-            <span className="text-body-sm text-[#888]">Last edited: {fmtDate(order.updated_at)}</span>
+            <span className="text-body-sm text-[#888]">
+              {order.status === 'deleted' ? 'Deleted' : 'Last edited'}: {fmtDate(order.updated_at)}
+            </span>
           )}
         </p>
+        {order.status === 'deleted' && (
+          <div className="mt-2 px-3 py-2 bg-[#F7F7F7] border border-[#E5E5E5] rounded-lg text-body-sm text-[#666]">
+            This bill was deleted. Its stock was put back, and it doesn&apos;t count in sales or GST reports. It&apos;s kept here for your records.
+          </div>
+        )}
         {order.return_comment && (
           <div className="mt-2 px-3 py-2 bg-[#FFF8EB] border border-amber-200 rounded-lg text-body-sm text-[#7A5A0E]">
             <span className="font-medium">Note: </span>{order.return_comment}
