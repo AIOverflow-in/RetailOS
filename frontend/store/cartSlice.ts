@@ -23,9 +23,10 @@ const cartSlice = createSlice({
     restoreCart(_state, action: PayloadAction<CartState>) {
       return action.payload
     },
-    clearCart(state) {
-      state.paymentMode = 'cash'
-      state.customer = { phone: '', name: '', age: '' }
+    // Every new bill starts in-state with cash; most bills are in-state, so an
+    // out-of-state choice must not carry over to the next customer.
+    clearCart() {
+      return initialState
     },
   },
 })
