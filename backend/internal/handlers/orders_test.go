@@ -413,6 +413,7 @@ func TestValidateBillLine(t *testing.T) {
 	}{
 		{"valid", 2, 112, 12, false},
 		{"above MRP is allowed (MRP not checked)", 1, 200, 18, false},
+		{"0% GST is allowed (exempt products)", 1, 40, 0, false},
 		{"zero qty", 0, 112, 12, true},
 		{"negative qty would add stock", -5, 112, 12, true},
 		{"zero price", 1, 0, 12, true},
@@ -441,5 +442,28 @@ func TestExpiredBatchMessage(t *testing.T) {
 	}
 	if expiredBatchMessage("Item", "B1", day(-30)) == "" {
 		t.Error("expired batch should be refused")
+	}
+}
+
+func TestLineAmounts_HalvesAddUpToTax(t *testing.T) {
+	// ₹10 at 12%: tax 1.07 → CGST 0.54 + SGST 0.53 (not 0.54 + 0.54).
+	if _, cgst, sgst, _ := lineAmounts(10, 1, 12, true); cgst != 0.54 || sgst != 0.53 {
+		t.Errorf("₹10 at 12%%: got CGST %v SGST %v, want 0.54 + 0.53", cgst, sgst)
+	}
+	for _, rate := range []float64{5, 12, 18, 28} {
+		for paise := 1; paise <= 50000; paise += 7 {
+			price := float64(paise) / 100
+			total, cgst, sgst, _ := lineAmounts(price, 1, rate, true)
+			_, _, _, igst := lineAmounts(price, 1, rate, false)
+			if round2(cgst+sgst) != igst {
+				t.Fatalf("₹%.2f at %v%%: CGST %v + SGST %v != tax %v", price, rate, cgst, sgst, igst)
+			}
+			if d := round2(cgst - sgst); d != 0 && d != 0.01 {
+				t.Fatalf("₹%.2f at %v%%: CGST %v should equal SGST %v or be 1 paisa more", price, rate, cgst, sgst)
+			}
+			if round2(total-cgst-sgst) <= 0 {
+				t.Fatalf("₹%.2f at %v%%: taxable not positive", price, rate)
+			}
+		}
 	}
 }

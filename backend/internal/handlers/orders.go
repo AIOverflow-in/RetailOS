@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"sort"
 	"strconv"
@@ -920,8 +921,11 @@ func lineAmounts(salePrice float64, qty int32, gstRate float64, inState bool) (l
 	}
 	tax := round2(lineTotal - taxable)
 	if inState {
-		cgst = round2(tax / 2)
-		sgst = round2(tax / 2)
+		// Split in whole paise so CGST + SGST is the tax exactly; CGST takes
+		// the odd paisa (₹5.33 → 2.67 + 2.66, not 2.67 + 2.67).
+		paise := int64(math.Round(tax * 100))
+		cgst = float64((paise+1)/2) / 100
+		sgst = float64(paise/2) / 100
 	} else {
 		igst = tax
 	}

@@ -8,6 +8,10 @@ interface TaxableLine {
 
 export const GST_RATES: GSTRate[] = [0, 5, 12, 18, 28]
 
+// Same rounding as the server's round2 (half away from zero for positive amounts),
+// so the counter shows exactly what gets saved.
+const round2 = (n: number) => Math.round(n * 100) / 100
+
 // salePrice is GST-inclusive (matches the price shown to the customer at checkout
 // and the value entered in inventory). Tax is extracted from the inclusive total.
 export function calcLineTotal(
@@ -15,7 +19,7 @@ export function calcLineTotal(
   qty: number,
   _gstRate: GSTRate
 ): number {
-  return parseFloat((salePrice * qty).toFixed(2))
+  return round2(salePrice * qty)
 }
 
 export function calcGST(
@@ -24,13 +28,16 @@ export function calcGST(
   gstRate: GSTRate,
   isInState: boolean
 ) {
-  const lineTotal = salePrice * qty
+  // Mirrors lineAmounts in the backend: round the line total, extract the tax,
+  // then split it so CGST + SGST equals the tax exactly.
+  const lineTotal = round2(salePrice * qty)
   const taxable = gstRate > 0 ? lineTotal / (1 + gstRate / 100) : lineTotal
-  const totalTax = parseFloat((lineTotal - taxable).toFixed(2))
+  const totalTax = round2(lineTotal - taxable)
 
   if (isInState) {
-    const half = parseFloat((totalTax / 2).toFixed(2))
-    return { cgst: half, sgst: half, igst: 0 }
+    // Split in whole paise; CGST takes the odd paisa.
+    const paise = Math.round(totalTax * 100)
+    return { cgst: Math.ceil(paise / 2) / 100, sgst: Math.floor(paise / 2) / 100, igst: 0 }
   }
   return { cgst: 0, sgst: 0, igst: totalTax }
 }
