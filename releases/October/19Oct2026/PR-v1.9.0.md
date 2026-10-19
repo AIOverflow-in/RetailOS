@@ -22,7 +22,7 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 ## What's New
 
 ### 1. Partially returned bills count at their kept value
-**Commit:** `3761d54`
+**Commits:** `3761d54`, `dafabbe`
 
 - Today's sales, the order count and the payment-mode split on the dashboard now include partially returned bills, at their amount after the return.
 - The GST report (summary, rate slabs and CSV export) includes them too, counting only the units the customer kept.
@@ -33,6 +33,7 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 **Technical Notes:**
 - Dashboard queries now count `status IN ('active', 'partially_returned')`. `orders.total_amount` is already kept net of returns by the edit flow, so the dashboard needed no other change.
 - The report queries scale each line by `(qty - returned_qty) / qty` and round per line, the same way the edit flow computes the bill's net total. So the report total matches the sum of the bills.
+- Taxable value is the rounded kept total minus the rounded kept CGST, SGST and IGST, so the columns always add up to the paisa. Rounding each piece separately could leave a partially returned line 1 paisa off (3 × ₹35 at 5% with 1 returned: 66.67 + 1.67 + 1.67 = 70.01 instead of 70.00). On the local copy of Sipra's data, every month, the full year and every rate slab add up exactly (6 figures were 1 paisa off before).
 
 ---
 
@@ -242,6 +243,8 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 - **Returned and deleted bills still reprint like normal bills.** This was reviewed and left as is.
 - **Double-clicking Delete or Return** could put stock back twice. Not changed, since both go through a confirmation dialog.
 - **Deleted bills can still be opened, printed and shared** from their page, with the Deleted note shown on screen.
+- **Orders search also matches batch numbers and product names for every search.** A bill number or phone fragment like `1234` can also bring up bills with that text in a batch number. If this gets in the way, a follow-up can match lines only for non-numeric searches, or add a "search in items" option.
+- **Raising the quantity on a line from before 26 Apr 2026** re-prices the whole line GST-inclusive. Those older lines had GST added on top, so their earlier units lose that extra tax when edited. This only affects old bills that get edited, which should be rare.
 - **Pre-existing test failures** (also on `main`): `TestLookupCustomer_*`, `TestSuperAdminLogin_*` and `TestSMTPConfig_IsConfigured`.
 
 ---
