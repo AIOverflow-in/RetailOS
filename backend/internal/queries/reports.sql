@@ -12,7 +12,7 @@ JOIN order_items oi ON o.order_id = oi.order_id
 -- deleted bills don't count. Prices are GST-inclusive, so taxable = total - tax.
 WHERE o.status IN ('active', 'partially_returned')
   AND o.created_at >= $1
-  AND o.created_at <= $2;
+  AND o.created_at < $2;
 
 -- name: GSTSlabBreakdown :many
 SELECT
@@ -26,7 +26,7 @@ FROM orders o
 JOIN order_items oi ON o.order_id = oi.order_id
 WHERE o.status IN ('active', 'partially_returned')
   AND o.created_at >= $1
-  AND o.created_at <= $2
+  AND o.created_at < $2
 GROUP BY oi.gst_rate
 ORDER BY oi.gst_rate;
 
@@ -38,7 +38,7 @@ SELECT
     COALESCE(SUM(b.landing_price * b.purchase_qty), 0)::numeric(14,2)   AS total_landing_value
 FROM batches b
 WHERE b.created_at >= $1
-  AND b.created_at <= $2
+  AND b.created_at < $2
   AND b.purchase_gst_rate IS NOT NULL;
 
 -- name: PurchaseGSTSlabBreakdown :many
@@ -49,7 +49,7 @@ SELECT
     COALESCE(SUM(b.landing_price * b.purchase_qty), 0)::numeric(14,2)   AS landing_value
 FROM batches b
 WHERE b.created_at >= $1
-  AND b.created_at <= $2
+  AND b.created_at < $2
   AND b.purchase_gst_rate IS NOT NULL
 GROUP BY b.purchase_gst_rate
 ORDER BY b.purchase_gst_rate;

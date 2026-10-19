@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 // ---------------------------------------------------------------------------
@@ -24,17 +25,15 @@ func TestParseDateRange_Valid(t *testing.T) {
 		t.Error("to should be valid")
 	}
 
-	// Check from is April 1
-	if from.Time.Month() != 4 || from.Time.Day() != 1 {
-		t.Errorf("from = %v, want April 1", from.Time)
+	// From 00:00 IST on 1 April up to (excluding) 00:00 IST on 1 May, so the
+	// whole of 30 April IST is included. 00:00 IST is 18:30 UTC the day before.
+	wantFrom := time.Date(2025, 3, 31, 18, 30, 0, 0, time.UTC)
+	wantTo := time.Date(2025, 4, 30, 18, 30, 0, 0, time.UTC)
+	if !from.Time.Equal(wantFrom) {
+		t.Errorf("from = %v, want %v", from.Time.UTC(), wantFrom)
 	}
-	// Check to is end of April 30
-	if to.Time.Month() != 4 || to.Time.Day() != 30 {
-		t.Errorf("to date = %v, want April 30", to.Time)
-	}
-	// to should be end of day (23:59:59)
-	if to.Time.Hour() != 23 || to.Time.Minute() != 59 {
-		t.Errorf("to time = %02d:%02d, want 23:59", to.Time.Hour(), to.Time.Minute())
+	if !to.Time.Equal(wantTo) {
+		t.Errorf("to = %v, want %v", to.Time.UTC(), wantTo)
 	}
 }
 

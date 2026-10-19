@@ -21,8 +21,8 @@ func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) 
 	conn := middleware.ConnFromCtx(r.Context())
 	q := generated.New(conn)
 
-	// Today at 00:00 in local time
-	now := time.Now()
+	// Today at 00:00 IST
+	now := time.Now().In(ist)
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	var todayTs pgtype.Timestamptz
 	todayTs.Time = todayStart

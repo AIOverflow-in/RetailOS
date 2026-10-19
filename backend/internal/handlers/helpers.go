@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"reflect"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -28,6 +29,18 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+// ist is India Standard Time. Every shop is in India, so "today", report date
+// ranges, the financial year and expiry are IST dates whatever zone the server
+// runs in (Render is UTC). India has no daylight saving, so a fixed offset is exact.
+var ist = time.FixedZone("IST", 5*60*60+30*60)
+
+// todayIST is today's IST date at 00:00 UTC, the same form time.Parse gives a
+// YYYY-MM-DD string, so the two compare as plain dates.
+func todayIST() time.Time {
+	y, m, d := time.Now().In(ist).Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 }
 
 // isUniqueViolation reports whether err is a Postgres unique-constraint violation.

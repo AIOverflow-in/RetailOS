@@ -914,7 +914,8 @@ func generateOrderNum(ctx interface {
 	Err() error
 	Value(key any) any
 }, q *generated.Queries, prefix string) (string, error) {
-	now := time.Now()
+	// The financial year starts on 1 April IST, not at 05:30 IST.
+	now := time.Now().In(ist)
 	fyStart := financialYearStart(now)
 	fyLabel := fmt.Sprintf("%02d-%02d", fyStart.Year()%100, (fyStart.Year()+1)%100)
 

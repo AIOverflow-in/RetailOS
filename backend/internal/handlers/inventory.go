@@ -241,7 +241,7 @@ func (h *InventoryHandler) CreateBatch(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "expiry_date must be in YYYY-MM-DD format")
 		return
 	}
-	if !expiry.After(time.Now()) {
+	if !expiry.After(todayIST()) {
 		writeError(w, http.StatusBadRequest, "Expiry date must be in the future.")
 		return
 	}
