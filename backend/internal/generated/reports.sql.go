@@ -14,7 +14,7 @@ import (
 const gSTReportSummary = `-- name: GSTReportSummary :one
 SELECT
     COUNT(DISTINCT o.order_id)::bigint AS total_orders,
-    COALESCE(SUM(ROUND((oi.line_total - oi.cgst_amount - oi.sgst_amount - oi.igst_amount) * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2)), 0)::numeric(14,2) AS taxable_value,
+    COALESCE(SUM(ROUND(oi.line_total * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2) - ROUND(oi.cgst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2) - ROUND(oi.sgst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2) - ROUND(oi.igst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2)), 0)::numeric(14,2) AS taxable_value,
     COALESCE(SUM(ROUND(oi.cgst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2)), 0)::numeric(14,2) AS total_cgst,
     COALESCE(SUM(ROUND(oi.sgst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2)), 0)::numeric(14,2) AS total_sgst,
     COALESCE(SUM(ROUND(oi.igst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2)), 0)::numeric(14,2) AS total_igst,
@@ -41,7 +41,8 @@ type GSTReportSummaryRow struct {
 }
 
 // Partially returned bills count at their kept quantity; fully returned and
-// deleted bills don't count. Prices are GST-inclusive, so taxable = total - tax.
+// deleted bills don't count. Prices are GST-inclusive, so taxable = total - tax,
+// taken from the rounded kept total and taxes so the columns add up to the paisa.
 func (q *Queries) GSTReportSummary(ctx context.Context, arg GSTReportSummaryParams) (GSTReportSummaryRow, error) {
 	row := q.db.QueryRow(ctx, gSTReportSummary, arg.CreatedAt, arg.CreatedAt_2)
 	var i GSTReportSummaryRow
@@ -59,7 +60,7 @@ func (q *Queries) GSTReportSummary(ctx context.Context, arg GSTReportSummaryPara
 const gSTSlabBreakdown = `-- name: GSTSlabBreakdown :many
 SELECT
     oi.gst_rate,
-    COALESCE(SUM(ROUND((oi.line_total - oi.cgst_amount - oi.sgst_amount - oi.igst_amount) * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2)), 0)::numeric(14,2) AS taxable_value,
+    COALESCE(SUM(ROUND(oi.line_total * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2) - ROUND(oi.cgst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2) - ROUND(oi.sgst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2) - ROUND(oi.igst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2)), 0)::numeric(14,2) AS taxable_value,
     COALESCE(SUM(ROUND(oi.cgst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2)), 0)::numeric(14,2) AS cgst,
     COALESCE(SUM(ROUND(oi.sgst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2)), 0)::numeric(14,2) AS sgst,
     COALESCE(SUM(ROUND(oi.igst_amount * (oi.qty - oi.returned_qty)::numeric / NULLIF(oi.qty, 0), 2)), 0)::numeric(14,2) AS igst,

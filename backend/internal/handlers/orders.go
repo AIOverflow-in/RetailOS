@@ -894,7 +894,6 @@ func (h *OrderHandler) EditOrder(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": newStatus})
 }
 
-// restoreOrderStock restores sold_qty for all items in an order, then soft-deletes it.
 var validGSTRates = map[float64]bool{0: true, 5: true, 12: true, 18: true, 28: true}
 
 // validateBillLine checks a line's quantity, price and GST rate before any stock
@@ -943,6 +942,7 @@ func lineAmounts(salePrice float64, qty int32, gstRate float64, inState bool) (l
 	return
 }
 
+// restoreOrderStock restores sold_qty for all items in an order, then soft-deletes it.
 func restoreOrderStock(ctx interface {
 	Deadline() (deadline time.Time, ok bool)
 	Done() <-chan struct{}
