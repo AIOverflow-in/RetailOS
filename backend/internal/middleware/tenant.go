@@ -26,13 +26,15 @@ func TenantContext(pool *pgxpool.Pool) func(http.Handler) http.Handler {
 				return
 			}
 			defer func() {
-				// Reset search_path to public before returning to pool
-				conn.Exec(context.Background(), "SET search_path TO public")
+				// Reset search_path and time zone before returning to pool
+				conn.Exec(context.Background(), "SET search_path TO public; RESET TIME ZONE")
 				conn.Release()
 			}()
 
+			// IST, so CURRENT_DATE and created_at::date are India dates (expiry,
+			// order date filters), not UTC ones that change at 05:30 IST.
 			_, err = conn.Exec(r.Context(),
-				fmt.Sprintf("SET search_path TO %s, public", claims.SchemaName))
+				fmt.Sprintf("SET search_path TO %s, public; SET TIME ZONE 'Asia/Kolkata'", claims.SchemaName))
 			if err != nil {
 				http.Error(w, `{"error":"tenant context error"}`, http.StatusInternalServerError)
 				return

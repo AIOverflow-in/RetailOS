@@ -2,7 +2,7 @@
 SELECT COALESCE(SUM(total_amount), 0)::numeric(14,2) AS total_sales,
        COUNT(*)::bigint AS order_count
 FROM orders
-WHERE status = 'active'
+WHERE status IN ('active', 'partially_returned')
   AND created_at >= $1;
 
 -- name: DashboardLowStockCount :one
@@ -20,7 +20,7 @@ WHERE (purchase_qty - sold_qty) > 0
 -- name: DashboardPaymentModeSplit :many
 SELECT payment_mode, COALESCE(SUM(total_amount), 0)::numeric(14,2) AS total
 FROM orders
-WHERE status = 'active'
+WHERE status IN ('active', 'partially_returned')
   AND created_at >= $1
 GROUP BY payment_mode;
 

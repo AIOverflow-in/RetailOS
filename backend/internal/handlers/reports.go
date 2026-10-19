@@ -179,17 +179,18 @@ func parseDateRange(r *http.Request) (pgtype.Timestamptz, pgtype.Timestamptz, er
 		return from, to, fmt.Errorf("Pick both a start date and an end date.")
 	}
 
-	fromT, err := time.Parse("2006-01-02", fromStr)
+	// Dates are IST days: from 00:00 IST on 'from' up to (not including) 00:00
+	// IST the day after 'to'.
+	fromT, err := time.ParseInLocation("2006-01-02", fromStr, ist)
 	if err != nil {
 		return from, to, fmt.Errorf("The start date isn't valid.")
 	}
-	toT, err := time.Parse("2006-01-02", toStr)
+	toT, err := time.ParseInLocation("2006-01-02", toStr, ist)
 	if err != nil {
 		return from, to, fmt.Errorf("The end date isn't valid.")
 	}
 
-	// End of day for 'to'
-	toT = toT.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+	toT = toT.AddDate(0, 0, 1)
 
 	from.Time = fromT
 	from.Valid = true

@@ -193,7 +193,10 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       salePrice: 0,
       gstRate: 0,
     }
-    if (bs.length === 1) Object.assign(patch, batchPatch(bs[0]))
+    if (bs.length === 1) {
+      Object.assign(patch, batchPatch(bs[0]))
+      warnIfNoGst(bs[0], p.name)
+    }
     updateRow(row.rowId, patch)
   }
 
@@ -221,8 +224,21 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
 
   function onPickBatch(batchId: string) {
     const b = batches.find(x => x.batch_id === batchId)
-    if (b) updateRow(row.rowId, batchPatch(b))
+    if (!b) return
+    updateRow(row.rowId, batchPatch(b))
+    warnIfNoGst(b, row.productName ?? '')
   }
+
+  // A batch saved without a GST rate would otherwise bill silently at 0%.
+  function warnIfNoGst(b: Batch, productName: string) {
+    if (b.purchase_gst_rate == null) {
+      toast.warning(`${productName}: this batch has no GST rate saved, so GST is set to 0%. Check the GST % before billing.`)
+    }
+  }
+
+  // Shown until a GST % is picked for a batch that has none saved.
+  const gstMissing = !!row.batchId && row.gstRate === 0
+    && batches.find(b => b.batch_id === row.batchId)?.purchase_gst_rate == null
 
   const lineTotal = row.batchId
     ? calcLineTotal(row.salePrice, row.qty, row.gstRate)
@@ -326,7 +342,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
                       tabIndex={-1}
                       onMouseDown={e => { e.preventDefault(); selectProduct(p) }}
                       onMouseMove={() => { if (active !== i) setActive(i) }}
-                      className={`w-full text-left px-3 py-2 transition-colors border-b border-[#F5F5F5] last:border-0 ${i === active ? 'bg-[#F0F0F0]' : ''}`}
+                      className={`w-full text-left px-3 py-2 transition-colors border-b border-[#F5F5F5] last:border-0 ${i === active ? 'bg-sky-100 shadow-[inset_3px_0_0_#0EA5E9]' : ''}`}
                     >
                       <p className="text-body-sm font-medium text-[#111]">{p.name}</p>
                       <p className="text-caption text-[#999]">{p.company_name}</p>
@@ -385,7 +401,8 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
           type="number"
           min={0}
           step={0.01}
-          className={`${cellInput} text-right`}
+          className={`${cellInput} text-right${row.batchId && !(row.salePrice > 0) ? ' border-red-500! bg-red-50!' : ''}`}
+          title={row.batchId && !(row.salePrice > 0) ? 'Enter a selling price above ₹0' : undefined}
           value={salePriceText}
           disabled={!row.batchId}
           onChange={e => {
@@ -420,6 +437,8 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
             const n = parseInt(v)
             if (isNaN(n) || n < 1) return
             const capped = row.availableStock != null ? Math.min(n, row.availableStock) : n
+            // Show what will actually be billed (capped to stock, whole units).
+            if (String(capped) !== v) setQtyText(String(capped))
             updateRow(row.rowId, { qty: capped })
           }}
           onBlur={() => {
@@ -435,7 +454,8 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       {/* GST */}
       <td className="py-2 px-1 align-middle">
         <select
-          className={`${cellSelect}`}
+          className={`${cellSelect}${gstMissing ? ' border-amber-500! bg-amber-50! text-amber-800!' : ''}`}
+          title={gstMissing ? 'This batch has no GST rate saved. Check the GST %.' : undefined}
           value={String(row.gstRate)}
           disabled={!row.batchId}
           onChange={e =>
@@ -446,6 +466,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
             <option key={r} value={String(r)}>{r}%</option>
           ))}
         </select>
+        {gstMissing && <p className="text-[10px] leading-tight text-amber-700 mt-0.5">No GST saved · check</p>}
       </td>
 
       {/* Stock */}

@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { Fragment, useEffect, useState, useCallback, Suspense } from 'react'
 import Link from 'next/link'
-import { Search, ArrowUp, ArrowDown, Check } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Search, ArrowUp, ArrowDown, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import LoadError from '@/components/shared/LoadError'
@@ -21,7 +22,7 @@ import {
 const PAGE_SIZE = 20
 
 type PaymentMode = 'cash' | 'upi' | 'card' | 'mixed'
-type OrderStatus = 'active' | 'returned' | 'partially_returned'
+type OrderStatus = 'active' | 'returned' | 'partially_returned' | 'deleted'
 type SortField = 'date' | 'total'
 type SortDir = 'asc' | 'desc'
 
@@ -36,6 +37,7 @@ const STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
   { value: 'active', label: 'Active' },
   { value: 'returned', label: 'Returned' },
   { value: 'partially_returned', label: 'Partially returned' },
+  { value: 'deleted', label: 'Deleted' },
 ]
 
 function MultiSelectFilter<T extends string>({
@@ -100,6 +102,19 @@ function MultiSelectFilter<T extends string>({
   )
 }
 
+// The bill lines that matched the batch or search, so similar bills (e.g. many
+// under the shop's walk-in name) can be told apart by qty and price.
+function MatchedItems({ text }: { text?: string }) {
+  if (!text) return null
+  return (
+    <div className="mt-1 space-y-0.5">
+      {text.split('\n').map((line, i) => (
+        <p key={i} className="text-caption font-normal text-sky-800 bg-sky-50 rounded px-1.5 py-0.5 w-fit max-w-full">{line}</p>
+      ))}
+    </div>
+  )
+}
+
 function statusLabel(s: string) {
   if (s === 'partially_returned') return 'Partial return'
   return s.charAt(0).toUpperCase() + s.slice(1)
@@ -138,7 +153,7 @@ function OrderActions({ order, deleting, onDelete }: {
             <AlertDialogHeader>
               <AlertDialogTitle>Delete {order.order_number}?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will delete the order and restore stock to the respective batches.
+                Its stock goes back to the batches and it stops counting in sales and GST reports. The bill stays in Orders, marked Deleted.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -157,7 +172,21 @@ function OrderActions({ order, deleting, onDelete }: {
   )
 }
 
+// useSearchParams needs a Suspense boundary (Next 16).
 export default function OrdersPage() {
+  return (
+    <Suspense fallback={null}>
+      <OrdersContent />
+    </Suspense>
+  )
+}
+
+function OrdersContent() {
+  const router = useRouter()
+  // ?batch=<id>&label=… comes from Inventory's "Bills with this batch".
+  const params = useSearchParams()
+  const batchId = params.get('batch') ?? ''
+  const batchLabel = params.get('label') ?? 'this batch'
   const [orders, setOrders] = useState<Order[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -174,6 +203,7 @@ export default function OrdersPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
   const filtersActive =
+    !!batchId ||
     paymentFilter.size > 0 ||
     statusFilter.size > 0 ||
     dateFrom !== '' ||
@@ -194,6 +224,7 @@ export default function OrdersPage() {
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
         sort: sortKey,
+        batchId: batchId || undefined,
       })
       setOrders(res.orders ?? [])
       setTotal(Number(res.total) ?? 0)
@@ -207,7 +238,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false)
     }
-  }, [q, page, paymentFilter, statusFilter, dateFrom, dateTo, sortField, sortDir])
+  }, [q, page, paymentFilter, statusFilter, dateFrom, dateTo, sortField, sortDir, batchId])
 
   useEffect(() => {
     load()
@@ -215,13 +246,14 @@ export default function OrdersPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [q, paymentFilter, statusFilter, dateFrom, dateTo, sortField, sortDir])
+  }, [q, paymentFilter, statusFilter, dateFrom, dateTo, sortField, sortDir, batchId])
 
   function clearFilters() {
     setPaymentFilter(new Set())
     setStatusFilter(new Set())
     setDateFrom('')
     setDateTo('')
+    if (batchId) router.replace('/orders')
   }
 
   async function deleteOrder(id: string) {
@@ -251,11 +283,24 @@ export default function OrdersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCCCCC]" />
           <input
             className="w-full sm:w-72 h-8 pl-9 pr-3 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
-            placeholder="Search bill no, name, phone…"
+            placeholder="Search bill no, name, phone, batch, product…"
             value={q}
             onChange={e => setQ(e.target.value)}
           />
         </div>
+
+        {batchId && (
+          <span className="inline-flex items-center gap-1.5 h-8 pl-3 pr-1.5 text-body-sm bg-sky-50 border border-sky-200 text-sky-800 rounded-lg max-w-full">
+            <span className="truncate">Bills with {batchLabel}</span>
+            <button
+              onClick={() => router.replace('/orders')}
+              aria-label="Show all bills"
+              className="p-1 rounded hover:bg-sky-100"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        )}
 
         <MultiSelectFilter<PaymentMode>
           label="Payment"
@@ -351,14 +396,15 @@ export default function OrdersPage() {
               </thead>
               <tbody>
                 {orders.map(o => (
-                  <tr key={o.order_id} className="border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA] transition-colors">
+                  <Fragment key={o.order_id}>
+                  <tr className={`${o.matched_items ? '' : 'border-b border-[#F7F7F7] last:border-0 '}hover:bg-[#FAFAFA] transition-colors`}>
                     <td className="py-3 px-4 font-mono text-body-sm font-medium text-[#111]">{o.order_number}</td>
                     <td className="py-3 px-4 text-body font-medium text-[#111]">
                       {o.customer_name ?? <span className="text-[#CCCCCC]">—</span>}
                     </td>
                     <td className="py-3 px-4 text-body text-[#888]">{o.customer_phone ?? '—'}</td>
                     <td className="py-3 px-4 text-body text-[#888] whitespace-nowrap">{fmtDate(o.created_at)}</td>
-                    <td className="py-3 px-4 text-body font-medium text-[#111]">{fmtCurrency(o.total_amount)}</td>
+                    <td className={`py-3 px-4 text-body font-medium ${o.status === 'deleted' ? 'text-[#BBBBBB] line-through' : 'text-[#111]'}`}>{fmtCurrency(o.total_amount)}</td>
                     <td className="py-3 px-4">
                       <span className="text-body-sm text-[#888] capitalize">{o.payment_mode ?? 'cash'}</span>
                     </td>
@@ -371,6 +417,14 @@ export default function OrdersPage() {
                       <OrderActions order={o} deleting={deleting} onDelete={deleteOrder} />
                     </td>
                   </tr>
+                  {o.matched_items && (
+                    <tr className="border-b border-[#F7F7F7] last:border-0">
+                      <td colSpan={8} className="px-4 pb-3 -mt-1">
+                        <MatchedItems text={o.matched_items} />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -387,8 +441,10 @@ export default function OrdersPage() {
                       {o.customer_name ?? <span className="text-[#CCCCCC]">No name</span>}
                     </p>
                   </div>
-                  <p className="text-body font-semibold text-[#111] shrink-0">{fmtCurrency(o.total_amount)}</p>
+                  <p className={`text-body font-semibold shrink-0 ${o.status === 'deleted' ? 'text-[#BBBBBB] line-through' : 'text-[#111]'}`}>{fmtCurrency(o.total_amount)}</p>
                 </div>
+
+                <MatchedItems text={o.matched_items} />
 
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-body-sm text-[#888]">
                   <span className="whitespace-nowrap">{fmtDate(o.created_at)}</span>

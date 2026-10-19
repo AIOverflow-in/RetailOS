@@ -181,6 +181,7 @@ export const api = {
       dateFrom?: string
       dateTo?: string
       sort?: 'date_asc' | 'date_desc' | 'total_asc' | 'total_desc'
+      batchId?: string
     } = {},
   ) => {
     const params = new URLSearchParams()
@@ -192,6 +193,7 @@ export const api = {
     if (filters.dateFrom) params.set('date_from', filters.dateFrom)
     if (filters.dateTo) params.set('date_to', filters.dateTo)
     if (filters.sort) params.set('sort', filters.sort)
+    if (filters.batchId) params.set('batch_id', filters.batchId)
     return request<{ orders: any[]; total: number; page: number; limit: number }>(
       `/orders?${params.toString()}`,
     )

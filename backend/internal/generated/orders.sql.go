@@ -26,17 +26,20 @@ const countOrdersFiltered = `-- name: CountOrdersFiltered :one
 SELECT COUNT(*)
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.status <> 'deleted'
-  AND (
+WHERE (
       $1::text = ''
       OR o.order_number ILIKE '%' || $1 || '%'
       OR c.name         ILIKE '%' || $1 || '%'
       OR c.phone        ILIKE '%' || $1 || '%'
+      -- Batch no. or product on any line, to find a walk-in's bill on a return.
+      OR EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = o.order_id
+                 AND (oi.batch_no ILIKE '%' || $1 || '%' OR oi.product_name ILIKE '%' || $1 || '%'))
   )
   AND ($2::text[] IS NULL OR o.status       = ANY($2::text[]))
   AND ($3::text[] IS NULL OR o.payment_mode = ANY($3::text[]))
   AND ($4::date   IS NULL OR o.created_at::date >= $4::date)
   AND ($5::date   IS NULL OR o.created_at::date <= $5::date)
+  AND ($6::uuid   IS NULL OR EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = o.order_id AND oi.batch_id = $6::uuid))
 `
 
 type CountOrdersFilteredParams struct {
@@ -45,6 +48,7 @@ type CountOrdersFilteredParams struct {
 	Column3 []string    `json:"column_3"`
 	Column4 pgtype.Date `json:"column_4"`
 	Column5 pgtype.Date `json:"column_5"`
+	Column6 pgtype.UUID `json:"column_6"`
 }
 
 func (q *Queries) CountOrdersFiltered(ctx context.Context, arg CountOrdersFilteredParams) (int64, error) {
@@ -54,6 +58,7 @@ func (q *Queries) CountOrdersFiltered(ctx context.Context, arg CountOrdersFilter
 		arg.Column3,
 		arg.Column4,
 		arg.Column5,
+		arg.Column6,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -360,20 +365,35 @@ func (q *Queries) GetOrderItems(ctx context.Context, orderID pgtype.UUID) ([]Get
 const listOrders = `-- name: ListOrders :many
 SELECT o.order_id, o.order_number, o.total_amount, o.status, o.payment_mode, o.created_at,
        c.name  AS customer_name,
-       c.phone AS customer_phone
+       c.phone AS customer_phone,
+       -- The lines that matched the batch filter or the search (one per line of
+       -- text), so the cashier can tell the bills apart. '' when none did.
+       COALESCE((SELECT string_agg(oi.product_name || ' · Batch ' || oi.batch_no
+                 || ' · Qty ' || (oi.qty - oi.returned_qty)
+                 || CASE WHEN oi.returned_qty > 0 THEN ' (' || oi.returned_qty || ' returned)' ELSE '' END
+                 || ' · ₹' || to_char(oi.sale_price, 'FM9999999990.00') || ' each',
+                 E'\n' ORDER BY oi.product_name)
+          FROM order_items oi
+         WHERE oi.order_id = o.order_id
+           AND (oi.batch_id = $9::uuid
+                OR ($1::text <> '' AND (oi.batch_no ILIKE '%' || $1 || '%' OR oi.product_name ILIKE '%' || $1 || '%')))
+       ), '')::text AS matched_items
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.status <> 'deleted'
-  AND (
+WHERE (
       $1::text = ''
       OR o.order_number ILIKE '%' || $1 || '%'
       OR c.name         ILIKE '%' || $1 || '%'
       OR c.phone        ILIKE '%' || $1 || '%'
+      -- Batch no. or product on any line, to find a walk-in's bill on a return.
+      OR EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = o.order_id
+                 AND (oi.batch_no ILIKE '%' || $1 || '%' OR oi.product_name ILIKE '%' || $1 || '%'))
   )
   AND ($2::text[] IS NULL OR o.status       = ANY($2::text[]))
   AND ($3::text[] IS NULL OR o.payment_mode = ANY($3::text[]))
   AND ($4::date   IS NULL OR o.created_at::date >= $4::date)
   AND ($5::date   IS NULL OR o.created_at::date <= $5::date)
+  AND ($9::uuid   IS NULL OR EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = o.order_id AND oi.batch_id = $9::uuid))
 ORDER BY
   CASE WHEN $6::text = 'date_asc'   THEN o.created_at   END ASC  NULLS LAST,
   CASE WHEN $6::text = 'date_desc'  THEN o.created_at   END DESC NULLS LAST,
@@ -392,6 +412,7 @@ type ListOrdersParams struct {
 	Column6 string      `json:"column_6"`
 	Limit   int32       `json:"limit"`
 	Offset  int32       `json:"offset"`
+	Column9 pgtype.UUID `json:"column_9"`
 }
 
 type ListOrdersRow struct {
@@ -403,6 +424,7 @@ type ListOrdersRow struct {
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	CustomerName  *string            `json:"customer_name"`
 	CustomerPhone *string            `json:"customer_phone"`
+	MatchedItems  string             `json:"matched_items"`
 }
 
 func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListOrdersRow, error) {
@@ -415,6 +437,7 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListO
 		arg.Column6,
 		arg.Limit,
 		arg.Offset,
+		arg.Column9,
 	)
 	if err != nil {
 		return nil, err
@@ -432,6 +455,7 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListO
 			&i.CreatedAt,
 			&i.CustomerName,
 			&i.CustomerPhone,
+			&i.MatchedItems,
 		); err != nil {
 			return nil, err
 		}
@@ -453,7 +477,7 @@ func (q *Queries) MarkOrderReturned(ctx context.Context, orderID pgtype.UUID) er
 }
 
 const softDeleteOrder = `-- name: SoftDeleteOrder :exec
-UPDATE orders SET status = 'deleted' WHERE order_id = $1
+UPDATE orders SET status = 'deleted', updated_at = NOW() WHERE order_id = $1
 `
 
 func (q *Queries) SoftDeleteOrder(ctx context.Context, orderID pgtype.UUID) error {

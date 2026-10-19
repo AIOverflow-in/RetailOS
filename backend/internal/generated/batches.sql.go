@@ -327,7 +327,7 @@ func (q *Queries) ListInventory(ctx context.Context) ([]ListInventoryRow, error)
 }
 
 const lockBatchForUpdate = `-- name: LockBatchForUpdate :one
-SELECT batch_id, purchase_qty, sold_qty
+SELECT batch_id, purchase_qty, sold_qty, expiry_date
 FROM batches
 WHERE batch_id = $1
 FOR UPDATE
@@ -337,12 +337,18 @@ type LockBatchForUpdateRow struct {
 	BatchID     pgtype.UUID `json:"batch_id"`
 	PurchaseQty int32       `json:"purchase_qty"`
 	SoldQty     int32       `json:"sold_qty"`
+	ExpiryDate  pgtype.Date `json:"expiry_date"`
 }
 
 func (q *Queries) LockBatchForUpdate(ctx context.Context, batchID pgtype.UUID) (LockBatchForUpdateRow, error) {
 	row := q.db.QueryRow(ctx, lockBatchForUpdate, batchID)
 	var i LockBatchForUpdateRow
-	err := row.Scan(&i.BatchID, &i.PurchaseQty, &i.SoldQty)
+	err := row.Scan(
+		&i.BatchID,
+		&i.PurchaseQty,
+		&i.SoldQty,
+		&i.ExpiryDate,
+	)
 	return i, err
 }
 

@@ -143,6 +143,8 @@ export interface Order {
   status: string
   created_at: string
   updated_at: string | null
+  // Order list only: lines matching the batch filter or search, one per line of text.
+  matched_items?: string
   return_comment: string | null
 }
 

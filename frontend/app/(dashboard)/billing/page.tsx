@@ -91,6 +91,29 @@ export default function BillingPage() {
       toast.error('Customer phone is required (10 digits)')
       return
     }
+    // Same checks the server makes, so the counter sees them before saving.
+    const badPrice = completeRows.find(r => !(r.salePrice > 0))
+    if (badPrice) {
+      toast.error(`${badPrice.productName}: enter a selling price above ₹0.`)
+      return
+    }
+    const badQty = completeRows.find(r => !(r.qty >= 1))
+    if (badQty) {
+      toast.error(`${badQty.productName}: quantity must be at least 1.`)
+      return
+    }
+    // The same batch on several lines must fit its stock in total.
+    const perBatch = new Map<string, { row: BillingRow; qty: number; lines: number }>()
+    for (const r of completeRows) {
+      const b = perBatch.get(r.batchId!) ?? { row: r, qty: 0, lines: 0 }
+      perBatch.set(r.batchId!, { row: r, qty: b.qty + r.qty, lines: b.lines + 1 })
+    }
+    for (const { row: r, qty, lines } of perBatch.values()) {
+      if (lines > 1 && r.availableStock != null && qty > r.availableStock) {
+        toast.error(`Not enough stock for ${r.productName} (batch ${r.batchNo}): ${qty} on the bill across ${lines} lines, only ${r.availableStock} available.`)
+        return
+      }
+    }
     setLoading(true)
     const cartIsInState = isInState
     const cartCustomer = customer

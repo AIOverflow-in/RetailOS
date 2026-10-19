@@ -1,5 +1,6 @@
 import { toast } from 'sonner'
 import type { OrderDetail, ShopSettings } from '@/types'
+import { orderItemsToBillItems } from '@/lib/billItems'
 import type { BillData, BillItem } from '@/components/bill/BillDocument'
 
 export type { BillData, BillItem }
@@ -12,19 +13,7 @@ export function buildBillData(
   const { order, items } = detail
   const isInState = order.cgst_total > 0 || order.sgst_total > 0
 
-  const billItems: BillItem[] = items.map(item => ({
-    productName: item.product_name,
-    batchNo: item.batch_no,
-    expiryDate: item.expiry_date ?? '',
-    mrp: item.mrp ?? 0,
-    qty: item.qty,
-    salePrice: item.sale_price,
-    gstRate: item.gst_rate,
-    cgstAmount: item.cgst_amount,
-    sgstAmount: item.sgst_amount,
-    igstAmount: item.igst_amount,
-    lineTotal: item.line_total,
-  }))
+  const billItems = orderItemsToBillItems(items)
 
   return {
     orderId: order.order_id,

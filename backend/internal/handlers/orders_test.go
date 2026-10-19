@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
+
 	"github.com/retail-os/backend/internal/middleware"
 )
 
@@ -372,5 +374,96 @@ func TestCreateOrder_InvalidClientRef(t *testing.T) {
 	// Rejected before any DB access, so a malformed ref can never create a bill.
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+func TestLineAmounts_GSTInclusive(t *testing.T) {
+	tests := []struct {
+		name                    string
+		price                   float64
+		qty                     int32
+		rate                    float64
+		inState                 bool
+		total, cgst, sgst, igst float64
+	}{
+		// ₹112 incl. 12% GST is ₹100 + ₹12 tax: the bill total stays ₹112.
+		{"in-state 12%", 112, 1, 12, true, 112, 6, 6, 0},
+		{"out-of-state 12%", 112, 1, 12, false, 112, 0, 0, 12},
+		{"qty multiplies the inclusive price", 52.5, 2, 5, true, 105, 2.5, 2.5, 0},
+		{"0% GST has no tax", 40, 3, 0, true, 120, 0, 0, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			total, cgst, sgst, igst := lineAmounts(tt.price, tt.qty, tt.rate, tt.inState)
+			if total != tt.total || cgst != tt.cgst || sgst != tt.sgst || igst != tt.igst {
+				t.Errorf("got total=%v cgst=%v sgst=%v igst=%v, want %v %v %v %v",
+					total, cgst, sgst, igst, tt.total, tt.cgst, tt.sgst, tt.igst)
+			}
+		})
+	}
+}
+
+func TestValidateBillLine(t *testing.T) {
+	tests := []struct {
+		name    string
+		qty     int32
+		price   float64
+		rate    float64
+		wantErr bool
+	}{
+		{"valid", 2, 112, 12, false},
+		{"above MRP is allowed (MRP not checked)", 1, 200, 18, false},
+		{"0% GST is allowed (exempt products)", 1, 40, 0, false},
+		{"zero qty", 0, 112, 12, true},
+		{"negative qty would add stock", -5, 112, 12, true},
+		{"zero price", 1, 0, 12, true},
+		{"negative price", 1, -50, 12, true},
+		{"GST rate not in the slabs", 1, 112, 3, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := validateBillLine("Item", tt.qty, tt.price, tt.rate)
+			if (got != "") != tt.wantErr {
+				t.Errorf("validateBillLine(%d, %v, %v) = %q, wantErr %v", tt.qty, tt.price, tt.rate, got, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestExpiredBatchMessage(t *testing.T) {
+	day := func(offset int) pgtype.Date {
+		return pgtype.Date{Time: todayIST().AddDate(0, 0, offset), Valid: true}
+	}
+	if expiredBatchMessage("Item", "B1", day(1)) != "" {
+		t.Error("batch expiring tomorrow should still be billable")
+	}
+	if expiredBatchMessage("Item", "B1", day(0)) == "" {
+		t.Error("batch expiring today should be refused, like the billing batch list")
+	}
+	if expiredBatchMessage("Item", "B1", day(-30)) == "" {
+		t.Error("expired batch should be refused")
+	}
+}
+
+func TestLineAmounts_HalvesAddUpToTax(t *testing.T) {
+	// ₹10 at 12%: tax 1.07 → CGST 0.54 + SGST 0.53 (not 0.54 + 0.54).
+	if _, cgst, sgst, _ := lineAmounts(10, 1, 12, true); cgst != 0.54 || sgst != 0.53 {
+		t.Errorf("₹10 at 12%%: got CGST %v SGST %v, want 0.54 + 0.53", cgst, sgst)
+	}
+	for _, rate := range []float64{5, 12, 18, 28} {
+		for paise := 1; paise <= 50000; paise += 7 {
+			price := float64(paise) / 100
+			total, cgst, sgst, _ := lineAmounts(price, 1, rate, true)
+			_, _, _, igst := lineAmounts(price, 1, rate, false)
+			if round2(cgst+sgst) != igst {
+				t.Fatalf("₹%.2f at %v%%: CGST %v + SGST %v != tax %v", price, rate, cgst, sgst, igst)
+			}
+			if d := round2(cgst - sgst); d != 0 && d != 0.01 {
+				t.Fatalf("₹%.2f at %v%%: CGST %v should equal SGST %v or be 1 paisa more", price, rate, cgst, sgst)
+			}
+			if round2(total-cgst-sgst) <= 0 {
+				t.Fatalf("₹%.2f at %v%%: taxable not positive", price, rate)
+			}
+		}
 	}
 }

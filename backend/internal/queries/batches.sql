@@ -20,7 +20,7 @@ WHERE b.product_id = $1
 ORDER BY b.expiry_date ASC, b.created_at ASC;
 
 -- name: LockBatchForUpdate :one
-SELECT batch_id, purchase_qty, sold_qty
+SELECT batch_id, purchase_qty, sold_qty, expiry_date
 FROM batches
 WHERE batch_id = $1
 FOR UPDATE;
