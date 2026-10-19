@@ -143,7 +143,24 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 
 - Picking a batch saved without a GST rate shows a warning ("this batch has no GST rate saved, so GST is set to 0%") and highlights the GST box in amber until a rate is chosen. The same warning appears when adding such a batch to a saved bill.
 
+- It's only a warning: billing at 0% still goes through, since some products really are 0% GST. Batches saved with a 0% rate show no warning; only batches with no rate at all do.
+
 **Why it matters:** These batches silently billed at 0% GST. Sipra has 11 such batches in stock, and 10 lines have already gone out at 0%.
+
+---
+
+### 10. CGST and SGST add up to the tax exactly
+**Commit:** `dc4642f`
+
+- The tax is split in whole paise: CGST takes the odd paisa and SGST the rest. For example, ₹5.33 of tax is now ₹2.67 + ₹2.66. Before, each half was rounded up separately, giving ₹2.67 + ₹2.67 = ₹5.34.
+- The billing screen now rounds exactly like the server: the line total first, then the same rounding rule. The cart summary and WhatsApp bill show exactly what gets saved.
+
+**Why it matters:** About half of all in-state lines recorded 1 paisa of extra tax. That's 3,130 lines and ₹31.30 on Sipra so far, overstating output tax and understating taxable value in GST filings. Separately, the screen and the saved bill could differ by a paisa on some price × qty combinations.
+
+**Technical Notes:**
+- `lineAmounts()` (server) and `calcGST()` (`lib/gst.ts`) use the same steps. A check over 115,400 price/qty/rate/state combinations gave identical total, CGST, SGST and IGST on both sides.
+- Unit test `TestLineAmounts_HalvesAddUpToTax`: CGST + SGST equals the tax for every price tried, and CGST equals SGST or is 1 paisa more.
+- Existing bills keep their stored amounts. Only new bills and edits use the new split.
 
 ---
 
@@ -160,6 +177,7 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 - `app/(dashboard)/orders/[id]/page.tsx` — "Deleted" date and note on deleted bills
 - `components/billing/BillingRowItem.tsx` — blue highlight; GST warning; ₹0 price outlined; Qty shows the billed quantity
 - `app/(dashboard)/billing/page.tsx` — price, quantity and same-batch stock errors before saving
+- `lib/gst.ts` — same rounding and CGST/SGST split as the server
 - `app/bill/[id]/page.tsx`, `lib/generateBill.tsx` — bill lines at kept quantities
 - `components/bill/BillDocument.tsx` — taxable value excludes GST
 - `package.json` — version 1.8.1
@@ -173,7 +191,7 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 - `internal/handlers/{helpers,dashboard,reports,inventory}.go` — IST dates
 - `internal/queries/batches.sql` — `LockBatchForUpdate` returns `expiry_date`
 - `internal/handlers/reports_test.go` — date range test for IST and the exclusive end bound
-- `internal/handlers/orders_test.go` — `TestLineAmounts_GSTInclusive`, `TestValidateBillLine`, `TestExpiredBatchMessage`
+- `internal/handlers/orders_test.go` — `TestLineAmounts_GSTInclusive`, `TestLineAmounts_HalvesAddUpToTax`, `TestValidateBillLine`, `TestExpiredBatchMessage`
 - `internal/generated/{dashboard,reports,orders,batches}.sql.go` — regenerated (`sqlc v1.30.0`)
 
 ---
@@ -194,7 +212,7 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 
 - **Returns are counted on the original bill's date**, not as credit notes in the month of the return. A return in November against an October bill lowers October's figures.
 - **Historical bills are not rewritten.** Bills before 26 Apr 2026 keep their GST-on-top amounts, as charged. The 2 bills edited under the old edit bug keep their ₹23.50 extra.
-- **CGST and SGST are each rounded up on odd-paisa tax** (e.g. ₹5.33 of tax shows as ₹2.67 + ₹2.67 = ₹5.34). That's about half of all lines, ₹31.30 so far on Sipra. Not changed in this release; a fix is proposed separately.
+- **Bills saved before this release keep their old CGST/SGST split** (1 paisa high on odd-paisa tax, ₹31.30 in total on Sipra). They aren't rewritten, since those amounts are what was printed and given to customers.
 - **Returned and deleted bills still reprint like normal bills.** This was reviewed and left as is.
 - **Double-clicking Delete or Return** could put stock back twice. Not changed, since both go through a confirmation dialog.
 - **Deleted bills can still be opened, printed and shared** from their page, with the Deleted note shown on screen.
@@ -241,6 +259,11 @@ This release fixes all of these, verified on a local copy of Sipra's data. It al
 
 ### GST warning
 - [ ] Pick a batch with no GST rate → warning shown, GST box amber; choose a rate → amber goes away
+- [ ] Leave it at 0% and place the order → the bill saves (0% is never blocked)
+
+### CGST / SGST split
+- [ ] Bill ₹112 at 5% in-state → CGST ₹2.67, SGST ₹2.66 (tax ₹5.33); cart summary, saved order, print and WhatsApp PDF all show the same
+- [ ] GST report for a period of new bills: Taxable + CGST + SGST = Total
 
 ### Search highlight
 - [ ] In billing, ↓ / ↑ and mouse hover show the highlighted product in sky blue with a left bar
