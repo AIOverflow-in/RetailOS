@@ -1,6 +1,6 @@
 # SellOS v1.10.0 — Release Notes
 
-### Bill without the mouse, and know where your customer lives: keyboard-first billing, shortcuts everywhere, customer addresses, and customer edits from the order page
+### Bill without the mouse, and know where your customer lives: keyboard-first billing, shortcuts everywhere, a clearer inventory row, customer addresses, and customer edits from the order page
 
 **Release Date:** October 2026
 **Branch:** `feat/customer-address-shortcuts` → `main`
@@ -77,6 +77,15 @@ Billing was fast to search but slow to finish: after picking a product the cashi
 
 ---
 
+### 5. Inventory rows: Add batch, and a hover menu for the rest
+**Commit:** `92908a6`
+
+- Each inventory row has one labelled button, **Add batch**, and a hamburger button. Hovering the hamburger (or clicking it, on touch screens) opens the other actions: Edit batch, Adjust stock and Bills with this batch under "This batch", and Edit product under "Product".
+
+**Why it matters:** Five identical grey icons in a column gave no hint of what each did. Restocking is the common action, so it is now the one clear button.
+
+---
+
 ## Summary of Changes
 
 ### New Files
@@ -145,6 +154,11 @@ Billing was fast to search but slow to finish: after picking a product the cashi
 - [ ] Open an order → Customer card → Edit → change the name and address → the card updates
 - [ ] Open an older bill of the same customer → it shows the new details
 - [ ] Change the phone to another customer's number → "Another customer already has this phone number."
+
+### Inventory rows
+- [ ] Each batch row shows **Add batch** and a hamburger; Add batch opens Add Stock with the product pre-filled
+- [ ] Hover the hamburger → the menu opens and stays open while the mouse moves onto it; on a touch screen, tap opens it
+- [ ] Edit batch, Adjust stock, Bills with this batch and Edit product each open the right thing
 
 ### Deploy
 - [ ] Take a database backup first; after deploy, the backend log shows `000014_add_customer_address.up.sql … OK` for every tenant
