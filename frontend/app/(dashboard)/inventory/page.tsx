@@ -14,6 +14,7 @@ import {
   ArrowDown,
   Check,
   ReceiptText,
+  Menu as MenuIcon,
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { InventoryRow } from '@/types'
@@ -26,6 +27,7 @@ import EditBatchModal from '@/components/inventory/EditBatchModal'
 import StockAdjustmentModal from '@/components/inventory/StockAdjustmentModal'
 import { Tooltip } from '@/components/ui/tooltip'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Menu } from '@base-ui/react/menu'
 
 const PAGE_SIZE = 20
 const NO_BOX = '__no_box__'
@@ -52,9 +54,9 @@ function isExpired(date: string) {
   return new Date(date) <= new Date()
 }
 
-/* Shared by the desktop table row and the mobile card.
-   The text labels show on mobile (where hover tooltips never fire) and are
-   hidden on desktop, where the Tooltip supplies the same wording. */
+/* Shared by the desktop table row and the mobile card. One labelled primary
+   action (restocking is the common one) and a "⋯" menu for the rest, grouped by
+   whether they act on this batch or on the product. */
 function BatchActions({ row, onEditProduct, onEditBatch, onAdjust }: {
   row: InventoryRow
   onEditProduct: (r: InventoryRow) => void
@@ -62,9 +64,7 @@ function BatchActions({ row, onEditProduct, onEditBatch, onAdjust }: {
   onAdjust: (r: InventoryRow) => void
 }) {
   const router = useRouter()
-  const actions = [
-    { label: 'Add batch', Icon: PackagePlus, run: () => router.push(`/inventory/add?product_id=${row.product_id}`) },
-    { label: 'Edit product', Icon: Pencil, run: () => onEditProduct(row) },
+  const batchActions = [
     { label: 'Edit batch', Icon: SlidersHorizontal, run: () => onEditBatch(row) },
     { label: 'Adjust stock', Icon: PackageMinus, run: () => onAdjust(row) },
     // Every bill this batch was sold on, e.g. to find a walk-in's bill on a return.
@@ -73,20 +73,51 @@ function BatchActions({ row, onEditProduct, onEditBatch, onAdjust }: {
       run: () => router.push(`/orders?batch=${row.batch_id}&label=${encodeURIComponent(`Batch ${row.batch_no} · ${row.name}`)}`),
     },
   ]
+  const itemCls = 'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-body-sm text-[#333] cursor-default outline-none data-highlighted:bg-[#F2F2F2]'
+  const groupCls = 'px-2.5 pt-1.5 pb-1 text-caption font-medium text-label'
   return (
-    <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-      {actions.map(({ label, Icon, run }) => (
-        <Tooltip key={label} content={label}>
-          <button
-            onClick={run}
-            aria-label={label}
-            className="flex items-center gap-1.5 p-2 md:p-1.5 rounded-md text-[#888] md:text-[#CCCCCC] hover:text-[#555] hover:bg-[#F2F2F2] transition-colors"
-          >
-            <Icon className="w-3.5 h-3.5 shrink-0" />
-            <span className="md:hidden text-body-sm whitespace-nowrap">{label}</span>
-          </button>
-        </Tooltip>
-      ))}
+    <div className="flex items-center gap-1.5">
+      <button
+        onClick={() => router.push(`/inventory/add?product_id=${row.product_id}`)}
+        className="flex items-center gap-1.5 h-10 md:h-7 px-3 md:px-2.5 rounded-md border border-[#E0E0E0] text-body-sm font-medium text-[#444] whitespace-nowrap hover:bg-[#F5F5F5] hover:border-[#C8C8C8] transition-colors"
+      >
+        <PackagePlus className="w-3.5 h-3.5 shrink-0" />
+        Add batch
+      </button>
+      <Menu.Root>
+        <Menu.Trigger
+          aria-label="More actions"
+          openOnHover
+          delay={80}
+          closeDelay={250}
+          className="flex items-center justify-center h-10 w-10 md:h-7 md:w-7 rounded-md text-[#777] hover:bg-[#F2F2F2] hover:text-[#111] data-popup-open:bg-[#F2F2F2] data-popup-open:text-[#111] transition-colors"
+        >
+          <MenuIcon className="w-4 h-4" />
+        </Menu.Trigger>
+        <Menu.Portal>
+          <Menu.Positioner align="end" sideOffset={4} className="z-50">
+            <Menu.Popup className="min-w-52 rounded-lg bg-white p-1 shadow-md ring-1 ring-black/10 outline-none">
+              <Menu.Group>
+                <Menu.GroupLabel className={groupCls}>This batch</Menu.GroupLabel>
+                {batchActions.map(({ label, Icon, run }) => (
+                  <Menu.Item key={label} onClick={run} className={itemCls}>
+                    <Icon className="w-3.5 h-3.5 shrink-0 text-[#888]" />
+                    {label}
+                  </Menu.Item>
+                ))}
+              </Menu.Group>
+              <div className="my-1 h-px bg-[#EEE]" />
+              <Menu.Group>
+                <Menu.GroupLabel className={groupCls}>Product</Menu.GroupLabel>
+                <Menu.Item onClick={() => onEditProduct(row)} className={itemCls}>
+                  <Pencil className="w-3.5 h-3.5 shrink-0 text-[#888]" />
+                  Edit product
+                </Menu.Item>
+              </Menu.Group>
+            </Menu.Popup>
+          </Menu.Positioner>
+        </Menu.Portal>
+      </Menu.Root>
     </div>
   )
 }
