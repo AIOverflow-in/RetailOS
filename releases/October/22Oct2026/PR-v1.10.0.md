@@ -53,13 +53,13 @@ Billing was fast to search but slow to finish: after picking a product the cashi
 
 - An optional Address field on the billing screen, after Age. It fills in for returning customers.
 - The address is printed on the bill and the WhatsApp PDF when one is saved, and shown on the order page, the Customers table and the edit dialog.
-- A returning customer's name, age and address typed on a bill now update the saved customer. Before, the server ignored them.
+- A bill can add or change a returning customer's age and address, but never blank them or rename the customer (a name is shared by every earlier bill, so it is changed only from the Edit dialog). The name box is locked once a saved customer is loaded, and Place Order waits for the lookup.
 
 **Why it matters:** Deliveries and follow-ups need an address, and it should be captured at the counter without slowing the bill: it is never required.
 
 **Technical Notes:**
 - Migration `000014_add_customer_address` adds a nullable `customers.address`. It is registered in `tenantMigrations` (`internal/db/migrate.go`), which is a hardcoded list, so a new file there is not picked up automatically.
-- On `POST /orders`, an omitted `address` leaves the saved one alone and a blank one clears it, so older browser tabs cannot erase addresses.
+- On `POST /orders`, empty age/address are ignored for a returning customer. `PUT /customers/{id}` keeps the address when none is sent and clears it when an empty string is sent.
 - Verified on a restored copy of the production database: both tenants get the column, row counts are unchanged.
 
 ---
@@ -87,7 +87,8 @@ Billing was fast to search but slow to finish: after picking a product the cashi
 ### 6. Inventory hides zero stock by default; HSN column removed
 **Commit:** `5afe0ea`
 
-- The Stock filter starts as In stock + Low stock, with a bar saying "Out-of-stock batches are hidden. Show them". Arriving from a "View batch" link starts with no stock filter, so the batch is always found.
+- A "Hide out of stock" checkbox (on by default, next to "Hide expired") hides batches with no stock, with a bar saying "Out-of-stock batches are hidden. Show them". Arriving from a "View batch" link starts with it off, so the batch is always found.
+- The Company moves under the product name, so every column fits at 1280px wide, and the Add batch / menu column stays in view.
 - The HSN column is removed from the table and the mobile card (still editable in Edit product).
 
 **Why it matters:** Cashiers mostly look for things they can sell. The bar makes the hidden filter obvious, so a missing product is never a mystery.
@@ -125,6 +126,12 @@ Billing was fast to search but slow to finish: after picking a product the cashi
 
 ---
 
+## Browser test gate
+
+`./e2e/run.sh` (new, see `e2e/README.md`) restores the newest backup into a throwaway local database, runs the backend on it (applying every migration), copies Sipra's data into the Test Shop tenant and drives the app in Chromium with 37 Playwright tests (keyboard billing, shortcuts, inventory, customers, every page at desktop and phone width, console errors). Running it found and fixed: a hydration error on the billing page, a held Ctrl+Enter picking a product on the next bill, a literal `\u2026` in the Customers search box, the shortcut button covering Sign out, and the inventory actions being scrolled out of view. CLAUDE.md now requires it before every PR and release.
+
+---
+
 ## Known Considerations
 
 - Editing a customer changes their old bills too; there is no per-bill snapshot of the customer.
@@ -155,8 +162,8 @@ Billing was fast to search but slow to finish: after picking a product the cashi
 - [ ] New customer with an address → the printed bill and the WhatsApp PDF show it
 - [ ] Bill without an address → no address row on the bill
 - [ ] Look up a returning customer by phone → the address is filled in
-- [ ] Change the name and address on a returning customer's bill → Customers shows the new values
-- [ ] Clear the address on a returning customer's bill → the saved address is removed
+- [ ] Change the address on a returning customer's bill → Customers shows the new address; the name box is locked
+- [ ] A returning customer's bill with the age and address left empty → the saved age and address are kept
 
 ### Edit customer from an order
 - [ ] Open an order → Customer card → Edit → change the name and address → the card updates
@@ -169,8 +176,12 @@ Billing was fast to search but slow to finish: after picking a product the cashi
 - [ ] Edit batch, Adjust stock, Bills with this batch and Edit product each open the right thing
 
 - [ ] Open Inventory → zero-stock batches are not listed and the amber bar is shown; "Show them" lists them and the bar goes away
+- [ ] Untick "Hide expired" → expired batches that still have stock appear
 - [ ] Inventory → Add Stock → "View batch" → the batch is found even with 0 stock
 - [ ] No HSN column on desktop or mobile
+
+### Browser gate
+- [ ] `./e2e/run.sh` → all tests pass, and the screenshots in `e2e/screenshots/` look right
 
 ### Deploy
 - [ ] Take a database backup first; after deploy, the backend log shows `000014_add_customer_address.up.sql … OK` for every tenant
