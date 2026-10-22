@@ -226,7 +226,10 @@ function InventoryContent() {
   const [companyFilter, setCompanyFilter] = useState<Set<string>>(new Set())
   const [boxFilter, setBoxFilter] = useState<Set<string>>(new Set())
   const [distributorFilter, setDistributorFilter] = useState<Set<string>>(new Set())
-  const [stockStatusFilter, setStockStatusFilter] = useState<Set<StockStatus>>(new Set())
+  const [stockStatusFilter, setStockStatusFilter] = useState<Set<StockStatus>>(
+    // Zero-stock batches are hidden by default; not when arriving from a "View batch" link.
+    () => new Set(initialQ ? [] : ['in', 'low']),
+  )
   const [sortField, setSortField] = useState<SortField>('expiry')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
@@ -408,6 +411,8 @@ function InventoryContent() {
   const filtersActive =
     companyFilter.size + boxFilter.size + distributorFilter.size + stockStatusFilter.size > 0
 
+  const hidingZero = stockStatusFilter.size === 2 && stockStatusFilter.has('in') && stockStatusFilter.has('low')
+
   function clearFilters() {
     setCompanyFilter(new Set())
     setBoxFilter(new Set())
@@ -528,8 +533,21 @@ function InventoryContent() {
         </div>
       </div>
 
+      {hidingZero && (
+        <div className="flex items-center gap-2 text-body-sm text-[#7A5B00] bg-[#FFF8E6] border border-[#FFE5B4] rounded-lg px-3 py-1.5">
+          <span>Out-of-stock batches are hidden.</span>
+          <button
+            type="button"
+            onClick={() => setStockStatusFilter(new Set())}
+            className="font-medium underline underline-offset-2 hover:text-[#111]"
+          >
+            Show them
+          </button>
+        </div>
+      )}
+
       {loading ? (
-        <TableSkeleton cols={10} />
+        <TableSkeleton cols={9} />
       ) : loadError ? (
         <LoadError what="inventory" message={loadError} onRetry={fetchInventory} />
       ) : displayed.length === 0 ? (
@@ -547,7 +565,7 @@ function InventoryContent() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
-                  {['Product', 'Company', 'Batch', 'Box', 'Expiry', 'MRP', 'Selling', 'Stock', 'HSN', ''].map(h => (
+                  {['Product', 'Company', 'Batch', 'Box', 'Expiry', 'MRP', 'Selling', 'Stock', ''].map(h => (
                     <th
                       key={h || 'actions'}
                       className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap"
@@ -583,7 +601,6 @@ function InventoryContent() {
                           {r.available_stock}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-body-sm text-[#CCCCCC] font-mono">{r.hsn_code ?? '—'}</td>
                       <td className="py-3 px-2">
                         <BatchActions
                           row={r}
@@ -633,7 +650,6 @@ function InventoryContent() {
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-caption text-[#AAAAAA] font-mono">
                     <span>Batch {r.batch_no}</span>
                     {r.box_no && <span>Box {r.box_no}</span>}
-                    {r.hsn_code && <span>HSN {r.hsn_code}</span>}
                   </div>
 
                   <div className="pt-1 border-t border-[#F7F7F7]">
