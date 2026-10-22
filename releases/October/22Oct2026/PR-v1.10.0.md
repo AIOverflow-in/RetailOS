@@ -84,6 +84,14 @@ Billing was fast to search but slow to finish: after picking a product the cashi
 
 **Why it matters:** Five identical grey icons in a column gave no hint of what each did. Restocking is the common action, so it is now the one clear button.
 
+### 6. Inventory hides zero stock by default; HSN column removed
+**Commit:** `5afe0ea`
+
+- The Stock filter starts as In stock + Low stock, with a bar saying "Out-of-stock batches are hidden. Show them". Arriving from a "View batch" link starts with no stock filter, so the batch is always found.
+- The HSN column is removed from the table and the mobile card (still editable in Edit product).
+
+**Why it matters:** Cashiers mostly look for things they can sell. The bar makes the hidden filter obvious, so a missing product is never a mystery.
+
 ---
 
 ## Summary of Changes
@@ -159,6 +167,10 @@ Billing was fast to search but slow to finish: after picking a product the cashi
 - [ ] Each batch row shows **Add batch** and a hamburger; Add batch opens Add Stock with the product pre-filled
 - [ ] Hover the hamburger → the menu opens and stays open while the mouse moves onto it; on a touch screen, tap opens it
 - [ ] Edit batch, Adjust stock, Bills with this batch and Edit product each open the right thing
+
+- [ ] Open Inventory → zero-stock batches are not listed and the amber bar is shown; "Show them" lists them and the bar goes away
+- [ ] Inventory → Add Stock → "View batch" → the batch is found even with 0 stock
+- [ ] No HSN column on desktop or mobile
 
 ### Deploy
 - [ ] Take a database backup first; after deploy, the backend log shows `000014_add_customer_address.up.sql … OK` for every tenant
