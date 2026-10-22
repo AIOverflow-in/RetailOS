@@ -1,0 +1,5 @@
+node_modules
+screenshots
+test-results
+.auth.json
+package-lock.json

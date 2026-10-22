@@ -22,6 +22,7 @@ export default function EditCustomerModal({ customer, open, onOpenChange, onSave
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [age, setAge] = useState('')
+  const [address, setAddress] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export default function EditCustomerModal({ customer, open, onOpenChange, onSave
       setName(customer.name)
       setPhone(customer.phone)
       setAge(customer.age != null ? String(customer.age) : '')
+      setAddress(customer.address ?? '')
     }
   }, [open, customer])
 
@@ -47,6 +49,7 @@ export default function EditCustomerModal({ customer, open, onOpenChange, onSave
         name: name.trim(),
         phone: phone.trim(),
         age: age ? parseInt(age, 10) : null,
+        address: address.trim(), // always sent: empty clears it
       })
       toast.success('Customer updated')
       onOpenChange(false)
@@ -77,6 +80,11 @@ export default function EditCustomerModal({ customer, open, onOpenChange, onSave
             <p className="text-caption font-medium text-label">Age (optional)</p>
             <input type="number" min="0" max="150" className={fieldCls} value={age} onChange={e => setAge(e.target.value)} />
           </div>
+          <div className="space-y-1">
+            <p className="text-caption font-medium text-label">Address (optional)</p>
+            <textarea className={`${fieldCls} h-auto py-2`} rows={2} value={address} onChange={e => setAddress(e.target.value)} />
+          </div>
+          <p className="text-caption text-[#AAAAAA]">Changes apply to all bills for this customer.</p>
           <button
             type="submit"
             disabled={saving}

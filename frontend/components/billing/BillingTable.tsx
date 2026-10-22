@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
+import { focusField } from '@/lib/focusField'
 import type { GSTRate } from '@/types'
 import BillingRowItem from './BillingRowItem'
 
@@ -71,12 +73,34 @@ export default function BillingTable({ rows, setRows }: Props) {
     setRows(prev => prev.map(r => (r.rowId === rowId ? { ...r, ...patch } : r)))
   }
 
+  // Row whose product box gets focus after the next render (new line, or after a delete).
+  const focusNext = useRef<string | null>(null)
+  useEffect(() => {
+    if (focusNext.current) { focusField(focusNext.current, 'product'); focusNext.current = null }
+  }, [rows])
+  // Start a bill with the cursor in the first product box.
+  useEffect(() => {
+    // Not on touch screens: it would pop the keyboard and the list over the form.
+    if (window.matchMedia('(pointer: fine)').matches) focusField(null, 'product')
+  }, [])
+
   function removeRow(rowId: string) {
-    setRows(prev => (prev.length > 1 ? prev.filter(r => r.rowId !== rowId) : prev))
+    if (rows.length < 2) return
+    const i = rows.findIndex(r => r.rowId === rowId)
+    focusNext.current = rows[i > 0 ? i - 1 : 1].rowId
+    setRows(prev => prev.filter(r => r.rowId !== rowId))
   }
 
   function addRow() {
-    setRows(prev => [...prev, emptyRow()])
+    const row = emptyRow()
+    focusNext.current = row.rowId
+    setRows(prev => [...prev, row])
+  }
+
+  function nextRow(rowId: string) {
+    const i = rows.findIndex(r => r.rowId === rowId)
+    if (i < rows.length - 1) focusField(rows[i + 1].rowId, 'product')
+    else addRow()
   }
 
   return (
@@ -115,6 +139,7 @@ export default function BillingTable({ rows, setRows }: Props) {
                 row={row}
                 updateRow={updateRow}
                 removeRow={removeRow}
+                onNext={nextRow}
                 canRemove={rows.length > 1}
               />
             ))}

@@ -19,6 +19,7 @@ import BillingTable, {
   isCompleteRow,
   type BillingRow,
 } from '@/components/billing/BillingTable'
+import { focusField } from '@/lib/focusField'
 import { calcGST, calcLineTotal } from '@/lib/gst'
 
 // What makes two attempts "the same bill": items, customer, payment, GST mode.
@@ -36,19 +37,27 @@ export default function BillingPage() {
 
   const [rows, setRows] = useState<BillingRow[]>(() => [emptyRow()])
   const [loading, setLoading] = useState(false)
+  // Saved details for the typed phone are still on their way.
+  const [lookingUp, setLookingUp] = useState(false)
   const [lastBill, setLastBill] = useState<BillData | null>(null)
   // clientRef of the last Place Order and the bill it was for (see lib/billDraft).
   const [attempt, setAttempt] = useState<{ ref: string; signature: string } | null>(null)
   const [unconfirmed, setUnconfirmed] = useState(false)
   const [restoredNotice, setRestoredNotice] = useState(false)
   const restored = useRef(false)
+  // After a bill is placed the form is rebuilt; the cursor goes back to its first product box.
+  const focusAfterReset = useRef(false)
+  useEffect(() => {
+    if (focusAfterReset.current) { focusAfterReset.current = false; focusField(null, 'product') }
+  }, [rows])
 
   // Bring back a bill that was in progress before a reload, logout or page change.
   useEffect(() => {
     const draft = loadBillDraft()
     if (draft && draft.rows.some(r => r.productId)) {
       setRows(draft.rows)
-      dispatch(restoreCart(draft.cart))
+      // Drafts saved before the address field existed have none.
+      dispatch(restoreCart({ ...draft.cart, customer: { ...draft.cart.customer, address: draft.cart.customer.address ?? '' } }))
       if (draft.clientRef) setAttempt({ ref: draft.clientRef, signature: billSignature(draft.rows, draft.cart) })
       setUnconfirmed(draft.unconfirmed)
       // Inline, not a toast: on first load the toaster may not be mounted yet.
@@ -134,6 +143,7 @@ export default function BillingPage() {
         phone: cartCustomer.phone || null,
         name: cartCustomer.name || null,
         age: cartCustomer.age ? parseInt(cartCustomer.age) : null,
+        address: cartCustomer.address,
         items: completeRows.map(r => ({
           batch_id: r.batchId as string,
           product_name: r.productName as string,
@@ -145,6 +155,7 @@ export default function BillingPage() {
       })
       toast.success(`Bill created: ${order.order_number}`)
       resetBill()
+      focusAfterReset.current = true
       // The print page loads everything it needs itself.
       printBill(order.order_id)
 
@@ -183,6 +194,7 @@ export default function BillingPage() {
         customerName: cartCustomer.name || null,
         customerPhone: cartCustomer.phone || null,
         customerAge: cartCustomer.age ? parseInt(cartCustomer.age) : null,
+        customerAddress: cartCustomer.address.trim() || null,
         paymentMode: cartPaymentMode,
         isInState: cartIsInState,
         items: billItems,
@@ -218,8 +230,35 @@ export default function BillingPage() {
   if (completeRows.length === 0) missing.push('Add at least one item')
   if (!customer.name.trim()) missing.push('Customer name')
   if (customer.phone.length !== 10) missing.push('Customer phone (10 digits)')
-  const placeOrderDisabled = loading || missing.length > 0
+  const placeOrderDisabled = loading || lookingUp || missing.length > 0
   const placeOrderTooltip = missing.length > 0 ? `Required: ${missing.join(', ')}` : ''
+
+  // Ctrl+Enter places the order from anywhere on the page. Re-bound each render so it sees current state.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.key === 'Enter' && (e.ctrlKey || e.metaKey))) return
+      e.preventDefault()
+      if (e.repeat) return // holding the keys must not place a second bill
+      if (placeOrderDisabled) {
+        if (missing.length) toast.error(`Required: ${missing.join(', ')}`)
+        else if (lookingUp) toast('Looking up the customer, try again in a moment.')
+        return
+      }
+      placeOrder()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  // The print tab steals focus; when the counter comes back, put the cursor in the product box.
+  useEffect(() => {
+    const onFocus = () => {
+      const a = document.activeElement
+      if (!a || a === document.body) focusField(null, 'product')
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
 
   return (
     <div className="space-y-5">
@@ -282,7 +321,7 @@ export default function BillingPage() {
 
       <div className="bg-white rounded-lg border border-[#EBEBEB] p-4">
         <p className="text-caption font-medium text-label mb-3">Customer</p>
-        <CustomerLookup />
+        <CustomerLookup onLookingUp={setLookingUp} />
       </div>
 
       {restoredNotice && (
@@ -317,9 +356,10 @@ export default function BillingPage() {
         </div>
       )}
 
-      <div className="flex items-end justify-between gap-4 flex-wrap">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <CartSummary rows={rows} isInState={isInState} />
-        <div className="flex items-center gap-2">
+        <div className="ml-auto w-full sm:w-[24rem] max-w-full">
+        <div className="flex items-center justify-end gap-2">
           {completeRows.length > 0 && (
             <button
               onClick={resetBill}
@@ -340,6 +380,11 @@ export default function BillingPage() {
               {loading ? 'Processing…' : `Place Order — ₹${grandTotal.toFixed(2)}`}
             </button>
           </span>
+        </div>
+        {/* Fixed-width column with room for two lines: the buttons never move when the text changes. */}
+        <p className={`mt-1.5 min-h-[2.25rem] text-right text-caption leading-tight ${lookingUp || missing.length === 0 ? 'text-[#AAAAAA]' : 'text-[#B45309]'}`}>
+          {lookingUp ? 'Looking up customer…' : missing.length > 0 ? `Required: ${missing.join(', ')}` : 'Ctrl + Enter to place order'}
+        </p>
         </div>
       </div>
     </div>

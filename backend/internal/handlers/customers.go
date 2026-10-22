@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -16,6 +17,18 @@ import (
 )
 
 type CustomerHandler struct{ pool *pgxpool.Pool }
+
+// cleanAddress trims the address; blank means none (stored as NULL).
+func cleanAddress(a *string) *string {
+	if a == nil {
+		return nil
+	}
+	t := strings.TrimSpace(*a)
+	if t == "" {
+		return nil
+	}
+	return &t
+}
 
 func NewCustomerHandler(pool *pgxpool.Pool) *CustomerHandler {
 	return &CustomerHandler{pool: pool}
@@ -98,9 +111,10 @@ func (h *CustomerHandler) UpdateCustomer(w http.ResponseWriter, r *http.Request)
 	}
 
 	var body struct {
-		Name  string `json:"name"`
-		Phone string `json:"phone"`
-		Age   *int32 `json:"age"`
+		Name    string  `json:"name"`
+		Phone   string  `json:"phone"`
+		Age     *int32  `json:"age"`
+		Address *string `json:"address"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -123,6 +137,10 @@ func (h *CustomerHandler) UpdateCustomer(w http.ResponseWriter, r *http.Request)
 		Name:       body.Name,
 		Phone:      body.Phone,
 		Age:        body.Age,
+		// Absent address = keep the saved one (an older tab must not erase it);
+		// an empty string clears it.
+		SetAddress: body.Address != nil,
+		Address:    cleanAddress(body.Address),
 	})
 	if isUniqueViolation(err) {
 		writeError(w, http.StatusConflict, "Another customer already has this phone number.")

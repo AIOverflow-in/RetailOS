@@ -26,19 +26,25 @@ func (q *Queries) CountCustomers(ctx context.Context, dollar_1 string) (int64, e
 }
 
 const createCustomer = `-- name: CreateCustomer :one
-INSERT INTO customers (phone, name, age)
-VALUES ($1, $2, $3)
-RETURNING customer_id, phone, name, age, visit_count, created_at
+INSERT INTO customers (phone, name, age, address)
+VALUES ($1, $2, $3, $4)
+RETURNING customer_id, phone, name, age, visit_count, created_at, address
 `
 
 type CreateCustomerParams struct {
-	Phone string `json:"phone"`
-	Name  string `json:"name"`
-	Age   *int32 `json:"age"`
+	Phone   string  `json:"phone"`
+	Name    string  `json:"name"`
+	Age     *int32  `json:"age"`
+	Address *string `json:"address"`
 }
 
 func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error) {
-	row := q.db.QueryRow(ctx, createCustomer, arg.Phone, arg.Name, arg.Age)
+	row := q.db.QueryRow(ctx, createCustomer,
+		arg.Phone,
+		arg.Name,
+		arg.Age,
+		arg.Address,
+	)
 	var i Customer
 	err := row.Scan(
 		&i.CustomerID,
@@ -47,12 +53,13 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 		&i.Age,
 		&i.VisitCount,
 		&i.CreatedAt,
+		&i.Address,
 	)
 	return i, err
 }
 
 const getCustomerByPhone = `-- name: GetCustomerByPhone :one
-SELECT customer_id, phone, name, age, visit_count, created_at FROM customers WHERE phone = $1 LIMIT 1
+SELECT customer_id, phone, name, age, visit_count, created_at, address FROM customers WHERE phone = $1 LIMIT 1
 `
 
 func (q *Queries) GetCustomerByPhone(ctx context.Context, phone string) (Customer, error) {
@@ -65,6 +72,7 @@ func (q *Queries) GetCustomerByPhone(ctx context.Context, phone string) (Custome
 		&i.Age,
 		&i.VisitCount,
 		&i.CreatedAt,
+		&i.Address,
 	)
 	return i, err
 }
@@ -79,7 +87,7 @@ func (q *Queries) IncrementVisitCount(ctx context.Context, customerID pgtype.UUI
 }
 
 const listCustomers = `-- name: ListCustomers :many
-SELECT customer_id, phone, name, age, visit_count, created_at FROM customers
+SELECT customer_id, phone, name, age, visit_count, created_at, address FROM customers
 WHERE $1::text = ''
    OR name ILIKE '%' || $1 || '%'
    OR phone ILIKE '%' || $1 || '%'
@@ -109,6 +117,7 @@ func (q *Queries) ListCustomers(ctx context.Context, arg ListCustomersParams) ([
 			&i.Age,
 			&i.VisitCount,
 			&i.CreatedAt,
+			&i.Address,
 		); err != nil {
 			return nil, err
 		}
@@ -122,24 +131,32 @@ func (q *Queries) ListCustomers(ctx context.Context, arg ListCustomersParams) ([
 
 const updateCustomer = `-- name: UpdateCustomer :one
 UPDATE customers
-SET name = $2, phone = $3, age = $4
-WHERE customer_id = $1
-RETURNING customer_id, phone, name, age, visit_count, created_at
+SET name = $1,
+    phone = $2,
+    age = $3,
+    -- set_address false = the caller sent no address: keep the saved one.
+    address = CASE WHEN $4::boolean THEN $5::text ELSE address END
+WHERE customer_id = $6
+RETURNING customer_id, phone, name, age, visit_count, created_at, address
 `
 
 type UpdateCustomerParams struct {
-	CustomerID pgtype.UUID `json:"customer_id"`
 	Name       string      `json:"name"`
 	Phone      string      `json:"phone"`
 	Age        *int32      `json:"age"`
+	SetAddress bool        `json:"set_address"`
+	Address    *string     `json:"address"`
+	CustomerID pgtype.UUID `json:"customer_id"`
 }
 
 func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) (Customer, error) {
 	row := q.db.QueryRow(ctx, updateCustomer,
-		arg.CustomerID,
 		arg.Name,
 		arg.Phone,
 		arg.Age,
+		arg.SetAddress,
+		arg.Address,
+		arg.CustomerID,
 	)
 	var i Customer
 	err := row.Scan(
@@ -149,6 +166,7 @@ func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) 
 		&i.Age,
 		&i.VisitCount,
 		&i.CreatedAt,
+		&i.Address,
 	)
 	return i, err
 }

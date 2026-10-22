@@ -139,6 +139,14 @@ export default function BillPage() {
                 <p style={{ fontSize: 9, color: '#222' }}>{order.customer_phone || '—'}</p>
               </td>
             </tr>
+            {order.customer_address && (
+              <tr style={{ borderBottom: '1px solid #CCC' }}>
+                <td colSpan={2} style={cell}>
+                  <p style={{ fontWeight: 700, fontSize: 9, marginBottom: 2, color: '#111' }}>Customer Address</p>
+                  <p style={{ fontSize: 9, color: '#222', whiteSpace: 'pre-wrap' }}>{order.customer_address}</p>
+                </td>
+              </tr>
+            )}
             <tr>
               <td style={{ ...cell, borderRight: '1px solid #CCC' }}>
                 <p style={{ fontWeight: 700, fontSize: 9, marginBottom: 2, color: '#111' }}>Customer Age</p>

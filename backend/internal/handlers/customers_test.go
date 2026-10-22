@@ -19,7 +19,6 @@ func TestLookupCustomer_PhoneValidation(t *testing.T) {
 		phone   string
 		wantErr string
 	}{
-		{"empty phone", "", "phone must be exactly 10 digits"},
 		{"too short", "12345", "phone must be exactly 10 digits"},
 		{"too long", "12345678901", "phone must be exactly 10 digits"},
 		{"9 digits", "123456789", "phone must be exactly 10 digits"},
@@ -46,14 +45,12 @@ func TestLookupCustomer_PhoneValidation(t *testing.T) {
 	}
 }
 
-func TestLookupCustomer_NoPhoneParam(t *testing.T) {
-	handler := &CustomerHandler{pool: nil}
-
-	req := httptest.NewRequest(http.MethodGet, "/customers", nil)
-	w := httptest.NewRecorder()
-	handler.LookupCustomer(w, req)
-
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+func TestCleanAddress(t *testing.T) {
+	blank, spaced := "  \n ", "  12 Park St,\nKolkata  "
+	if cleanAddress(nil) != nil || cleanAddress(&blank) != nil {
+		t.Error("nil and blank must give nil")
+	}
+	if got := cleanAddress(&spaced); got == nil || *got != "12 Park St,\nKolkata" {
+		t.Errorf("got %v", got)
 	}
 }

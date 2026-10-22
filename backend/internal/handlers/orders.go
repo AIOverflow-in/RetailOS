@@ -40,9 +40,11 @@ type orderItemRequest struct {
 }
 
 type createOrderRequest struct {
-	Phone       string             `json:"phone"`
-	Name        string             `json:"name"`
-	Age         *int32             `json:"age"`
+	Phone string `json:"phone"`
+	Name  string `json:"name"`
+	Age   *int32 `json:"age"`
+	// nil = leave the saved address alone; blank = clear it.
+	Address     *string            `json:"address"`
 	IsInState   bool               `json:"is_in_state"`
 	Items       []orderItemRequest `json:"items"`
 	CGSTTotal   float64            `json:"cgst_total"`
@@ -181,9 +183,10 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			// New customer
 			customer, err = q.CreateCustomer(r.Context(), generated.CreateCustomerParams{
-				Phone: req.Phone,
-				Name:  req.Name,
-				Age:   req.Age,
+				Phone:   req.Phone,
+				Name:    req.Name,
+				Age:     req.Age,
+				Address: cleanAddress(req.Address),
 			})
 			if err != nil {
 				writeError(w, http.StatusInternalServerError, "could not create customer")
@@ -192,6 +195,28 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		} else if err != nil {
 			writeError(w, http.StatusInternalServerError, "could not lookup customer")
 			return
+		} else {
+			// Returning customer: a bill can add an age or address the customer didn't
+			// have, or change them, but never blank them (a lookup that hadn't finished
+			// sends empty fields) and never renames them: the name is shared by every
+			// earlier bill, so it is changed only from the customer's edit dialog.
+			age, addr := customer.Age, customer.Address
+			if req.Age != nil {
+				age = req.Age
+			}
+			if a := cleanAddress(req.Address); a != nil {
+				addr = a
+			}
+			if !equalPtr(age, customer.Age) || !equalPtr(addr, customer.Address) {
+				customer, err = q.UpdateCustomer(r.Context(), generated.UpdateCustomerParams{
+					CustomerID: customer.CustomerID, Name: customer.Name, Phone: customer.Phone,
+					Age: age, SetAddress: true, Address: addr,
+				})
+				if err != nil {
+					writeError(w, http.StatusInternalServerError, "could not update customer")
+					return
+				}
+			}
 		}
 		customerID = customer.CustomerID
 	}
@@ -1016,4 +1041,11 @@ func financialYearStart(t time.Time) time.Time {
 		year--
 	}
 	return time.Date(year, time.April, 1, 0, 0, 0, 0, t.Location())
+}
+
+func equalPtr[T comparable](a, b *T) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
 }

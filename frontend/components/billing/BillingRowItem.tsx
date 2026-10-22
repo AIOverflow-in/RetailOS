@@ -7,6 +7,7 @@ import { api } from '@/lib/api'
 import type { GSTRate } from '@/types'
 import { useProductSearch } from '@/lib/useProductSearch'
 import { filterCatalog } from '@/lib/productCatalog'
+import { focusField } from '@/lib/focusField'
 import { GST_RATES, calcLineTotal, fmtCurrency } from '@/lib/gst'
 import type { BillingRow } from './BillingTable'
 
@@ -27,6 +28,8 @@ interface Props {
   updateRow: (rowId: string, patch: Partial<BillingRow>) => void
   removeRow: (rowId: string) => void
   canRemove: boolean
+  // Enter on Qty/Price: go to the next line's product box (adds a line if needed).
+  onNext: (rowId: string) => void
 }
 
 const cellInput =
@@ -34,11 +37,17 @@ const cellInput =
 const cellSelect =
   'h-7 px-2 text-body-sm border border-[#E8E8E8] rounded-md bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors w-full cursor-pointer'
 
-export default function BillingRowItem({ row, updateRow, removeRow, canRemove }: Props) {
+export default function BillingRowItem({ row, updateRow, removeRow, canRemove, onNext }: Props) {
   const [batches, setBatches] = useState<Batch[]>([])
   const [batchError, setBatchError] = useState(false)
   // Dropdown open: on focus/typing, closed by Esc, picking or leaving the box.
   const [focused, setFocused] = useState(false)
+  // The row id is random, so it can't be rendered into the server HTML; it is set
+  // here so the keyboard shortcuts (lib/focusField) can find the row.
+  const rowEl = useRef<HTMLTableRowElement>(null)
+  useLayoutEffect(() => { rowEl.current?.setAttribute('data-row', row.rowId) }, [row.rowId])
+  // Where focus goes once the row has re-rendered with its batch(es).
+  const pendingFocus = useRef<'qty' | 'batch' | null>(null)
   const [qtyText, setQtyText] = useState<string>(String(row.qty))
   const [salePriceText, setSalePriceText] = useState<string>(
     row.salePrice ? String(row.salePrice) : '',
@@ -89,6 +98,8 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
   function onProductKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Escape') { setFocused(false); return }
     if (e.key === 'Enter') {
+      // Ctrl/Cmd+Enter places the bill and a held key repeats: neither may pick a product.
+      if (e.ctrlKey || e.metaKey || e.repeat) return
       if (focused && pickable(active)) { e.preventDefault(); selectProduct(matches[active]) }
       return
     }
@@ -109,6 +120,16 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       setVisible(v => v + PAGE)
     }
   }
+
+  useEffect(() => {
+    const f = pendingFocus.current
+    // The batch loads a moment after Enter: if focus has since gone elsewhere (say the
+    // cashier already jumped to the phone box), leave it there.
+    const a = document.activeElement
+    if (f && a && a !== document.body && !rowEl.current?.contains(a)) { pendingFocus.current = null; return }
+    if (f === 'qty' && row.batchId) { pendingFocus.current = null; focusField(row.rowId, 'qty') }
+    if (f === 'batch' && batches.length > 1) { pendingFocus.current = null; focusField(row.rowId, 'batch') }
+  }, [row.batchId, row.productId, row.rowId, batches])
 
   // Sync local input text with external row changes (e.g., batch prefill)
   useEffect(() => { setQtyText(String(row.qty)) }, [row.qty])
@@ -197,6 +218,14 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       Object.assign(patch, batchPatch(bs[0]))
       warnIfNoGst(bs[0], p.name)
     }
+    // Re-picking the product the row already has changes nothing, so nothing would
+    // re-render to run the focus effect: focus now.
+    if (bs.length === 1 && row.batchId === bs[0].batch_id) {
+      pendingFocus.current = null
+      focusField(row.rowId, 'qty')
+    } else {
+      pendingFocus.current = bs.length === 1 ? 'qty' : bs.length > 1 ? 'batch' : null
+    }
     updateRow(row.rowId, patch)
   }
 
@@ -270,12 +299,17 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
   }, [dropdownOpen])
 
   return (
-    <tr className="border-b border-[#F7F7F7] last:border-0 group hover:bg-[#FAFAFA] transition-colors">
+    <tr
+      ref={rowEl}
+      className="border-b border-[#F7F7F7] last:border-0 group hover:bg-[#FAFAFA] transition-colors"
+      onKeyDown={e => { if (e.altKey && e.code === 'KeyD' && canRemove) { e.preventDefault(); removeRow(row.rowId) } }}
+    >
       {/* Product — searchable picker */}
       <td className="py-2 px-3 align-middle">
         <div className="relative w-56">
           <input
             ref={inputRef}
+            data-field="product"
             className={`${cellInput}`}
             placeholder="Search product…"
             value={query}
@@ -359,9 +393,11 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       <td className="py-2 align-middle">
         {batches.length > 0 ? (
           <select
+            data-field="batch"
             className={`${cellSelect} w-32`}
             value={row.batchId ?? ''}
             onChange={e => onPickBatch(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && !e.repeat && row.batchId) { e.preventDefault(); focusField(row.rowId, 'qty') } }}
           >
             <option value="">Select…</option>
             {batches.map(b => (
@@ -405,6 +441,10 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
           title={row.batchId && !(row.salePrice > 0) ? 'Enter a selling price above ₹0' : undefined}
           value={salePriceText}
           disabled={!row.batchId}
+          data-field="price"
+          onFocus={e => e.target.select()}
+          onWheel={e => e.currentTarget.blur()}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); if (!e.repeat) onNext(row.rowId) } }}
           onChange={e => {
             const v = e.target.value
             setSalePriceText(v)
@@ -430,6 +470,10 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
           className={`${cellInput} text-right`}
           value={qtyText}
           disabled={!row.batchId}
+          data-field="qty"
+          onFocus={e => e.target.select()}
+          onWheel={e => e.currentTarget.blur()}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); if (!e.repeat) onNext(row.rowId) } }}
           onChange={e => {
             const v = e.target.value
             setQtyText(v)

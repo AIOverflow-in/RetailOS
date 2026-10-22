@@ -4,7 +4,7 @@ import type { CartState, PaymentMode } from '@/types'
 const initialState: CartState = {
   isInState: true,
   paymentMode: 'cash',
-  customer: { phone: '', name: '', age: '' },
+  customer: { phone: '', name: '', age: '', address: '' },
 }
 
 const cartSlice = createSlice({
@@ -17,7 +17,7 @@ const cartSlice = createSlice({
     setPaymentMode(state, action: PayloadAction<PaymentMode>) {
       state.paymentMode = action.payload
     },
-    setCustomer(state, action: PayloadAction<{ phone: string; name: string; age: string }>) {
+    setCustomer(state, action: PayloadAction<{ phone: string; name: string; age: string; address: string }>) {
       state.customer = action.payload
     },
     restoreCart(_state, action: PayloadAction<CartState>) {

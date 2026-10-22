@@ -207,28 +207,30 @@ SELECT o.order_id, o.order_number, o.customer_id, o.cgst_total, o.sgst_total, o.
        o.total_amount, o.status, o.created_at, o.payment_mode, o.updated_at, o.return_comment,
        c.name  AS customer_name,
        c.phone AS customer_phone,
-       c.age   AS customer_age
+       c.age   AS customer_age,
+       c.address AS customer_address
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
 WHERE o.order_id = $1
 `
 
 type GetOrderByIDRow struct {
-	OrderID       pgtype.UUID        `json:"order_id"`
-	OrderNumber   string             `json:"order_number"`
-	CustomerID    pgtype.UUID        `json:"customer_id"`
-	CgstTotal     pgtype.Numeric     `json:"cgst_total"`
-	SgstTotal     pgtype.Numeric     `json:"sgst_total"`
-	IgstTotal     pgtype.Numeric     `json:"igst_total"`
-	TotalAmount   pgtype.Numeric     `json:"total_amount"`
-	Status        string             `json:"status"`
-	CreatedAt     pgtype.Timestamptz `json:"created_at"`
-	PaymentMode   string             `json:"payment_mode"`
-	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
-	ReturnComment *string            `json:"return_comment"`
-	CustomerName  *string            `json:"customer_name"`
-	CustomerPhone *string            `json:"customer_phone"`
-	CustomerAge   *int32             `json:"customer_age"`
+	OrderID         pgtype.UUID        `json:"order_id"`
+	OrderNumber     string             `json:"order_number"`
+	CustomerID      pgtype.UUID        `json:"customer_id"`
+	CgstTotal       pgtype.Numeric     `json:"cgst_total"`
+	SgstTotal       pgtype.Numeric     `json:"sgst_total"`
+	IgstTotal       pgtype.Numeric     `json:"igst_total"`
+	TotalAmount     pgtype.Numeric     `json:"total_amount"`
+	Status          string             `json:"status"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	PaymentMode     string             `json:"payment_mode"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	ReturnComment   *string            `json:"return_comment"`
+	CustomerName    *string            `json:"customer_name"`
+	CustomerPhone   *string            `json:"customer_phone"`
+	CustomerAge     *int32             `json:"customer_age"`
+	CustomerAddress *string            `json:"customer_address"`
 }
 
 func (q *Queries) GetOrderByID(ctx context.Context, orderID pgtype.UUID) (GetOrderByIDRow, error) {
@@ -250,6 +252,7 @@ func (q *Queries) GetOrderByID(ctx context.Context, orderID pgtype.UUID) (GetOrd
 		&i.CustomerName,
 		&i.CustomerPhone,
 		&i.CustomerAge,
+		&i.CustomerAddress,
 	)
 	return i, err
 }

@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip } from '@/components/ui/tooltip'
 import LoadError, { errorMessage } from '@/components/shared/LoadError'
 import EditQuantityDialog from '@/components/EditQuantityDialog'
+import EditCustomerModal from '@/components/customers/EditCustomerModal'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -43,6 +44,7 @@ export default function OrderDetailPage() {
 
   const [editingItem, setEditingItem] = useState<OrderItem | null>(null)
   const [editOpen, setEditOpen] = useState(false)
+  const [customerOpen, setCustomerOpen] = useState(false)
 
   const [addOpen, setAddOpen] = useState(false)
   const { query, suggestions, loading: searchLoading, handleQuery, triggerPreload, setQuery, setSuggestions } = useProductSearch()
@@ -305,7 +307,15 @@ export default function OrderDetailPage() {
 
       {/* Customer card */}
       {order.customer_name && (
-        <div className="bg-white rounded-lg border border-[#EBEBEB] px-5 py-4 grid grid-cols-2 gap-4">
+        <div className="relative bg-white rounded-lg border border-[#EBEBEB] px-5 py-4 grid grid-cols-2 gap-4">
+          {order.customer_id && order.customer_phone && (
+            <button
+              onClick={() => setCustomerOpen(true)}
+              className="absolute top-3 right-3 inline-flex items-center gap-1 text-body-sm font-medium text-[#888] hover:text-[#111] transition-colors print:hidden"
+            >
+              <Pencil className="w-3 h-3" /> Edit
+            </button>
+          )}
           <div>
             <p className="text-caption font-medium text-label mb-1">Customer</p>
             <p className="text-body font-medium text-[#111]">{order.customer_name}</p>
@@ -314,6 +324,12 @@ export default function OrderDetailPage() {
             <div>
               <p className="text-caption font-medium text-label mb-1">Phone</p>
               <p className="text-body font-medium text-[#111]">{order.customer_phone}</p>
+            </div>
+          )}
+          {order.customer_address && (
+            <div className="col-span-2">
+              <p className="text-caption font-medium text-label mb-1">Address</p>
+              <p className="text-body font-medium text-[#111] whitespace-pre-wrap">{order.customer_address}</p>
             </div>
           )}
         </div>
@@ -556,6 +572,21 @@ export default function OrderDetailPage() {
           <span>Total</span><span>{fmtCurrency(order.total_amount)}</span>
         </div>
       </div>
+
+      <EditCustomerModal
+        open={customerOpen}
+        onOpenChange={setCustomerOpen}
+        customer={order.customer_id && order.customer_phone ? {
+          customer_id: order.customer_id,
+          name: order.customer_name ?? '',
+          phone: order.customer_phone,
+          age: order.customer_age,
+          address: order.customer_address,
+          visit_count: 0,
+          created_at: '',
+        } : null}
+        onSaved={load}
+      />
 
       <EditQuantityDialog
         open={editOpen}

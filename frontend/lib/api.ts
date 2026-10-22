@@ -162,7 +162,7 @@ export const api = {
     request<{ customers: any[]; total: number; page: number; limit: number }>(
       `/customers?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`
     ),
-  updateCustomer: (id: string, data: { name: string; phone: string; age?: number | null }) =>
+  updateCustomer: (id: string, data: { name: string; phone: string; age?: number | null; address?: string | null }) =>
     request(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   // Dashboard

@@ -107,6 +107,7 @@ export default function DistributorsPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCCCCC]" />
         <input
           className="w-full h-9 pl-9 pr-4 text-body bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+          data-search
           placeholder="Search distributors…"
           value={q}
           onChange={e => setQ(e.target.value)}

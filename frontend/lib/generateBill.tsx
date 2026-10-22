@@ -22,6 +22,7 @@ export function buildBillData(
     customerName: order.customer_name,
     customerPhone: order.customer_phone,
     customerAge: order.customer_age ?? null,
+    customerAddress: order.customer_address ?? null,
     paymentMode: order.payment_mode,
     isInState,
     items: billItems,

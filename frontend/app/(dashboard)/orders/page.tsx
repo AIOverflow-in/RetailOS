@@ -283,6 +283,7 @@ function OrdersContent() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#CCCCCC]" />
           <input
             className="w-full sm:w-72 h-8 pl-9 pr-3 text-body-sm bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
+            data-search
             placeholder="Search bill no, name, phone, batch, product…"
             value={q}
             onChange={e => setQ(e.target.value)}

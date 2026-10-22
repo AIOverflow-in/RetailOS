@@ -12,7 +12,7 @@ import {
   PanelLeftOpen, PanelLeftClose, Menu, X,
 } from 'lucide-react'
 
-const NAV = [
+export const NAV = [
   { href: '/dashboard',    label: 'Dashboard',    Icon: LayoutDashboard },
   { href: '/billing',      label: 'Billing',      Icon: Receipt },
   { href: '/inventory',    label: 'Inventory',    Icon: Package },
