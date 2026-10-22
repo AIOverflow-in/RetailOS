@@ -7,6 +7,7 @@ import { api } from '@/lib/api'
 import type { GSTRate } from '@/types'
 import { useProductSearch } from '@/lib/useProductSearch'
 import { filterCatalog } from '@/lib/productCatalog'
+import { focusField } from '@/lib/focusField'
 import { GST_RATES, calcLineTotal, fmtCurrency } from '@/lib/gst'
 import type { BillingRow } from './BillingTable'
 
@@ -27,6 +28,8 @@ interface Props {
   updateRow: (rowId: string, patch: Partial<BillingRow>) => void
   removeRow: (rowId: string) => void
   canRemove: boolean
+  // Enter on Qty/Price: go to the next line's product box (adds a line if needed).
+  onNext: (rowId: string) => void
 }
 
 const cellInput =
@@ -34,11 +37,13 @@ const cellInput =
 const cellSelect =
   'h-7 px-2 text-body-sm border border-[#E8E8E8] rounded-md bg-white focus:outline-none focus:border-[#AAAAAA] transition-colors w-full cursor-pointer'
 
-export default function BillingRowItem({ row, updateRow, removeRow, canRemove }: Props) {
+export default function BillingRowItem({ row, updateRow, removeRow, canRemove, onNext }: Props) {
   const [batches, setBatches] = useState<Batch[]>([])
   const [batchError, setBatchError] = useState(false)
   // Dropdown open: on focus/typing, closed by Esc, picking or leaving the box.
   const [focused, setFocused] = useState(false)
+  // Where focus goes once the row has re-rendered with its batch(es).
+  const pendingFocus = useRef<'qty' | 'batch' | null>(null)
   const [qtyText, setQtyText] = useState<string>(String(row.qty))
   const [salePriceText, setSalePriceText] = useState<string>(
     row.salePrice ? String(row.salePrice) : '',
@@ -109,6 +114,12 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       setVisible(v => v + PAGE)
     }
   }
+
+  useEffect(() => {
+    const f = pendingFocus.current
+    if (f === 'qty' && row.batchId) { pendingFocus.current = null; focusField(row.rowId, 'qty') }
+    if (f === 'batch' && batches.length > 1) { pendingFocus.current = null; focusField(row.rowId, 'batch') }
+  }, [row.batchId, row.productId, row.rowId, batches])
 
   // Sync local input text with external row changes (e.g., batch prefill)
   useEffect(() => { setQtyText(String(row.qty)) }, [row.qty])
@@ -197,6 +208,7 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       Object.assign(patch, batchPatch(bs[0]))
       warnIfNoGst(bs[0], p.name)
     }
+    pendingFocus.current = bs.length === 1 ? 'qty' : bs.length > 1 ? 'batch' : null
     updateRow(row.rowId, patch)
   }
 
@@ -270,12 +282,17 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
   }, [dropdownOpen])
 
   return (
-    <tr className="border-b border-[#F7F7F7] last:border-0 group hover:bg-[#FAFAFA] transition-colors">
+    <tr
+      className="border-b border-[#F7F7F7] last:border-0 group hover:bg-[#FAFAFA] transition-colors"
+      onKeyDown={e => { if (e.altKey && e.code === 'KeyD' && canRemove) { e.preventDefault(); removeRow(row.rowId) } }}
+    >
       {/* Product — searchable picker */}
       <td className="py-2 px-3 align-middle">
         <div className="relative w-56">
           <input
             ref={inputRef}
+            data-row={row.rowId}
+            data-field="product"
             className={`${cellInput}`}
             placeholder="Search product…"
             value={query}
@@ -359,9 +376,12 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
       <td className="py-2 align-middle">
         {batches.length > 0 ? (
           <select
+            data-row={row.rowId}
+            data-field="batch"
             className={`${cellSelect} w-32`}
             value={row.batchId ?? ''}
             onChange={e => onPickBatch(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && row.batchId) { e.preventDefault(); focusField(row.rowId, 'qty') } }}
           >
             <option value="">Select…</option>
             {batches.map(b => (
@@ -405,6 +425,11 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
           title={row.batchId && !(row.salePrice > 0) ? 'Enter a selling price above ₹0' : undefined}
           value={salePriceText}
           disabled={!row.batchId}
+          data-row={row.rowId}
+          data-field="price"
+          onFocus={e => e.target.select()}
+          onWheel={e => e.currentTarget.blur()}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onNext(row.rowId) } }}
           onChange={e => {
             const v = e.target.value
             setSalePriceText(v)
@@ -430,6 +455,11 @@ export default function BillingRowItem({ row, updateRow, removeRow, canRemove }:
           className={`${cellInput} text-right`}
           value={qtyText}
           disabled={!row.batchId}
+          data-row={row.rowId}
+          data-field="qty"
+          onFocus={e => e.target.select()}
+          onWheel={e => e.currentTarget.blur()}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onNext(row.rowId) } }}
           onChange={e => {
             const v = e.target.value
             setQtyText(v)

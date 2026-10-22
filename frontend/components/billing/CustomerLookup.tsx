@@ -46,6 +46,7 @@ export default function CustomerLookup() {
         <p className="text-caption text-label font-medium">Phone<span className="text-red-500 ml-0.5">*</span></p>
         <div className="relative">
           <input
+            data-field="phone"
             className={`${inputClass} w-36`}
             maxLength={10}
             placeholder="9876543210"

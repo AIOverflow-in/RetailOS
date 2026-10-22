@@ -19,6 +19,7 @@ import BillingTable, {
   isCompleteRow,
   type BillingRow,
 } from '@/components/billing/BillingTable'
+import { focusField } from '@/lib/focusField'
 import { calcGST, calcLineTotal } from '@/lib/gst'
 
 // What makes two attempts "the same bill": items, customer, payment, GST mode.
@@ -145,6 +146,7 @@ export default function BillingPage() {
       })
       toast.success(`Bill created: ${order.order_number}`)
       resetBill()
+      setTimeout(() => focusField(null, 'product'), 0)
       // The print page loads everything it needs itself.
       printBill(order.order_id)
 
@@ -220,6 +222,28 @@ export default function BillingPage() {
   if (customer.phone.length !== 10) missing.push('Customer phone (10 digits)')
   const placeOrderDisabled = loading || missing.length > 0
   const placeOrderTooltip = missing.length > 0 ? `Required: ${missing.join(', ')}` : ''
+
+  // Ctrl+Enter places the order from anywhere on the page. Re-bound each render so it sees current state.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.key === 'Enter' && (e.ctrlKey || e.metaKey))) return
+      e.preventDefault()
+      if (placeOrderDisabled) { if (missing.length) toast.error(`Required: ${missing.join(', ')}`); return }
+      placeOrder()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  // The print tab steals focus; when the counter comes back, put the cursor in the product box.
+  useEffect(() => {
+    const onFocus = () => {
+      const a = document.activeElement
+      if (!a || a === document.body) focusField(null, 'product')
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
 
   return (
     <div className="space-y-5">
@@ -319,6 +343,7 @@ export default function BillingPage() {
 
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <CartSummary rows={rows} isInState={isInState} />
+        <div className="flex flex-col items-end gap-1.5">
         <div className="flex items-center gap-2">
           {completeRows.length > 0 && (
             <button
@@ -340,6 +365,10 @@ export default function BillingPage() {
               {loading ? 'Processing…' : `Place Order — ₹${grandTotal.toFixed(2)}`}
             </button>
           </span>
+        </div>
+        {missing.length > 0
+          ? <p className="text-caption text-[#B45309]">Required: {missing.join(', ')}</p>
+          : <p className="text-caption text-[#AAAAAA]">Ctrl + Enter to place order</p>}
         </div>
       </div>
     </div>
