@@ -346,7 +346,7 @@ export default function BillingPage() {
 
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <CartSummary rows={rows} isInState={isInState} />
-        <div className="flex flex-col items-end gap-1.5">
+        <div className="relative pb-5">
         <div className="flex items-center gap-2">
           {completeRows.length > 0 && (
             <button
@@ -370,8 +370,8 @@ export default function BillingPage() {
           </span>
         </div>
         {missing.length > 0
-          ? <p className="text-caption text-[#B45309]">Required: {missing.join(', ')}</p>
-          : <p className="text-caption text-[#AAAAAA]">Ctrl + Enter to place order</p>}
+          ? <p className="absolute right-0 bottom-0 whitespace-nowrap text-caption text-[#B45309]">Required: {missing.join(', ')}</p>
+          : <p className="absolute right-0 bottom-0 whitespace-nowrap text-caption text-[#AAAAAA]">Ctrl + Enter to place order</p>}
         </div>
       </div>
     </div>
