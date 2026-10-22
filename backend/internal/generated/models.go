@@ -34,6 +34,7 @@ type Customer struct {
 	Age        *int32             `json:"age"`
 	VisitCount int32              `json:"visit_count"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	Address    *string            `json:"address"`
 }
 
 type Distributor struct {

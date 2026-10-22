@@ -2,8 +2,8 @@
 SELECT * FROM customers WHERE phone = $1 LIMIT 1;
 
 -- name: CreateCustomer :one
-INSERT INTO customers (phone, name, age)
-VALUES ($1, $2, $3)
+INSERT INTO customers (phone, name, age, address)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: IncrementVisitCount :exec
@@ -25,6 +25,6 @@ WHERE $1::text = ''
 
 -- name: UpdateCustomer :one
 UPDATE customers
-SET name = $2, phone = $3, age = $4
+SET name = $2, phone = $3, age = $4, address = $5
 WHERE customer_id = $1
 RETURNING *;

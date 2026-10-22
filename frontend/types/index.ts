@@ -100,6 +100,7 @@ export interface Customer {
   phone: string
   name: string
   age: number | null
+  address: string | null
   visit_count: number
   created_at: string
 }
@@ -135,6 +136,7 @@ export interface Order {
   customer_name: string | null
   customer_phone: string | null
   customer_age: number | null
+  customer_address: string | null
   cgst_total: number
   sgst_total: number
   igst_total: number
@@ -162,6 +164,7 @@ export interface CartState {
     phone: string
     name: string
     age: string
+    address: string
   }
 }
 

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -40,9 +41,11 @@ type orderItemRequest struct {
 }
 
 type createOrderRequest struct {
-	Phone       string             `json:"phone"`
-	Name        string             `json:"name"`
-	Age         *int32             `json:"age"`
+	Phone string `json:"phone"`
+	Name  string `json:"name"`
+	Age   *int32 `json:"age"`
+	// nil = leave the saved address alone; blank = clear it.
+	Address     *string            `json:"address"`
 	IsInState   bool               `json:"is_in_state"`
 	Items       []orderItemRequest `json:"items"`
 	CGSTTotal   float64            `json:"cgst_total"`
@@ -181,9 +184,10 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			// New customer
 			customer, err = q.CreateCustomer(r.Context(), generated.CreateCustomerParams{
-				Phone: req.Phone,
-				Name:  req.Name,
-				Age:   req.Age,
+				Phone:   req.Phone,
+				Name:    req.Name,
+				Age:     req.Age,
+				Address: cleanAddress(req.Address),
 			})
 			if err != nil {
 				writeError(w, http.StatusInternalServerError, "could not create customer")
@@ -192,6 +196,26 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		} else if err != nil {
 			writeError(w, http.StatusInternalServerError, "could not lookup customer")
 			return
+		} else {
+			// Returning customer: what the cashier typed on the bill wins over what was
+			// saved. The billing screen pre-fills these, so a difference is an edit.
+			name, age, addr := customer.Name, customer.Age, customer.Address
+			if strings.TrimSpace(req.Name) != "" {
+				name = strings.TrimSpace(req.Name)
+			}
+			age = req.Age
+			if req.Address != nil {
+				addr = cleanAddress(req.Address)
+			}
+			if name != customer.Name || !equalPtr(age, customer.Age) || !equalPtr(addr, customer.Address) {
+				customer, err = q.UpdateCustomer(r.Context(), generated.UpdateCustomerParams{
+					CustomerID: customer.CustomerID, Name: name, Phone: customer.Phone, Age: age, Address: addr,
+				})
+				if err != nil {
+					writeError(w, http.StatusInternalServerError, "could not update customer")
+					return
+				}
+			}
 		}
 		customerID = customer.CustomerID
 	}
@@ -1016,4 +1040,11 @@ func financialYearStart(t time.Time) time.Time {
 		year--
 	}
 	return time.Date(year, time.April, 1, 0, 0, 0, 0, t.Location())
+}
+
+func equalPtr[T comparable](a, b *T) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
 }

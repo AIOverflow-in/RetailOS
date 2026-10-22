@@ -78,7 +78,8 @@ SELECT o.order_id, o.order_number, o.customer_id, o.cgst_total, o.sgst_total, o.
        o.total_amount, o.status, o.created_at, o.payment_mode, o.updated_at, o.return_comment,
        c.name  AS customer_name,
        c.phone AS customer_phone,
-       c.age   AS customer_age
+       c.age   AS customer_age,
+       c.address AS customer_address
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
 WHERE o.order_id = $1;

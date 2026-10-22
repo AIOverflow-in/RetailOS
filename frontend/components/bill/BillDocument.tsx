@@ -22,6 +22,7 @@ export interface BillData {
   customerName: string | null
   customerPhone: string | null
   customerAge: number | null
+  customerAddress?: string | null
   paymentMode: string
   isInState: boolean
   items: BillItem[]
@@ -144,7 +145,7 @@ export function buildGSTSlabs(items: BillItem[], isInState: boolean): GSTSlab[] 
 }
 
 export function BillDocument({ data }: { data: BillData }) {
-  const { orderNumber, orderDate, customerName, customerPhone, customerAge,
+  const { orderNumber, orderDate, customerName, customerPhone, customerAge, customerAddress,
     paymentMode, isInState, items, totalAmount, settings, shopName, googleReviewQr } = data
 
   const totalMRP = parseFloat(items.reduce((s, i) => s + i.mrp * i.qty, 0).toFixed(2))
@@ -210,6 +211,14 @@ export function BillDocument({ data }: { data: BillData }) {
               <Text style={s.infoValue}>{customerPhone || '—'}</Text>
             </View>
           </View>
+          {customerAddress ? (
+            <View style={s.infoRow}>
+              <View style={s.infoCell}>
+                <Text style={s.infoLabel}>Customer Address</Text>
+                <Text style={s.infoValue}>{customerAddress}</Text>
+              </View>
+            </View>
+          ) : null}
           <View style={s.infoRowLast}>
             <View style={s.infoCellBorder}>
               <Text style={s.infoLabel}>Customer Age</Text>

@@ -80,7 +80,7 @@ export default function CustomersPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
-                  {['Name', 'Phone', 'Age', 'Visits', 'Joined', ''].map(h => (
+                  {['Name', 'Phone', 'Age', 'Address', 'Visits', 'Joined', ''].map(h => (
                     <th key={h || 'actions'} className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap">
                       {h}
                     </th>
@@ -96,6 +96,7 @@ export default function CustomersPage() {
                     <td className="py-3 px-4 text-body font-medium text-[#111]">{c.name}</td>
                     <td className="py-3 px-4 text-body text-[#888] font-mono">{c.phone}</td>
                     <td className="py-3 px-4 text-body text-[#999]">{c.age ?? '\u2014'}</td>
+                    <td className="py-3 px-4 text-body-sm text-[#999] max-w-56 truncate" title={c.address ?? undefined}>{c.address || '\u2014'}</td>
                     <td className="py-3 px-4 text-body text-[#999]">{c.visit_count}</td>
                     <td className="py-3 px-4 text-body-sm text-[#999]">{fmtDate(c.created_at)}</td>
                     <td className="py-3 px-2">

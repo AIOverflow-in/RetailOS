@@ -49,7 +49,8 @@ export default function BillingPage() {
     const draft = loadBillDraft()
     if (draft && draft.rows.some(r => r.productId)) {
       setRows(draft.rows)
-      dispatch(restoreCart(draft.cart))
+      // Drafts saved before the address field existed have none.
+      dispatch(restoreCart({ ...draft.cart, customer: { ...draft.cart.customer, address: draft.cart.customer.address ?? '' } }))
       if (draft.clientRef) setAttempt({ ref: draft.clientRef, signature: billSignature(draft.rows, draft.cart) })
       setUnconfirmed(draft.unconfirmed)
       // Inline, not a toast: on first load the toaster may not be mounted yet.
@@ -135,6 +136,7 @@ export default function BillingPage() {
         phone: cartCustomer.phone || null,
         name: cartCustomer.name || null,
         age: cartCustomer.age ? parseInt(cartCustomer.age) : null,
+        address: cartCustomer.address,
         items: completeRows.map(r => ({
           batch_id: r.batchId as string,
           product_name: r.productName as string,
@@ -185,6 +187,7 @@ export default function BillingPage() {
         customerName: cartCustomer.name || null,
         customerPhone: cartCustomer.phone || null,
         customerAge: cartCustomer.age ? parseInt(cartCustomer.age) : null,
+        customerAddress: cartCustomer.address.trim() || null,
         paymentMode: cartPaymentMode,
         isInState: cartIsInState,
         items: billItems,

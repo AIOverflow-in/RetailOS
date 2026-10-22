@@ -16,7 +16,7 @@ export default function CustomerLookup() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handlePhone(val: string) {
-    dispatch(setCustomer({ ...customer, phone: val, name: '', age: '' }))
+    dispatch(setCustomer({ ...customer, phone: val, name: '', age: '', address: '' }))
     if (timerRef.current) clearTimeout(timerRef.current)
     if (val.length === 10) {
       timerRef.current = setTimeout(() => lookup(val), 300)
@@ -28,7 +28,7 @@ export default function CustomerLookup() {
     try {
       const c = await api.lookupCustomer(phone)
       if (c) {
-        dispatch(setCustomer({ phone, name: c.name, age: c.age ? String(c.age) : '' }))
+        dispatch(setCustomer({ phone, name: c.name, age: c.age ? String(c.age) : '', address: c.address ?? '' }))
         toast.success(`${c.name} — visit #${c.visit_count + 1}`)
       }
     } catch (err) {
@@ -74,6 +74,15 @@ export default function CustomerLookup() {
           placeholder="—"
           value={customer.age}
           onChange={e => dispatch(setCustomer({ ...customer, age: e.target.value.replace(/\D/g, '') }))}
+        />
+      </div>
+      <div className="space-y-1.5 flex-1 min-w-48">
+        <p className="text-caption text-label font-medium">Address</p>
+        <input
+          className={`${inputClass} w-full`}
+          placeholder="Optional"
+          value={customer.address}
+          onChange={e => dispatch(setCustomer({ ...customer, address: e.target.value }))}
         />
       </div>
     </div>
