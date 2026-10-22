@@ -37,12 +37,19 @@ export default function BillingPage() {
 
   const [rows, setRows] = useState<BillingRow[]>(() => [emptyRow()])
   const [loading, setLoading] = useState(false)
+  // Saved details for the typed phone are still on their way.
+  const [lookingUp, setLookingUp] = useState(false)
   const [lastBill, setLastBill] = useState<BillData | null>(null)
   // clientRef of the last Place Order and the bill it was for (see lib/billDraft).
   const [attempt, setAttempt] = useState<{ ref: string; signature: string } | null>(null)
   const [unconfirmed, setUnconfirmed] = useState(false)
   const [restoredNotice, setRestoredNotice] = useState(false)
   const restored = useRef(false)
+  // After a bill is placed the form is rebuilt; the cursor goes back to its first product box.
+  const focusAfterReset = useRef(false)
+  useEffect(() => {
+    if (focusAfterReset.current) { focusAfterReset.current = false; focusField(null, 'product') }
+  }, [rows])
 
   // Bring back a bill that was in progress before a reload, logout or page change.
   useEffect(() => {
@@ -148,7 +155,7 @@ export default function BillingPage() {
       })
       toast.success(`Bill created: ${order.order_number}`)
       resetBill()
-      setTimeout(() => focusField(null, 'product'), 0)
+      focusAfterReset.current = true
       // The print page loads everything it needs itself.
       printBill(order.order_id)
 
@@ -223,7 +230,7 @@ export default function BillingPage() {
   if (completeRows.length === 0) missing.push('Add at least one item')
   if (!customer.name.trim()) missing.push('Customer name')
   if (customer.phone.length !== 10) missing.push('Customer phone (10 digits)')
-  const placeOrderDisabled = loading || missing.length > 0
+  const placeOrderDisabled = loading || lookingUp || missing.length > 0
   const placeOrderTooltip = missing.length > 0 ? `Required: ${missing.join(', ')}` : ''
 
   // Ctrl+Enter places the order from anywhere on the page. Re-bound each render so it sees current state.
@@ -231,7 +238,12 @@ export default function BillingPage() {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.key === 'Enter' && (e.ctrlKey || e.metaKey))) return
       e.preventDefault()
-      if (placeOrderDisabled) { if (missing.length) toast.error(`Required: ${missing.join(', ')}`); return }
+      if (e.repeat) return // holding the keys must not place a second bill
+      if (placeOrderDisabled) {
+        if (missing.length) toast.error(`Required: ${missing.join(', ')}`)
+        else if (lookingUp) toast('Looking up the customer, try again in a moment.')
+        return
+      }
       placeOrder()
     }
     window.addEventListener('keydown', onKey)
@@ -309,7 +321,7 @@ export default function BillingPage() {
 
       <div className="bg-white rounded-lg border border-[#EBEBEB] p-4">
         <p className="text-caption font-medium text-label mb-3">Customer</p>
-        <CustomerLookup />
+        <CustomerLookup onLookingUp={setLookingUp} />
       </div>
 
       {restoredNotice && (
@@ -344,10 +356,10 @@ export default function BillingPage() {
         </div>
       )}
 
-      <div className="flex items-end justify-between gap-4 flex-wrap">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <CartSummary rows={rows} isInState={isInState} />
-        <div className="relative pb-5">
-        <div className="flex items-center gap-2">
+        <div className="ml-auto w-full sm:w-[24rem] max-w-full">
+        <div className="flex items-center justify-end gap-2">
           {completeRows.length > 0 && (
             <button
               onClick={resetBill}
@@ -369,9 +381,10 @@ export default function BillingPage() {
             </button>
           </span>
         </div>
-        {missing.length > 0
-          ? <p className="absolute right-0 bottom-0 whitespace-nowrap text-caption text-[#B45309]">Required: {missing.join(', ')}</p>
-          : <p className="absolute right-0 bottom-0 whitespace-nowrap text-caption text-[#AAAAAA]">Ctrl + Enter to place order</p>}
+        {/* Fixed-width column with room for two lines: the buttons never move when the text changes. */}
+        <p className={`mt-1.5 min-h-[2.25rem] text-right text-caption leading-tight ${lookingUp || missing.length === 0 ? 'text-[#AAAAAA]' : 'text-[#B45309]'}`}>
+          {lookingUp ? 'Looking up customer…' : missing.length > 0 ? `Required: ${missing.join(', ')}` : 'Ctrl + Enter to place order'}
+        </p>
         </div>
       </div>
     </div>

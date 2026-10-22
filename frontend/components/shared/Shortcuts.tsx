@@ -41,8 +41,8 @@ export default function Shortcuts() {
   const pathname = usePathname()
   const [hover, setHover] = useState(false)
   const [pinned, setPinned] = useState(false)
-  // Offsets from the left/bottom of the viewport; default sits just right of the icon rail.
-  const [pos, setPos] = useState({ left: 68, bottom: 12 })
+  // Offsets from the left/bottom of the viewport; default sits right of the icon rail and above the sidebar's Sign out row.
+  const [pos, setPos] = useState({ left: 68, bottom: 64 })
   const drag = useRef<{ x: number; y: number; left: number; bottom: number; moved: boolean } | null>(null)
 
   useEffect(() => {
@@ -50,6 +50,14 @@ export default function Shortcuts() {
       const saved = JSON.parse(localStorage.getItem(POS_KEY) ?? 'null')
       if (saved && typeof saved.left === 'number' && typeof saved.bottom === 'number') setPos(saved)
     } catch {}
+    // A smaller window than when it was placed must not leave the button off-screen.
+    const clamp = () => setPos(p => ({
+      left: Math.min(p.left, Math.max(0, window.innerWidth - BTN)),
+      bottom: Math.min(p.bottom, Math.max(0, window.innerHeight - BTN)),
+    }))
+    clamp()
+    window.addEventListener('resize', clamp)
+    return () => window.removeEventListener('resize', clamp)
   }, [])
 
   useEffect(() => {
@@ -69,10 +77,11 @@ export default function Shortcuts() {
       }
       if (e.key === 'F2') { e.preventDefault(); document.querySelector<HTMLElement>('[data-field="phone"]')?.focus(); return }
       if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return
-      if (e.key === '/') {
+      const isQuestion = e.key === '?' || (e.code === 'Slash' && e.shiftKey)
+      if (e.key === '/' && !isQuestion) {
         const el = document.querySelector<HTMLElement>('[data-search]')
         if (el) { e.preventDefault(); el.focus() }
-      } else if (e.key === '?') {
+      } else if (isQuestion) {
         setPinned(p => !p)
       }
     }
@@ -120,7 +129,7 @@ export default function Shortcuts() {
     >
       {open && (
         <div className={`absolute ${down ? 'top-full pt-2' : 'bottom-full pb-2'} ${right ? 'right-0' : 'left-0'}`}>
-          <div className="w-64 max-h-[70vh] overflow-y-auto bg-white border border-[#EBEBEB] rounded-lg shadow-xl p-3 space-y-3">
+          <div className="w-64 max-h-[85vh] overflow-y-auto bg-white border border-[#EBEBEB] rounded-lg shadow-xl p-3 space-y-3">
             {GROUPS.map(g => (
               <div key={g.title}>
                 <p className="text-caption font-medium text-label mb-1">{g.title}</p>
@@ -142,7 +151,7 @@ export default function Shortcuts() {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        className="w-10 h-10 flex items-center justify-center rounded-full bg-[#111] text-white shadow-lg cursor-grab active:cursor-grabbing touch-none select-none hover:bg-[#333] transition-colors"
+        className="w-[40px] h-[40px] flex items-center justify-center rounded-full bg-[#111] text-white shadow-lg cursor-grab active:cursor-grabbing touch-none select-none hover:bg-[#333] transition-colors"
       >
         <Keyboard strokeWidth={1.5} className="w-4 h-4" />
       </button>

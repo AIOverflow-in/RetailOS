@@ -223,13 +223,12 @@ function InventoryContent() {
   const [page, setPage] = useState(1)
 
   const [hideExpired, setHideExpired] = useState(!initialQ)
+  // Zero-stock batches are hidden by default; not when arriving from a "View batch" link.
+  const [hideOutOfStock, setHideOutOfStock] = useState(!initialQ)
   const [companyFilter, setCompanyFilter] = useState<Set<string>>(new Set())
   const [boxFilter, setBoxFilter] = useState<Set<string>>(new Set())
   const [distributorFilter, setDistributorFilter] = useState<Set<string>>(new Set())
-  const [stockStatusFilter, setStockStatusFilter] = useState<Set<StockStatus>>(
-    // Zero-stock batches are hidden by default; not when arriving from a "View batch" link.
-    () => new Set(initialQ ? [] : ['in', 'low']),
-  )
+  const [stockStatusFilter, setStockStatusFilter] = useState<Set<StockStatus>>(new Set())
   const [sortField, setSortField] = useState<SortField>('expiry')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
@@ -349,6 +348,7 @@ function InventoryContent() {
   const displayed = useMemo(() => {
     let items = rows
     if (hideExpired) items = items.filter(r => !isExpired(r.expiry_date))
+    if (hideOutOfStock) items = items.filter(r => r.available_stock > 0)
     if (companyFilter.size > 0) items = items.filter(r => companyFilter.has(r.company_name))
     if (boxFilter.size > 0) items = items.filter(r => boxFilter.has(r.box_no ?? NO_BOX))
     if (distributorFilter.size > 0)
@@ -385,6 +385,7 @@ function InventoryContent() {
   }, [
     rows,
     hideExpired,
+    hideOutOfStock,
     companyFilter,
     boxFilter,
     distributorFilter,
@@ -398,6 +399,7 @@ function InventoryContent() {
     setPage(1)
   }, [
     hideExpired,
+    hideOutOfStock,
     companyFilter,
     boxFilter,
     distributorFilter,
@@ -410,8 +412,6 @@ function InventoryContent() {
   const paginated = displayed.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
   const filtersActive =
     companyFilter.size + boxFilter.size + distributorFilter.size + stockStatusFilter.size > 0
-
-  const hidingZero = stockStatusFilter.size === 2 && stockStatusFilter.has('in') && stockStatusFilter.has('low')
 
   function clearFilters() {
     setCompanyFilter(new Set())
@@ -502,6 +502,15 @@ function InventoryContent() {
             />
             Hide expired
           </label>
+          <label className="flex items-center gap-1.5 text-body-sm text-[#555] select-none cursor-pointer">
+            <input
+              type="checkbox"
+              className="w-3.5 h-3.5 accent-[#111]"
+              checked={hideOutOfStock}
+              onChange={e => setHideOutOfStock(e.target.checked)}
+            />
+            Hide out of stock
+          </label>
 
           <div className="flex items-center gap-1">
             <span className="text-body-sm text-[#888]">Sort</span>
@@ -533,12 +542,12 @@ function InventoryContent() {
         </div>
       </div>
 
-      {hidingZero && (
+      {hideOutOfStock && (
         <div className="flex items-center gap-2 text-body-sm text-[#7A5B00] bg-[#FFF8E6] border border-[#FFE5B4] rounded-lg px-3 py-1.5">
           <span>Out-of-stock batches are hidden.</span>
           <button
             type="button"
-            onClick={() => setStockStatusFilter(new Set())}
+            onClick={() => setHideOutOfStock(false)}
             className="font-medium underline underline-offset-2 hover:text-[#111]"
           >
             Show them
@@ -547,7 +556,7 @@ function InventoryContent() {
       )}
 
       {loading ? (
-        <TableSkeleton cols={9} />
+        <TableSkeleton cols={8} />
       ) : loadError ? (
         <LoadError what="inventory" message={loadError} onRetry={fetchInventory} />
       ) : displayed.length === 0 ? (
@@ -565,10 +574,10 @@ function InventoryContent() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F2F2F2]">
-                  {['Product', 'Company', 'Batch', 'Box', 'Expiry', 'MRP', 'Selling', 'Stock', ''].map(h => (
+                  {['Product', 'Batch', 'Box', 'Expiry', 'MRP', 'Selling', 'Stock', ''].map(h => (
                     <th
                       key={h || 'actions'}
-                      className="text-left py-2.5 px-4 text-caption font-medium text-label whitespace-nowrap"
+                      className={`text-left py-2.5 px-2 text-caption font-medium text-label whitespace-nowrap${h ? '' : ' sticky right-0 bg-white'}`}
                     >
                       {h}
                     </th>
@@ -582,26 +591,29 @@ function InventoryContent() {
                   return (
                     <tr
                       key={r.batch_id}
-                      className={`border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA] transition-colors ${expired ? 'opacity-40' : ''}`}
+                      className={`group border-b border-[#F7F7F7] last:border-0 hover:bg-[#FAFAFA] transition-colors ${expired ? 'opacity-40' : ''}`}
                     >
-                      <td className="py-3 px-4 text-body font-medium text-[#111]">{r.name}</td>
-                      <td className="py-3 px-4 text-body text-[#888]">{r.company_name}</td>
-                      <td className="py-3 px-4 text-body-sm text-[#999] font-mono">{r.batch_no}</td>
-                      <td className="py-3 px-4 text-body-sm text-[#999] font-mono">{r.box_no ?? '—'}</td>
-                      <td className="py-3 px-4 whitespace-nowrap">
+                      <td className="py-3 px-3 max-w-72">
+                        <p className="text-body font-medium text-[#111]">{r.name}</p>
+                        <p className="text-body-sm text-[#888]">{r.company_name}</p>
+                      </td>
+                      <td className="py-3 px-2 text-body-sm text-[#999] font-mono">{r.batch_no}</td>
+                      <td className="py-3 px-2 text-body-sm text-[#999] font-mono">{r.box_no ?? '—'}</td>
+                      <td className="py-3 px-2 whitespace-nowrap">
                         <span className={`text-body-sm ${expiryColor(expired, expiring)}`}>
                           {(expired || expiring) && <span className="mr-1">{'●'}</span>}
                           {fmtDate(r.expiry_date)}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-body text-[#888]">{fmtCurrency(r.mrp)}</td>
-                      <td className="py-3 px-4 text-body font-medium text-[#111]">{fmtCurrency(r.selling_price)}</td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-2 text-body text-[#888]">{fmtCurrency(r.mrp)}</td>
+                      <td className="py-3 px-2 text-body font-medium text-[#111]">{fmtCurrency(r.selling_price)}</td>
+                      <td className="py-3 px-2">
                         <span className={`text-body-sm font-medium ${stockColor(r.available_stock)}`}>
                           {r.available_stock}
                         </span>
                       </td>
-                      <td className="py-3 px-2">
+                      {/* Sticky: on a narrow window the table scrolls sideways but the actions stay in view. */}
+                      <td className="py-3 px-2 whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#FAFAFA] transition-colors">
                         <BatchActions
                           row={r}
                           onEditProduct={openEditProduct}

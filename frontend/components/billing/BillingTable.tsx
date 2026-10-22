@@ -79,7 +79,10 @@ export default function BillingTable({ rows, setRows }: Props) {
     if (focusNext.current) { focusField(focusNext.current, 'product'); focusNext.current = null }
   }, [rows])
   // Start a bill with the cursor in the first product box.
-  useEffect(() => { focusField(null, 'product') }, [])
+  useEffect(() => {
+    // Not on touch screens: it would pop the keyboard and the list over the form.
+    if (window.matchMedia('(pointer: fine)').matches) focusField(null, 'product')
+  }, [])
 
   function removeRow(rowId: string) {
     if (rows.length < 2) return
