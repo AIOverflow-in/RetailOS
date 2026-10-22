@@ -137,6 +137,9 @@ func (h *CustomerHandler) UpdateCustomer(w http.ResponseWriter, r *http.Request)
 		Name:       body.Name,
 		Phone:      body.Phone,
 		Age:        body.Age,
+		// Absent address = keep the saved one (an older tab must not erase it);
+		// an empty string clears it.
+		SetAddress: body.Address != nil,
 		Address:    cleanAddress(body.Address),
 	})
 	if isUniqueViolation(err) {

@@ -9,15 +9,20 @@ import type { RootState } from '@/store'
 
 const inputClass = "h-10 md:h-8 px-3 text-body border border-[#E5E5E5] rounded-lg bg-white focus:outline-none focus:border-[#CCCCCC] transition-colors placeholder:text-[#CCCCCC]"
 
-export default function CustomerLookup() {
+export default function CustomerLookup({ onLookingUp }: { onLookingUp?: (busy: boolean) => void }) {
   const dispatch = useDispatch()
   const customer = useSelector((s: RootState) => s.cart.customer)
   const [loading, setLoading] = useState(false)
+  // A saved customer's name is shared by all their bills, so it isn't edited on a bill.
+  const [found, setFound] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handlePhone(val: string) {
     dispatch(setCustomer({ ...customer, phone: val, name: '', age: '', address: '' }))
     if (timerRef.current) clearTimeout(timerRef.current)
+    setFound(false)
+    // Busy from the 10th digit, so Place Order waits for the saved details to arrive.
+    onLookingUp?.(val.length === 10)
     if (val.length === 10) {
       timerRef.current = setTimeout(() => lookup(val), 300)
     }
@@ -28,6 +33,7 @@ export default function CustomerLookup() {
     try {
       const c = await api.lookupCustomer(phone)
       if (c) {
+        setFound(true)
         dispatch(setCustomer({ phone, name: c.name, age: c.age ? String(c.age) : '', address: c.address ?? '' }))
         toast.success(`${c.name} — visit #${c.visit_count + 1}`)
       }
@@ -37,6 +43,7 @@ export default function CustomerLookup() {
       toast.error(`Couldn't look up this phone number. ${err instanceof Error ? err.message : ''} You can still type the customer's details.`)
     } finally {
       setLoading(false)
+      onLookingUp?.(false)
     }
   }
 
@@ -61,8 +68,10 @@ export default function CustomerLookup() {
       <div className="space-y-1.5">
         <p className="text-caption text-label font-medium">Name<span className="text-red-500 ml-0.5">*</span></p>
         <input
-          className={`${inputClass} w-48`}
+          className={`${inputClass} w-48${found ? ' bg-[#F7F7F7] text-[#777]' : ''}`}
           placeholder="Patient name"
+          readOnly={found}
+          title={found ? 'Saved customer. Change the name from the Customers page or the order.' : undefined}
           value={customer.name}
           onChange={e => dispatch(setCustomer({ ...customer, name: e.target.value }))}
         />

@@ -25,6 +25,10 @@ WHERE $1::text = ''
 
 -- name: UpdateCustomer :one
 UPDATE customers
-SET name = $2, phone = $3, age = $4, address = $5
-WHERE customer_id = $1
+SET name = @name,
+    phone = @phone,
+    age = sqlc.narg(age),
+    -- set_address false = the caller sent no address: keep the saved one.
+    address = CASE WHEN @set_address::boolean THEN sqlc.narg(address)::text ELSE address END
+WHERE customer_id = @customer_id
 RETURNING *;

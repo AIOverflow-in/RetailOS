@@ -49,7 +49,7 @@ export default function EditCustomerModal({ customer, open, onOpenChange, onSave
         name: name.trim(),
         phone: phone.trim(),
         age: age ? parseInt(age, 10) : null,
-        address: address.trim() || null,
+        address: address.trim(), // always sent: empty clears it
       })
       toast.success('Customer updated')
       onOpenChange(false)

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -197,19 +196,21 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, "could not lookup customer")
 			return
 		} else {
-			// Returning customer: what the cashier typed on the bill wins over what was
-			// saved. The billing screen pre-fills these, so a difference is an edit.
-			name, age, addr := customer.Name, customer.Age, customer.Address
-			if strings.TrimSpace(req.Name) != "" {
-				name = strings.TrimSpace(req.Name)
+			// Returning customer: a bill can add an age or address the customer didn't
+			// have, or change them, but never blank them (a lookup that hadn't finished
+			// sends empty fields) and never renames them: the name is shared by every
+			// earlier bill, so it is changed only from the customer's edit dialog.
+			age, addr := customer.Age, customer.Address
+			if req.Age != nil {
+				age = req.Age
 			}
-			age = req.Age
-			if req.Address != nil {
-				addr = cleanAddress(req.Address)
+			if a := cleanAddress(req.Address); a != nil {
+				addr = a
 			}
-			if name != customer.Name || !equalPtr(age, customer.Age) || !equalPtr(addr, customer.Address) {
+			if !equalPtr(age, customer.Age) || !equalPtr(addr, customer.Address) {
 				customer, err = q.UpdateCustomer(r.Context(), generated.UpdateCustomerParams{
-					CustomerID: customer.CustomerID, Name: name, Phone: customer.Phone, Age: age, Address: addr,
+					CustomerID: customer.CustomerID, Name: customer.Name, Phone: customer.Phone,
+					Age: age, SetAddress: true, Address: addr,
 				})
 				if err != nil {
 					writeError(w, http.StatusInternalServerError, "could not update customer")

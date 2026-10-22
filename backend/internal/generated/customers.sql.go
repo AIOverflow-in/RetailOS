@@ -131,26 +131,32 @@ func (q *Queries) ListCustomers(ctx context.Context, arg ListCustomersParams) ([
 
 const updateCustomer = `-- name: UpdateCustomer :one
 UPDATE customers
-SET name = $2, phone = $3, age = $4, address = $5
-WHERE customer_id = $1
+SET name = $1,
+    phone = $2,
+    age = $3,
+    -- set_address false = the caller sent no address: keep the saved one.
+    address = CASE WHEN $4::boolean THEN $5::text ELSE address END
+WHERE customer_id = $6
 RETURNING customer_id, phone, name, age, visit_count, created_at, address
 `
 
 type UpdateCustomerParams struct {
-	CustomerID pgtype.UUID `json:"customer_id"`
 	Name       string      `json:"name"`
 	Phone      string      `json:"phone"`
 	Age        *int32      `json:"age"`
+	SetAddress bool        `json:"set_address"`
 	Address    *string     `json:"address"`
+	CustomerID pgtype.UUID `json:"customer_id"`
 }
 
 func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) (Customer, error) {
 	row := q.db.QueryRow(ctx, updateCustomer,
-		arg.CustomerID,
 		arg.Name,
 		arg.Phone,
 		arg.Age,
+		arg.SetAddress,
 		arg.Address,
+		arg.CustomerID,
 	)
 	var i Customer
 	err := row.Scan(
